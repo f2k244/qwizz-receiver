@@ -226,6 +226,41 @@
             50% { opacity: 0.5; }
         }
         .pulsing { animation: pulse 2s infinite; }
+
+        /* QR Code Overlay */
+        #qr-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        #qr-overlay h2 {
+            font-size: 80px;
+            font-weight: 900;
+            margin-bottom: 50px;
+            color: var(--white);
+            text-shadow: 0 0 30px rgba(0, 168, 255, 0.5);
+        }
+        .qr-box {
+            background: var(--white);
+            padding: 25px;
+            border-radius: 40px;
+            box-shadow: 0 0 80px rgba(0, 168, 255, 0.5);
+        }
+        .qr-box img {
+            width: 600px;
+            height: 600px;
+            border-radius: 20px;
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -272,6 +307,13 @@
 <div id="bottom-bar">
     <span id="server-hint"></span>
     <div id="connection-dot"></div>
+</div>
+
+<div id="qr-overlay">
+    <h2>REJOIGNEZ LA PARTIE !</h2>
+    <div class="qr-box">
+        <img id="qr-img" src="">
+    </div>
 </div>
 
 <script>
@@ -343,6 +385,7 @@ function handleMessage(data) {
     if (data.type === 'track_update') updateTrack(data);
     else if (data.type === 'leaderboard') updateLeaderboard(data.players);
     else if (data.type === 'state') updateState(data.state);
+    else if (data.type === 'show_qr') toggleQR(data.show);
 }
 
 function updateTrack(data) {
@@ -385,6 +428,20 @@ function updateLeaderboard(players) {
 function updateState(state) {
     const badge = document.getElementById('status-badge');
     badge.className = state === 'blocked' ? 'show' : '';
+}
+
+function toggleQR(show) {
+    const qr = document.getElementById('qr-overlay');
+    if (show && serverBase) {
+        // Use serverBase directly from the Chromecast LOAD intercept
+        const url = serverBase.replace('ws://', 'http://').replace('/ws', '');
+        document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=' + encodeURIComponent(url) + '&bgcolor=ffffff&color=09072B&margin=0';
+        qr.style.opacity = '1';
+        qr.style.pointerEvents = 'auto';
+    } else {
+        qr.style.opacity = '0';
+        qr.style.pointerEvents = 'none';
+    }
 }
 
 // ── UI ───────────────────────────────────────────────────
