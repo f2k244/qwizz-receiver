@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>QWIZZ Cast Receiver V4.4.0</title>
+  <title>QWIZZ Cast Receiver V4.4.1</title>
   <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
@@ -14,11 +14,11 @@
     #ambient{position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 20% 50%,rgba(0,168,255,.12) 0%,transparent 70%),radial-gradient(ellipse 40% 40% at 80% 20%,rgba(138,43,226,.10) 0%,transparent 70%);pointer-events:none;z-index:0}
     #splash{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3vmin;z-index:10000;transition:opacity 1s ease}
     #splash h1{font-size:6rem;font-weight:900;letter-spacing:1.5vmin;color:var(--blue);text-shadow:0 0 40px rgba(0,168,255,.4);display:block}
-    #splash-logo{width:50vmin;height:auto;filter:drop-shadow(0 0 50px rgba(0,168,255,0.6));display:none}
+    #splash-logo{width:70vmin;height:auto;filter:drop-shadow(0 0 50px rgba(0,168,255,0.6));display:none}
     #idle{position:fixed;inset:0;background:var(--bg);display:flex;justify-content:center;align-items:center;z-index:100;transition:opacity .8s ease}
     #idle.gone{opacity:0;pointer-events:none}
     .idle-content{display:flex;flex-direction:column;align-items:center;text-align:center;animation:fadeInUp 1.2s ease-out}
-    .idle-logo{width:55vmin;height:auto;margin-bottom:4vmin;filter:drop-shadow(0 0 50px rgba(0,168,255,0.6));display:none}
+    .idle-logo{width:75vmin;height:auto;margin-bottom:4vmin;filter:drop-shadow(0 0 60px rgba(0,168,255,0.6));display:none}
     .idle-title{font-size:7rem;font-weight:900;letter-spacing:1.5vmin;color:var(--blue);text-shadow:0 0 60px rgba(0,168,255,0.4)}
     #player{position:fixed;inset:0;display:grid;grid-template-columns:40vw 1fr;padding:8vmin;gap:8vmin;align-items:center;opacity:0;pointer-events:none;transition:opacity .8s;z-index:10}
     #player.visible{opacity:1}
@@ -91,7 +91,7 @@
   <div id="qr-overlay"><div style="font-size:2rem;color:var(--blue);font-weight:900;margin-bottom:1.5vmin">Scanner pour Rejoindre</div><img id="qr-img"></div>
   <div id="pause-overlay"><h1>PAUSE</h1><div id="pause-msg" style="font-size:3rem;max-width:80vw;line-height:1.4"></div></div>
   <div id="podium-overlay"><div class="logo-area" style="display:block"><img id="podium-logo"></div><h1 id="podium-title">CLASSEMENT FINAL</h1><div class="podium-container" id="podium-steps"></div></div>
-  <div class="logo-area" id="main-logo-wrap"><img id="logo-img"></div>
+  <div class="logo-area hidden" id="main-logo-wrap"><img id="logo-img"></div>
 <script>
 var castCtx=cast.framework.CastReceiverContext.getInstance(),serverURL='',socket,appState={showCheaterStatus:true,revealAnim:'random'},isAnimating=false,hasTrack=false;
 castCtx.addCustomMessageListener('urn:x-cast:com.qwizz.control',e=>{if(e.data&&e.data.serverURL)initS(e.data.serverURL)});
@@ -103,7 +103,6 @@ function initS(u){
     el.onload=()=>{
         el.style.display='block';
         if(id==='splash-logo')document.getElementById('splash-text').style.display='none';
-        if(id==='idle-logo')document.getElementById('idle-title-text').style.display='none';
     };
     el.src=u+'/tv_logo?'+Date.now();
   });
