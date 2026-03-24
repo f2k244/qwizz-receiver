@@ -315,22 +315,29 @@ function pickAnim() {
 
 function renderLeaderboard(players) {
   if (!players) return;
+  var lb = document.getElementById('leaderboard');
+  if (isAnimating && !lb.classList.contains('mode-bottom-right')) return;
+  
   var list = document.getElementById('lb-list');
   var medals = ['🥇','🥈','🥉'];
   var sorted = players.sort(function(a,b){ return b.score - a.score; }).slice(0,10);
   
-  var lb = document.getElementById('leaderboard');
-  var isBottomRight = lb.classList.contains('mode-bottom-right');
-  
-  if (isBottomRight) {
+  if (lb.classList.contains('mode-bottom-right')) {
     renderTicker(sorted);
     return;
   }
   
   list.innerHTML = '';
+  if (sorted.length === 0) {
+    list.innerHTML = '<div class="lb-row" style="opacity:1"><span class="lb-rank">—</span><span class="lb-name">En attente de joueurs</span><span class="lb-score">—</span></div>';
+    return;
+  }
   sorted.forEach(function(p, i) {
     var r = document.createElement('div');
     r.className = 'lb-row' + (i===0?' top1':i===1?' top2':i===2?' top3':'');
+    if (lb.classList.contains('mode-full') && !lb.classList.contains('hidden') && !isAnimating) {
+      r.style.opacity = '1';
+    }
     r.dataset.score = p.score;
     r.innerHTML = '<span class="lb-rank">'+(medals[i]||(i+1))+'</span><span class="lb-name">'+escHtml(p.name)+'</span><span class="lb-score">'+p.score+' pts</span>';
     list.appendChild(r);
@@ -339,48 +346,51 @@ function renderLeaderboard(players) {
 
 function showLeaderboard() {
   var lb = document.getElementById('leaderboard');
+  if (lb.classList.contains('hidden') === false && isAnimating === false) {
+     // Already showing, just pick a new animation if it's explicitly called (e.g. from app toggle)
+  }
   lb.classList.remove('hidden');
-  var rows = Array.from(lb.querySelectorAll('.lb-row'));
-  var anim = pickAnim();
-  animateRows(rows, anim, lb.classList.contains('mode-bottom-right'));
-}
-
-function hideLeaderboard() {
-  document.getElementById('leaderboard').classList.add('hidden');
-  stopTicker();
-}
-
-function animateRows(rows, anim, isBottomRight) {
-  if (isBottomRight) return; // Ticker handles bottom-right
+  if (lb.classList.contains('mode-bottom-right')) return;
   
-  // Reset
-  rows.forEach(function(r){ r.style.opacity='0'; r.style.animation=''; r.className=r.className.replace(/anim-\S+/g,'').trim(); });
+  var rows = Array.from(lb.querySelectorAll('.lb-row'));
+  if (rows.length === 0) return;
+  
+  isAnimating = true;
+  rows.forEach(function(r){ 
+    r.style.opacity='0'; 
+    r.style.animation=''; 
+    r.className=r.className.replace(/anim-\S+/g,'').trim(); 
+  });
+  
+  var anim = pickAnim();
+  var maxDelay = 0;
   
   if (anim === 'suspense') {
-    // Reveal from LAST to FIRST — 1.2s per reveal
     var reversed = rows.slice().reverse();
     reversed.forEach(function(row, idx) {
+      var d = 300 + idx * 1200;
+      maxDelay = Math.max(maxDelay, d + 1200);
       setTimeout(function() {
         row.classList.add('anim-suspense');
-        // Flash background
         row.style.background = 'rgba(0,168,255,.15)';
         setTimeout(function(){ row.style.background = ''; }, 600);
-      }, 300 + idx * 1200);
+      }, d);
     });
   } else if (anim === 'cascade') {
-    // Top to bottom, fast
     rows.forEach(function(row, idx) {
-      setTimeout(function(){ row.classList.add('anim-cascade'); }, idx * 80);
+      var d = idx * 80; maxDelay = Math.max(maxDelay, d + 500);
+      setTimeout(function(){ row.classList.add('anim-cascade'); }, d);
     });
   } else if (anim === 'wipe') {
-    // Top to bottom, horizontal wipe
     rows.forEach(function(row, idx) {
-      setTimeout(function(){ row.classList.add('anim-wipe'); }, idx * 120);
+      var d = idx * 120; maxDelay = Math.max(maxDelay, d + 500);
+      setTimeout(function(){ row.classList.add('anim-wipe'); }, d);
     });
   } else if (anim === 'neon') {
     // All at once, neon flicker
     rows.forEach(function(row, idx) {
-      setTimeout(function(){ row.classList.add('anim-neon'); }, idx * 40);
+      var d = idx * 40; maxDelay = Math.max(maxDelay, d + 1000);
+      setTimeout(function(){ row.classList.add('anim-neon'); }, d);
     });
   } else if (anim === 'zoom') {
     // Each pops in with elastic zoom
