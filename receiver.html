@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>QWIZZ Cast Receiver</title>
+  <!-- Google Cast Receiver SDK v3 -->
+  <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg:#09072B; --blue:#00A8FF; --purple:#8A2BE2; --font:'Outfit',sans-serif; --qr-size:200px; }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body,html{width:100%;height:100%;background:var(--bg);color:#fff;font-family:var(--font);overflow:hidden}
+    #ambient{position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 20% 50%,rgba(0,168,255,.12) 0%,transparent 70%),radial-gradient(ellipse 40% 40% at 80% 20%,rgba(138,43,226,.10) 0%,transparent 70%);pointer-events:none;z-index:0}
+    
+    /* ── Connecting Screen ── */
+    #splash{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;z-index:200;transition:opacity 1s ease}
+    #splash.hidden{opacity:0;pointer-events:none}
+    #splash h1{font-size:5rem;font-weight:900;letter-spacing:8px;background:linear-gradient(to right,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    #splash p{font-size:1.3rem;color:rgba(255,255,255,.6)}
+    #splash .loader{width:48px;height:48px;border:4px solid rgba(0,168,255,.15);border-top:4px solid var(--blue);border-radius:50%;animation:spin 1s linear infinite}
+    #splash .server-url{font-size:.95rem;color:rgba(0,168,255,.7);margin-top:10px;font-family:monospace}
+    
+    /* ── Player / Game Screen ── */
+    #idle{position:fixed;inset:0;background:var(--bg);display:flex;justify-content:center;align-items:center;z-index:100;transition:opacity .8s ease}
+    #idle.gone{opacity:0;pointer-events:none}
+    .idle-content{display:flex;flex-direction:column;align-items:center;text-align:center;animation:fadeInUp 1s ease-out}
+    .idle-logo{width:420px;margin-bottom:40px;filter:drop-shadow(0 0 40px rgba(0,168,255,.6));animation:pulse-anim 3s infinite ease-in-out}
+    .idle-title{font-size:4rem;font-weight:900;letter-spacing:8px;background:linear-gradient(to right,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .idle-sub{font-size:1.5rem;color:rgba(255,255,255,.5);margin-top:20px}
+    
+    #player{position:fixed;inset:0;display:grid;grid-template-columns:1fr 1fr;padding:60px;gap:60px;align-items:center;opacity:0;pointer-events:none;transition:opacity .8s;z-index:10}
+    #player.visible{opacity:1}
+    #cover-wrap{display:flex;align-items:center;justify-content:center}
+    #cover{width:480px;height:480px;border-radius:24px;border:2px solid rgba(255,255,255,.15);object-fit:cover;box-shadow:0 30px 80px rgba(0,0,0,.8),0 0 60px rgba(0,168,255,.15);display:none;animation:artworkIn .6s ease}
+    #cover-placeholder{width:480px;height:480px;border-radius:24px;border:2px dashed rgba(0,168,255,0.25);background:rgba(26,26,58,.5);display:flex;align-items:center;justify-content:center;font-size:200px;font-weight:900;color:rgba(0,168,255,.3)}
+    .right{display:flex;flex-direction:column;gap:40px}
+    .logo-area{position:fixed;top:40px;right:60px;z-index:999}
+    .logo-area img{width:340px;height:auto;object-fit:contain}
+    .track-title{font-size:52px;font-weight:700;line-height:1.1;margin-bottom:12px;text-shadow:0 2px 30px rgba(0,168,255,.3)}
+    .track-artist{font-size:28px;color:#E0E0E0;font-weight:300}
+    
+    /* ── Connection dot ── */
+    #bottom-bar{position:fixed;bottom:0;left:0;right:0;padding:20px 60px;display:flex;justify-content:flex-end;align-items:center;background:linear-gradient(to top,rgba(9,7,43,.9),transparent);z-index:50}
+    #connection-dot{width:10px;height:10px;border-radius:50%;background:#f44;box-shadow:0 0 8px #f44;transition:all .4s}
+    #connection-dot.ok{background:#00ff88;box-shadow:0 0 8px #00ff88}
+    
+    /* ── Leaderboard ── */
+    #leaderboard{background:rgba(26,26,58,.9);border:1px solid rgba(0,168,255,.25);border-radius:24px;padding:30px;backdrop-filter:blur(20px);z-index:20}
+    #leaderboard.hidden{display:none!important}
+    #leaderboard.mode-full{position:fixed;inset:60px;display:flex;flex-direction:column;justify-content:center;align-items:center}
+    #leaderboard.mode-full .lb-title{font-size:52px;margin-bottom:44px;text-align:center}
+    #leaderboard.mode-full #lb-list{width:80%;max-width:900px}
+    #leaderboard.mode-full .lb-row{padding:22px 20px;font-size:34px;margin-bottom:8px;border-radius:16px}
+    #leaderboard.mode-bottom-right{position:fixed;bottom:60px;right:60px;width:420px}
+    #leaderboard.mode-bottom-right .lb-title{font-size:22px;margin-bottom:14px}
+    #leaderboard.mode-bottom-right .lb-row{padding:10px 14px;font-size:18px;border-radius:10px}
+    .lb-title{font-weight:900;letter-spacing:2px;color:var(--blue);text-transform:uppercase;margin-bottom:20px}
+    .lb-row{display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.05);opacity:0}
+    .lb-row:last-child{border-bottom:none}
+    .lb-rank{width:44px;font-size:inherit;text-align:center;font-weight:900}
+    .lb-name{flex:1;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+    .lb-score{font-size:inherit;font-weight:900;color:var(--blue);font-family:monospace}
+    .lb-row.top1 .lb-score{color:gold;text-shadow:0 0 12px gold}
+    .lb-row.top2 .lb-score{color:#C0C0C0;text-shadow:0 0 12px silver}
+    .lb-row.top3 .lb-score{color:#CD7F32;text-shadow:0 0 12px #CD7F32}
+    
+    /* ── QR Overlay ── */
+    #qr-overlay{position:fixed;z-index:2000;display:none;background:rgba(26,26,58,.9);backdrop-filter:blur(15px);padding:28px;border-radius:36px;border:1px solid rgba(0,168,255,.3);text-align:center;width:calc(var(--qr-size) + 56px)}
+    #qr-overlay.visible{display:flex;flex-direction:column;align-items:center;gap:16px}
+    #qr-overlay img{border-radius:16px;background:#fff;padding:12px;width:var(--qr-size);height:var(--qr-size)}
+    #qr-label{font-size:13px;font-weight:700;letter-spacing:2px;color:var(--blue)}
+    #qr-overlay.pos-center{top:50%;left:50%;transform:translate(-50%,-50%)}
+    #qr-overlay.pos-bottom-right{bottom:40px;right:40px}
+    #qr-overlay.pos-bottom-left{bottom:40px;left:40px}
+    #qr-overlay.pos-top-right{top:40px;right:40px}
+    #qr-overlay.pos-top-left{top:40px;left:40px}
+    
+    /* ── Keyframes ── */
+    @keyframes spin{100%{transform:rotate(360deg)}}
+    @keyframes pulse-anim{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes artworkIn{from{opacity:0;transform:scale(.92) rotate(-2deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+    
+    /* ── ANIMATION: SUSPENSE (from last to first) ── */
+    @keyframes suspenseIn{
+      0%{opacity:0;transform:translateX(-60px);filter:blur(6px)}
+      60%{filter:blur(0)}
+      100%{opacity:1;transform:translateX(0)}
+    }
+    @keyframes spotlight{
+      0%{box-shadow:0 0 0 rgba(0,168,255,0)}
+      30%{box-shadow:0 0 60px rgba(0,168,255,.5),inset 0 0 30px rgba(0,168,255,.1)}
+      100%{box-shadow:0 0 0 rgba(0,168,255,0)}
+    }
+    .anim-suspense{animation:suspenseIn .7s cubic-bezier(.34,1.56,.64,1) forwards, spotlight 1.2s ease forwards}
+    
+    /* ── ANIMATION: CASCADE (top to bottom rain) ── */
+    @keyframes cascadeIn{
+      0%{opacity:0;transform:translateY(-40px) scaleY(.6)}
+      70%{transform:translateY(4px) scaleY(1.02)}
+      100%{opacity:1;transform:translateY(0) scaleY(1)}
+    }
+    .anim-cascade{animation:cascadeIn .45s cubic-bezier(.34,1.56,.64,1) forwards}
+    
+    /* ── ANIMATION: WIPE (left→right reveal) ── */
+    @keyframes wipeIn{
+      from{opacity:1;clip-path:inset(0 100% 0 0 round 12px)}
+      to{opacity:1;clip-path:inset(0 0% 0 0 round 12px)}
+    }
+    .anim-wipe{animation:wipeIn .5s ease forwards;opacity:1}
+    
+    /* ── ANIMATION: NEON FLICKER ── */
+    @keyframes neonFlicker{
+      0%,19%,21%,23%,25%,54%,56%,100%{opacity:1;text-shadow:0 0 10px var(--blue),0 0 20px var(--blue)}
+      20%,24%,55%{opacity:.4;text-shadow:none}
+    }
+    @keyframes neonFadeIn{from{opacity:0;filter:brightness(3)}to{opacity:1;filter:brightness(1)}}
+    .anim-neon{animation:neonFadeIn .6s ease forwards}
+    .anim-neon .lb-score{animation:neonFlicker 2s ease infinite}
+    
+    /* ── ANIMATION: ZOOM (elastic pop) ── */
+    @keyframes zoomIn{
+      0%{opacity:0;transform:scale(.3) rotate(-6deg)}
+      65%{transform:scale(1.08) rotate(1deg)}
+      100%{opacity:1;transform:scale(1) rotate(0)}
+    }
+    .anim-zoom{animation:zoomIn .55s cubic-bezier(.34,1.56,.64,1) forwards}
+    
+    /* ── BOTTOM-RIGHT TICKER ── */
+    #lb-ticker-wrap{overflow:hidden;height:56px;position:relative}
+    .lb-ticker-row{position:absolute;width:100%;transition:all .5s ease;display:flex;align-items:center;gap:12px}
+    .lb-ticker-row.entering{transform:translateY(100%);opacity:0}
+    .lb-ticker-row.visible{transform:translateY(0);opacity:1}
+    .lb-ticker-row.leaving{transform:translateY(-100%);opacity:0}
+  </style>
+</head>
+<body>
+  <div id="ambient"></div>
+  
+  <!-- Splash / Connecting screen -->
+  <div id="splash">
+    <h1>QWIZZ</h1>
+    <div class="loader"></div>
+    <p id="splash-status">En attente de connexion...</p>
+    <p class="server-url" id="splash-server"></p>
+  </div>
+  
+  <!-- Idle (waiting) screen -->
+  <div id="idle">
+    <div class="idle-content">
+      <img id="idle-logo" src="" class="idle-logo" onerror="this.style.display='none'">
+      <div class="idle-title">PRÊT À QWIZZER ?</div>
+      <div class="idle-sub">Veuillez attendre le début de la musique...</div>
+    </div>
+  </div>
+  
+  <!-- Player / track view -->
+  <div id="player">
+    <div id="cover-wrap">
+      <img id="cover" src="">
+      <div id="cover-placeholder">?</div>
+    </div>
+    <div class="right">
+      <div class="logo-area"><img id="logo-img" src="" onerror="this.style.display='none'"></div>
+      <div>
+        <div class="track-title" id="track-title">En attente...</div>
+        <div class="track-artist" id="track-artist">Prêt à buzzer ?</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Leaderboard -->
+  <div id="leaderboard" class="hidden mode-full">
+    <div class="lb-title">🏆 Classement</div>
+    <div id="lb-list"></div>
+  </div>
+  
+  <!-- Bottom bar -->
+  <div id="bottom-bar"><div id="connection-dot"></div></div>
+  
+  <!-- QR Overlay -->
+  <div id="qr-overlay" class="pos-center">
+    <div id="qr-label">Scanner &amp; Jouer</div>
+    <img id="qr-img" src="">
+  </div>
+
+<script>
+// ──────────────────────────────────────────────
+// Cast Receiver SDK
+// ──────────────────────────────────────────────
+var castCtx = cast.framework.CastReceiverContext.getInstance();
+var serverURL = '';
+var socket;
+var reconnectDelay = 1000;
+var revealAnim = 'random';
+var lastAnim = '';
+var tickerPlayers = [];
+var tickerIdx = 0;
+var tickerTimer = null;
+
+// Message from sender with server URL
+castCtx.addCustomMessageListener('urn:x-cast:com.qwizz.control', function(e) {
+  if (e.data && e.data.serverURL && !serverURL) {
+    initServer(e.data.serverURL);
+  }
+});
+
+function initServer(url) {
+  serverURL = url;
+  document.getElementById('splash-server').textContent = url;
+  document.getElementById('splash-status').textContent = 'Connexion à ' + url + '...';
+  // Load logo and connect WS
+  document.getElementById('idle-logo').src = url + '/tv_logo';
+  document.getElementById('logo-img').src = url + '/tv_logo';
+  connectWS();
+}
+
+castCtx.start();
+
+// ──────────────────────────────────────────────
+// WebSocket
+// ──────────────────────────────────────────────
+function connectWS() {
+  if (!serverURL) return;
+  var wsURL = serverURL.replace('http://', 'ws://') + '/ws';
+  try { socket = new WebSocket(wsURL); } catch(e) { scheduleReconnect(); return; }
+  socket.onopen = function() {
+    document.getElementById('connection-dot').classList.add('ok');
+    reconnectDelay = 1000;
+    // Hide splash
+    document.getElementById('splash').classList.add('hidden');
+    setTimeout(function(){ document.getElementById('splash').style.display='none'; }, 1000);
+    // Poll state immediately
+    pollState();
+  };
+  socket.onmessage = function(e) { try { handle(JSON.parse(e.data)); } catch(x) {} };
+  socket.onclose = function() {
+    document.getElementById('connection-dot').classList.remove('ok');
+    scheduleReconnect();
+  };
+}
+
+function scheduleReconnect() {
+  setTimeout(connectWS, reconnectDelay);
+  reconnectDelay = Math.min(reconnectDelay * 1.5, 10000);
+}
+
+// ──────────────────────────────────────────────
+// Message Handler
+// ──────────────────────────────────────────────
+function handle(d) {
+  if (d.type === 'track_update') {
+    document.getElementById('track-title').textContent = d.title || '?';
+    document.getElementById('track-artist').textContent = d.artist || '';
+    var img = document.getElementById('cover'), ph = document.getElementById('cover-placeholder');
+    if (d.cover && d.cover !== '' && serverURL) {
+      img.onload = function(){ img.style.display='block'; ph.style.display='none'; };
+      img.onerror = function(){ img.style.display='none'; ph.style.display='flex'; };
+      img.src = serverURL + d.cover + '?' + Date.now();
+    } else { img.style.display='none'; ph.style.display='flex'; }
+    showPlayer();
+  } else if (d.type === 'leaderboard') {
+    renderLeaderboard(d.players);
+  } else if (d.type === 'appearance') {
+    applyAppearance(d.data);
+  } else if (d.type === 'show_qr') {
+    var qr = document.getElementById('qr-overlay');
+    if (d.show && serverURL) {
+      document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=' + encodeURIComponent(serverURL) + '&bgcolor=ffffff&color=09072B&margin=0';
+      qr.classList.add('visible');
+      if (d.duration > 0) setTimeout(function(){ qr.classList.remove('visible'); }, d.duration * 1000);
+    } else { qr.classList.remove('visible'); }
+  }
+}
+
+function applyAppearance(data) {
+  var root = document.documentElement;
+  if (data.tvBackgroundColor) root.style.setProperty('--bg', data.tvBackgroundColor);
+  if (data.tvFont) root.style.setProperty('--font', data.tvFont);
+  if (data.qrSize) root.style.setProperty('--qr-size', data.qrSize + 'px');
+  if (data.qrPosition) {
+    var qr = document.getElementById('qr-overlay');
+    Array.from(qr.classList).forEach(function(c){ if(c.startsWith('pos-')) qr.classList.remove(c); });
+    qr.classList.add('pos-' + data.qrPosition);
+  }
+  var lb = document.getElementById('leaderboard');
+  if (data.scoreAnimationMode) {
+    lb.classList.remove('mode-full','mode-bottom-right');
+    lb.classList.add('mode-' + data.scoreAnimationMode);
+  }
+  if (data.scoreRevealAnimation) revealAnim = data.scoreRevealAnimation;
+  if (data.showScores === true || data.showScores === 1) {
+    showLeaderboard();
+  } else if (data.showScores === false || data.showScores === 0) {
+    hideLeaderboard();
+  }
+  if (data.tvHasBackground && serverURL) {
+    document.getElementById('ambient').style.background = 'url(' + serverURL + '/tv_bg?' + Date.now() + ') center/cover no-repeat';
+  }
+}
+
+// ──────────────────────────────────────────────
+// Leaderboard Animations
+// ──────────────────────────────────────────────
+var ANIMS = ['suspense','cascade','wipe','neon','zoom'];
+
+function pickAnim() {
+  if (revealAnim !== 'random') return revealAnim;
+  var choices = ANIMS.filter(function(a){ return a !== lastAnim; });
+  var chosen = choices[Math.floor(Math.random() * choices.length)];
+  lastAnim = chosen;
+  return chosen;
+}
+
+function renderLeaderboard(players) {
+  if (!players) return;
+  var list = document.getElementById('lb-list');
+  var medals = ['🥇','🥈','🥉'];
+  var sorted = players.sort(function(a,b){ return b.score - a.score; }).slice(0,10);
+  
+  var lb = document.getElementById('leaderboard');
+  var isBottomRight = lb.classList.contains('mode-bottom-right');
+  
+  if (isBottomRight) {
+    renderTicker(sorted);
+    return;
+  }
+  
+  list.innerHTML = '';
+  sorted.forEach(function(p, i) {
+    var r = document.createElement('div');
+    r.className = 'lb-row' + (i===0?' top1':i===1?' top2':i===2?' top3':'');
+    r.dataset.score = p.score;
+    r.innerHTML = '<span class="lb-rank">'+(medals[i]||(i+1))+'</span><span class="lb-name">'+escHtml(p.name)+'</span><span class="lb-score">'+p.score+' pts</span>';
+    list.appendChild(r);
+  });
+}
+
+function showLeaderboard() {
+  var lb = document.getElementById('leaderboard');
+  lb.classList.remove('hidden');
+  var rows = Array.from(lb.querySelectorAll('.lb-row'));
+  var anim = pickAnim();
+  animateRows(rows, anim, lb.classList.contains('mode-bottom-right'));
+}
+
+function hideLeaderboard() {
+  document.getElementById('leaderboard').classList.add('hidden');
+  stopTicker();
+}
+
+function animateRows(rows, anim, isBottomRight) {
+  if (isBottomRight) return; // Ticker handles bottom-right
+  
+  // Reset
+  rows.forEach(function(r){ r.style.opacity='0'; r.style.animation=''; r.className=r.className.replace(/anim-\S+/g,'').trim(); });
+  
+  if (anim === 'suspense') {
+    // Reveal from LAST to FIRST — 1.2s per reveal
+    var reversed = rows.slice().reverse();
+    reversed.forEach(function(row, idx) {
+      setTimeout(function() {
+        row.classList.add('anim-suspense');
+        // Flash background
+        row.style.background = 'rgba(0,168,255,.15)';
+        setTimeout(function(){ row.style.background = ''; }, 600);
+      }, 300 + idx * 1200);
+    });
+  } else if (anim === 'cascade') {
+    // Top to bottom, fast
+    rows.forEach(function(row, idx) {
+      setTimeout(function(){ row.classList.add('anim-cascade'); }, idx * 80);
+    });
+  } else if (anim === 'wipe') {
+    // Top to bottom, horizontal wipe
+    rows.forEach(function(row, idx) {
+      setTimeout(function(){ row.classList.add('anim-wipe'); }, idx * 120);
+    });
+  } else if (anim === 'neon') {
+    // All at once, neon flicker
+    rows.forEach(function(row, idx) {
+      setTimeout(function(){ row.classList.add('anim-neon'); }, idx * 40);
+    });
+  } else if (anim === 'zoom') {
+    // Each pops in with elastic zoom
+    rows.forEach(function(row, idx) {
+      setTimeout(function(){ row.classList.add('anim-zoom'); }, idx * 100);
+    });
+  } else {
+    // Fallback: instant show
+    rows.forEach(function(r){ r.style.opacity='1'; });
+  }
+}
+
+// ── Bottom-right Ticker ──
+function renderTicker(players) {
+  var list = document.getElementById('lb-list');
+  list.innerHTML = '<div id="lb-ticker-wrap"></div>';
+  tickerPlayers = players;
+  tickerIdx = 0;
+  stopTicker();
+  showTickerRow(0);
+  tickerTimer = setInterval(function() {
+    tickerIdx = (tickerIdx + 1) % tickerPlayers.length;
+    showTickerRow(tickerIdx);
+  }, 3000);
+}
+
+function showTickerRow(idx) {
+  var wrap = document.getElementById('lb-ticker-wrap');
+  if (!wrap) return;
+  var p = tickerPlayers[idx];
+  var medals = ['🥇','🥈','🥉'];
+  var rank = medals[idx] || (idx+1);
+  wrap.innerHTML = '<div class="lb-ticker-row entering"><span class="lb-rank">'+rank+'</span><span class="lb-name">'+escHtml(p.name)+'</span><span class="lb-score">'+p.score+' pts</span></div>';
+  var row = wrap.querySelector('.lb-ticker-row');
+  setTimeout(function(){ row.classList.remove('entering'); row.classList.add('visible'); }, 30);
+}
+
+function stopTicker() { if (tickerTimer) { clearInterval(tickerTimer); tickerTimer = null; } }
+
+// ──────────────────────────────────────────────
+// Helpers
+// ──────────────────────────────────────────────
+function showPlayer() {
+  document.getElementById('idle').classList.add('gone');
+  document.getElementById('player').classList.add('visible');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// HTTP Polling fallback — every 6s
+function pollState() {
+  if (!serverURL) return;
+  fetch(serverURL + '/tv_state').then(function(r){ return r.json(); }).then(function(s) {
+    if (s.players) renderLeaderboard(s.players);
+    if (s.scoreRevealAnimation) revealAnim = s.scoreRevealAnimation;
+    var lb = document.getElementById('leaderboard');
+    if (s.scoreAnimationMode) {
+      lb.classList.remove('mode-full','mode-bottom-right');
+      lb.classList.add('mode-' + s.scoreAnimationMode);
+    }
+    if (s.showScores === true) showLeaderboard();
+    else if (s.showScores === false) hideLeaderboard();
+  }).catch(function(){});
+  setTimeout(pollState, 6000);
+}
+</script>
+</body>
+</html>
