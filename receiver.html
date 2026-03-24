@@ -11,101 +11,48 @@
     *{margin:0;padding:0;box-sizing:border-box}
     body,html{width:100%;height:100%;background:var(--bg);color:#fff;font-family:var(--font);overflow:hidden;font-size:1.5vmin}
     #ambient{position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 20% 50%,rgba(0,168,255,.12) 0%,transparent 70%),radial-gradient(ellipse 40% 40% at 80% 20%,rgba(138,43,226,.10) 0%,transparent 70%);pointer-events:none;z-index:0}
-    #splash{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;z-index:200;transition:opacity 1s ease}
-    #splash.hidden{opacity:0;pointer-events:none}
-    #splash h1{font-size:5rem;font-weight:900;letter-spacing:8px;background:linear-gradient(to right,var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-    #idle{position:fixed;inset:0;background:var(--bg);display:flex;justify-content:center;align-items:center;z-index:100;transition:opacity .8s ease}
-    #idle.gone{opacity:0;pointer-events:none}
-    .idle-content{display:flex;flex-direction:column;align-items:center;text-align:center;animation:fadeInUp 1s ease-out}
-    .idle-logo{width:30vmin;margin-bottom:4vmin;filter:drop-shadow(0 0 40px rgba(0,168,255,.6));animation:pulse-anim 3s infinite ease-in-out}
-    .idle-title{font-size:6rem;font-weight:900;letter-spacing:1vmin;background:linear-gradient(to right,var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-    .idle-sub{font-size:2rem;color:rgba(255,255,255,.5);margin-top:2rem}
-    #player{position:fixed;inset:0;display:grid;grid-template-columns:40vw 1fr;padding:8vmin;gap:8vmin;align-items:center;opacity:0;pointer-events:none;transition:opacity .8s;z-index:10}
-    #player.visible{opacity:1}
-    #cover-wrap{display:flex;align-items:center;justify-content:center}
-    #cover{width:60vmin;height:60vmin;max-width:80%;max-height:80%;border-radius:3vmin;border:0.3vmin solid rgba(255,255,255,.2);object-fit:contain;background:rgba(0,0,0,0.3);box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 80px rgba(0,168,255,.2);display:none;animation:artworkIn .6s ease;transition:transform 0.5s ease}
-    #cover-placeholder{width:50vmin;height:50vmin;border-radius:2.5vmin;border:2px dashed rgba(0,168,255,0.25);background:rgba(26,26,58,.5);display:flex;align-items:center;justify-content:center;font-size:20rem;font-weight:900;color:rgba(0,168,255,.3)}
-    .right{display:flex;flex-direction:column;gap:4vmin}
-    .logo-area{position:fixed;top:4vmin;right:6vmin;z-index:99}
-    .logo-area img{width:25vmin;height:auto;object-fit:contain}
-    .track-title{font-size:5rem;font-weight:700;line-height:1.1;margin-bottom:1.5rem;text-shadow:0 2px 30px rgba(0,168,255,.3)}
-    .track-artist{font-size:2.5rem;color:#E0E0E0;font-weight:300}
-    #bottom-bar{position:fixed;bottom:0;left:0;right:0;padding:20px 60px;display:flex;justify-content:flex-end;align-items:center;background:linear-gradient(to top,rgba(9,7,43,.9),transparent);z-index:50}
-    #connection-dot{width:10px;height:10px;border-radius:50%;background:#f44;box-shadow:0 0 8px #f44;transition:all .4s}
-    #connection-dot.ok{background:#00ff88;box-shadow:0 0 8px #00ff88}
-    #leaderboard{background:rgba(26,26,58,.9);border:1px solid rgba(0,168,255,.25);border-radius:24px;padding:30px;backdrop-filter:blur(20px);z-index:20}
-    #leaderboard.hidden{display:none!important}
-    #leaderboard.mode-full{position:fixed;inset:60px;display:flex;flex-direction:column;justify-content:center;align-items:center}
-    #leaderboard.mode-bottom-right{position:fixed;bottom:60px;right:60px;width:420px}
-    .lb-row{display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.05);opacity:0}
-    #qr-overlay{position:fixed;z-index:10000;display:none;background:rgba(26,26,58,.95);backdrop-filter:blur(15px);padding:3vmin;border-radius:4vmin;border:1px solid rgba(0,168,255,.4);text-align:center;width:calc(var(--qr-size) + 6vmin);transition: opacity 0.3s ease;}
-    #qr-overlay.visible{display:flex;flex-direction:column;align-items:center;gap:2vmin}
-    #qr-overlay img{border-radius:2vmin;background:#fff;padding:1.5vmin;width:var(--qr-size);height:var(--qr-size)}
-    #qr-label{font-size:1.8rem;font-weight:700;letter-spacing:0.2rem;color:var(--blue);margin-bottom: 0.5rem;}
-    #qr-overlay.pos-center{top:50%;left:50%;transform:translate(-50%,-50%)}
-    #qr-overlay.pos-bottom-right{bottom:4vmin;right:4vmin}
-    #qr-overlay.pos-bottom-left{bottom:4vmin;left:4vmin}
-    #qr-overlay.pos-top-right{top:4vmin;right:4vmin}
-    #qr-overlay.pos-top-left{top:4vmin;left:4vmin}
-    #pause-overlay{position:fixed;inset:0;background:rgba(9,7,43,0.95);backdrop-filter:blur(30px);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9000;text-align:center;padding:40px}
+    #pause-overlay{position:fixed;inset:0;background:rgba(9,7,43,0.95);backdrop-filter:blur(30px);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9000;text-align:center;padding:4vmin}
     #pause-overlay.visible{display:flex}
-    #pause-overlay h1{font-size:10rem;color:var(--blue);margin-bottom:30px;font-weight:900;letter-spacing:10px}
-    #podium-overlay{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9500;padding:60px}
+    #pause-overlay h1{font-size:10rem;color:var(--blue);font-weight:900;letter-spacing:1vmin}
+    #podium-overlay{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9500;padding:6vmin}
     #podium-overlay.visible{display:flex}
-    .podium-block{width:260px;background:linear-gradient(135deg,#1A1A3A,#09072B);border:3px solid var(--blue);border-radius:24px 24px 0 0;display:flex;align-items:center;justify-content:center;font-size:80px;font-weight:900;box-shadow:0 0 50px rgba(0,168,255,0.3)}
-    .lb-row.cheater{background:rgba(255,0,0,0.1) !important;border:1px solid rgba(255,0,0,0.3) !important}
-    @keyframes spin{100%{transform:rotate(360deg)}}
-    @keyframes pulse-anim{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
-    @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes artworkIn{from{opacity:0;transform:scale(.92) rotate(-2deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+    #player{position:fixed;inset:0;display:grid;grid-template-columns:40vw 1fr;padding:8vmin;gap:8vmin;align-items:center;opacity:0;transition:opacity .8s;z-index:10}
+    #player.visible{opacity:1}
+    #cover{width:60vmin;height:60vmin;border-radius:3vmin;border:0.3vmin solid rgba(255,255,255,.2);object-fit:contain;box-shadow:0 40px 100px rgba(0,0,0,.7);display:none}
+    #cover-placeholder{width:50vmin;height:50vmin;border-radius:2.5vmin;border:2px dashed rgba(0,168,255,.2);display:flex;align-items:center;justify-content:center;font-size:20rem;color:rgba(0,168,255,.2)}
+    .track-title{font-size:5rem;font-weight:900;margin-bottom:1.5rem;text-shadow:0 2px 30px rgba(0,168,255,.3)}
+    #leaderboard{background:rgba(26,26,58,.9);border-radius:24px;padding:3vmin;backdrop-filter:blur(20px);z-index:20}
+    #leaderboard.hidden{display:none!important}
+    .lb-row.cheater{background:rgba(255,0,0,0.15)!important;border:1px solid rgba(255,0,0,0.4)!important}
+    #qr-overlay{position:fixed;z-index:10000;display:none;background:rgba(26,26,58,.95);padding:3vmin;border-radius:4vmin;border:1px solid var(--blue);text-align:center;top:50%;left:50%;transform:translate(-50%,-50%)}
+    #qr-overlay.visible{display:flex;flex-direction:column;align-items:center;gap:2vmin}
+    #qr-img{width:var(--qr-size);height:var(--qr-size);background:#fff;padding:1.5vmin;border-radius:2vmin}
   </style>
 </head>
 <body>
-  <div id="ambient"></div>
-  <div id="pause-overlay"><h1>PAUSE</h1><p id="pause-msg">On revient d'ici peu !</p></div>
-  <div id="podium-overlay"><h1 style="font-size:5rem;font-weight:900;background:linear-gradient(to right,gold,var(--blue));">CLASSEMENT FINAL</h1><div class="podium-container" id="podium-steps"></div></div>
-  <div id="splash"><h1>QWIZZ</h1><p id="splash-status">Connexion...</p></div>
-  <div id="idle"><div class="idle-content"><img id="idle-logo" src="" class="idle-logo"><div class="idle-title">PRÊT À QWIZZER ?</div></div></div>
-  <div id="player"><div id="cover-wrap"><img id="cover" src=""><div id="cover-placeholder">?</div></div><div class="right"><div class="logo-area"><img id="logo-img" src=""></div><div><div class="track-title" id="track-title">...</div><div class="track-artist" id="track-artist">...</div></div></div></div>
+  <div id="pause-overlay"><h1>PAUSE</h1><p id="pause-msg" style="font-size:3rem"></p></div>
+  <div id="podium-overlay"><h1 style="font-size:5rem">CLASSEMENT FINAL</h1><div id="podium-steps" style="display:flex;align-items:flex-end;gap:4vmin;margin-top:5vmin"></div></div>
+  <div id="player"><div id="cover-wrap"><img id="cover" src=""><div id="cover-placeholder">?</div></div><div><div class="track-title" id="track-title"></div><div id="track-artist" style="font-size:2.5rem;color:#ccc"></div></div></div>
   <div id="leaderboard" class="hidden mode-full"><div id="lb-list"></div></div>
-  <div id="qr-overlay" class="pos-center"><div id="qr-label">Scanner & Jouer</div><img id="qr-img" src=""></div>
+  <div id="qr-overlay" class="visible"><div style="font-size:1.8rem;color:var(--blue);font-weight:700">Scanner & Jouer</div><img id="qr-img" src=""></div>
 <script>
-var castCtx = cast.framework.CastReceiverContext.getInstance();
-var serverURL = '';
-var socket;
-castCtx.addCustomMessageListener('urn:x-cast:com.qwizz.control', function(e) { if (e.data && e.data.serverURL) initServer(e.data.serverURL); });
-function initServer(url) { serverURL = url; document.getElementById('idle-logo').src = url + '/tv_logo'; document.getElementById('logo-img').src = url + '/tv_logo'; connectWS(); }
-castCtx.start();
-function connectWS() { if (!serverURL) return; var wsURL = serverURL.replace('http://', 'ws://') + '/ws'; socket = new WebSocket(wsURL);
-socket.onopen = function() { document.getElementById('splash').classList.add('hidden'); pollState(); };
-socket.onmessage = function(e) { handle(JSON.parse(e.data)); };
-socket.onclose = function() { setTimeout(connectWS, 2000); }; }
-function handle(d) {
-  if (d.type === 'track_update') {
-    document.getElementById('track-title').textContent = d.title || '';
-    document.getElementById('track-artist').textContent = d.artist || '';
-    var img = document.getElementById('cover'), ph = document.getElementById('cover-placeholder');
-    if (d.cover) { img.onload = function(){ img.style.display='block'; ph.style.display='none'; }; img.src = serverURL + d.cover + '?' + Date.now(); }
-    showPlayer();
-  } else if (d.type === 'leaderboard') { renderLeaderboard(d.players); }
-  else if (d.type === 'show_qr') {
-    var qr = document.getElementById('qr-overlay');
-    var targetURL = d.url || serverURL;
-    if (d.show && targetURL) {
-      document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=' + encodeURIComponent(targetURL);
-      qr.classList.add('visible');
-    } else { qr.classList.remove('visible'); }
-  } else if (d.type === 'isPaused') {
-    if (d.data) { document.getElementById('pause-overlay').classList.add('visible'); } else { document.getElementById('pause-overlay').classList.remove('visible'); }
-  } else if (d.type === 'end_game') { showPodium(d.data); }
-}
-function renderLeaderboard(players) {
-  var list = document.getElementById('lb-list');
-  var sorted = players.sort((a,b)=>b.score - a.score).slice(0,10);
-  list.innerHTML = sorted.map((p,i)=>`<div class="lb-row ${p.isCheating?'cheater':''}" style="opacity:1"><span class="lb-rank">${i+1}</span><span class="lb-name">${p.name}</span><span class="lb-score">${p.score} pts</span></div>`).join('');
-}
-function showPlayer() { document.getElementById('idle').classList.add('gone'); document.getElementById('player').classList.add('visible'); }
-function pollState() { if (!serverURL) return; fetch(serverURL + '/tv_state').then(r=>r.json()).then(s=>{ if (s.players) renderLeaderboard(s.players); }).catch(e=>{}); setTimeout(pollState, 5000); }
+var castCtx=cast.framework.CastReceiverContext.getInstance(),serverURL='',socket,appState={showCheaterStatus:true};
+castCtx.addCustomMessageListener('urn:x-cast:com.qwizz.control',e=>{if(e.data.serverURL)init(e.data.serverURL)});
+function init(u){serverURL=u;connectWS()}castCtx.start();
+function connectWS(){if(!serverURL)return;socket=new WebSocket(serverURL.replace('http','ws')+'/ws');
+socket.onmessage=e=>{var d=JSON.parse(e.data);
+if(d.type==='appearance'){Object.assign(appState,d.data);if(d.data.showScores!==undefined){d.data.showScores?showLB():hideLB()}}
+else if(d.type==='track_update'){document.getElementById('track-title').textContent=d.title;document.getElementById('track-artist').textContent=d.artist;var i=document.getElementById('cover'),p=document.getElementById('cover-placeholder');if(d.cover){i.style.display='block';p.style.display='none';i.src=serverURL+d.cover+'?'+Date.now()}showP()}
+else if(d.type==='leaderboard')renderLB(d.players);
+else if(d.type==='show_qr'){var q=document.getElementById('qr-overlay');if(d.show){document.getElementById('qr-img').src='https://api.qrserver.com/v1/create-qr-code/?data='+encodeURIComponent(d.url||serverURL);q.style.display='flex'}else q.style.display='none'}
+else if(d.type==='isPaused'){var o=document.getElementById('pause-overlay');if(d.data){o.classList.add('visible');document.getElementById('pause-msg').textContent=d.pauseMessage}else o.classList.remove('visible')}};
+socket.onclose=()=>setTimeout(connectWS,2000);socket.onopen=()=>poll()}
+function renderLB(p){var l=document.getElementById('lb-list'),s=p.sort((a,b)=>b.score-a.score).slice(0,10);
+l.innerHTML=s.map((x,i)=>{var c=x.isCheating&&appState.showCheaterStatus;return `<div class="lb-row ${c?'cheater':''}" style="display:flex;align-items:center;gap:2rem;padding:1rem;opacity:1"><span style="font-size:2rem;width:3rem">${i+1}</span><span style="flex:1;font-size:2rem">${x.name}${c?' ⚠️ TRICHE':''}</span><span style="font-size:2rem">${x.score} pts</span></div>`}).join('')}
+function showLB(){document.getElementById('leaderboard').classList.remove('hidden')}
+function hideLB(){document.getElementById('leaderboard').classList.add('hidden')}
+function showP(){document.getElementById('player').style.opacity=1}
+function poll(){if(!serverURL)return;fetch(serverURL+'/tv_state').then(r=>r.json()).then(s=>{if(s.players)renderLB(s.players)}).catch(()=>{});setTimeout(poll,5000)}
 </script>
 </body>
 </html>
