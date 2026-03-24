@@ -76,6 +76,26 @@
     #qr-overlay.pos-top-right{top:40px;right:40px}
     #qr-overlay.pos-top-left{top:40px;left:40px}
     
+    /* ── Phase 9 Overlays ── */
+    #pause-overlay{position:fixed;inset:0;background:rgba(9,7,43,0.95);backdrop-filter:blur(30px);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9000;text-align:center;padding:40px}
+    #pause-overlay.visible{display:flex}
+    #pause-overlay h1{font-size:6rem;color:var(--blue);margin-bottom:30px;font-weight:900;letter-spacing:10px}
+    #pause-overlay p{font-size:2.5rem;color:#fff;max-width:1100px;line-height:1.4}
+
+    #podium-overlay{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9500;padding:60px}
+    #podium-overlay.visible{display:flex}
+    .podium-container{display:flex;align-items:flex-end;gap:50px;margin-top:120px}
+    .podium-step{display:flex;flex-direction:column;align-items:center;gap:20px}
+    .podium-block{width:260px;background:linear-gradient(135deg,#1A1A3A,#09072B);border:3px solid var(--blue);border-radius:24px 24px 0 0;display:flex;align-items:center;justify-content:center;font-size:80px;font-weight:900;box-shadow:0 0 50px rgba(0,168,255,0.3)}
+    .step-1 .podium-block{height:450px;border-color:gold;box-shadow:0 0 80px rgba(255,215,0,0.4)}
+    .step-2 .podium-block{height:320px;border-color:silver}
+    .step-3 .podium-block{height:220px;border-color:#CD7F32}
+    .podium-name{font-size:42px;font-weight:900;text-align:center}
+    .podium-score{font-size:30px;color:var(--blue)}
+    
+    .lb-row.cheater{background:rgba(255,0,0,0.1);border:1px solid rgba(255,0,0,0.3)}
+    .cheater-label{font-size:14px;color:#ff4444;font-weight:900;margin-left:10px;text-transform:uppercase}
+
     /* ── Keyframes ── */
     @keyframes spin{100%{transform:rotate(360deg)}}
     @keyframes pulse-anim{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
@@ -138,6 +158,19 @@
 <body>
   <div id="ambient"></div>
   
+  <div id="pause-overlay">
+      <h1>PAUSE</h1>
+      <p id="pause-msg">On revient d'ici peu !</p>
+      <div class="loader" style="margin-top:80px; width:64px; height:64px"></div>
+  </div>
+
+  <div id="podium-overlay">
+      <h1 style="font-size:5rem;font-weight:900;background:linear-gradient(to right,gold,var(--blue));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">CLASSEMENT FINAL</h1>
+      <div class="podium-container" id="podium-steps">
+          <!-- Steps -->
+      </div>
+  </div>
+
   <!-- Splash / Connecting screen -->
   <div id="splash">
     <h1>QWIZZ</h1>
@@ -214,7 +247,9 @@ function initServer(url) {
   document.getElementById('splash-status').textContent = 'Connexion à ' + url + '...';
   // Load logo and connect WS
   document.getElementById('idle-logo').src = url + '/tv_logo';
+  document.getElementById('idle-logo').onerror = function() { this.style.display='none'; };
   document.getElementById('logo-img').src = url + '/tv_logo';
+  document.getElementById('logo-img').onerror = function() { this.style.display='none'; };
   connectWS();
 }
 
@@ -280,6 +315,16 @@ function handle(d) {
       qr.classList.add('visible');
       if (d.duration > 0) setTimeout(function(){ qr.classList.remove('visible'); }, d.duration * 1000);
     } else { qr.classList.remove('visible'); }
+  } else if (d.type === 'isPaused') {
+    const over = document.getElementById('pause-overlay');
+    if (d.data) {
+      document.getElementById('pause-msg').innerText = d.pauseMessage || "Prenez un QWIZZ, on revient d'ici peu !";
+      over.classList.add('visible');
+    } else {
+      over.classList.remove('visible');
+    }
+  } else if (d.type === 'end_game') {
+    showPodium(d.data);
   }
 }
 
@@ -346,12 +391,12 @@ function renderLeaderboard(players) {
   }
   sorted.forEach(function(p, i) {
     var r = document.createElement('div');
-    r.className = 'lb-row' + (i===0?' top1':i===1?' top2':i===2?' top3':'');
+    r.className = 'lb-row' + (i===0?' top1':i===1?' top2':i===2?' top3':'') + (p.isCheating ? ' cheater' : '');
     if (lb.classList.contains('mode-full') && !lb.classList.contains('hidden') && !isAnimating) {
       r.style.opacity = '1';
     }
     r.dataset.score = p.score;
-    r.innerHTML = '<span class="lb-rank">'+(medals[i]||(i+1))+'</span><span class="lb-name">'+escHtml(p.name)+'</span><span class="lb-score">'+p.score+' pts</span>';
+    r.innerHTML = '<span class="lb-rank">'+(medals[i]||(i+1))+'</span><span class="lb-name">'+escHtml(p.name)+(p.isCheating ? '<span class="cheater-label">⚠️ TRICHE !</span>' : '')+'</span><span class="lb-score">'+p.score+' pts</span>';
     list.appendChild(r);
   });
 }
@@ -410,6 +455,11 @@ function showLeaderboard() {
   }
 }
 
+function hideLeaderboard() {
+  document.getElementById('leaderboard').classList.add('hidden');
+  stopTicker();
+}
+
 // ── Bottom-right Ticker ──
 function renderTicker(players) {
   var list = document.getElementById('lb-list');
@@ -417,11 +467,13 @@ function renderTicker(players) {
   tickerPlayers = players;
   tickerIdx = 0;
   stopTicker();
-  showTickerRow(0);
-  tickerTimer = setInterval(function() {
-    tickerIdx = (tickerIdx + 1) % tickerPlayers.length;
-    showTickerRow(tickerIdx);
-  }, 3000);
+  if (tickerPlayers.length > 0) {
+    showTickerRow(0);
+    tickerTimer = setInterval(function() {
+      tickerIdx = (tickerIdx + 1) % tickerPlayers.length;
+      showTickerRow(tickerIdx);
+    }, 3000);
+  }
 }
 
 function showTickerRow(idx) {
@@ -436,6 +488,30 @@ function showTickerRow(idx) {
 }
 
 function stopTicker() { if (tickerTimer) { clearInterval(tickerTimer); tickerTimer = null; } }
+
+function showPodium(data) {
+  const over = document.getElementById('podium-overlay');
+  const container = document.getElementById('podium-steps');
+  over.classList.add('visible');
+  
+  container.innerHTML = `
+    <div class="podium-step step-2">
+        <div class="podium-name">${data[1]?.name || ''}</div>
+        <div class="podium-score">${data[1]?.score || 0} pts</div>
+        <div class="podium-block">2</div>
+    </div>
+    <div class="podium-step step-1">
+        <div class="podium-name">${data[0]?.name || ''}</div>
+        <div class="podium-score">${data[0]?.score || 0} pts</div>
+        <div class="podium-block">1</div>
+    </div>
+    <div class="podium-step step-3">
+        <div class="podium-name">${data[2]?.name || ''}</div>
+        <div class="podium-score">${data[2]?.score || 0} pts</div>
+        <div class="podium-block">3</div>
+    </div>
+  `;
+}
 
 // ──────────────────────────────────────────────
 // Helpers
