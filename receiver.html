@@ -44,7 +44,7 @@
     #qr-overlay.pos-top-right{top:4vmin;right:4vmin}
     #qr-overlay.pos-top-left{top:4vmin;left:4vmin}
     #qr-img{width:var(--qr-size);height:var(--qr-size);background:#fff;padding:1.5vmin;border-radius:2vmin}
-    #pause-overlay{position:fixed;inset:0;background:rgba(9,7,43,0.98);backdrop-filter:blur(40px);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:11000;text-align:center;padding:5vmin}
+    #pause-overlay{position:fixed;inset:0;background:rgba(9,7,43,0.98);backdrop-filter:blur(40px);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:8000;text-align:center;padding:5vmin}
     #pause-overlay.visible{display:flex}
     #pause-overlay h1{font-size:8rem;color:var(--blue);font-weight:900;letter-spacing:2vmin;margin-bottom:4vmin}
     #podium-overlay{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9500;padding:6vmin}
@@ -194,6 +194,7 @@ function toggleP(d){
   else o.classList.remove('visible');
 }
 function showPodium(data) {
+  document.getElementById('pause-overlay').classList.remove('visible');
   document.getElementById('player').classList.remove('visible');
   document.getElementById('leaderboard').classList.add('hidden');
   document.getElementById('main-logo-wrap').classList.add('hidden');
