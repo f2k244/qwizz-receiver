@@ -160,8 +160,8 @@ function updateT(d){
   document.getElementById('track-title').textContent=d.title;
   document.getElementById('track-artist').textContent=d.artist;
   var i=document.getElementById('cover'),p=document.getElementById('cover-placeholder');
-  if(d.cover){i.onload=()=>{i.style.display='block';p.style.display='none'};i.src=serverURL+d.cover+'?'+Date.now()}
-  else{i.style.display='none';p.style.display='flex'}
+  if(d.cover){i.onload=()=>{i.style.display='block';p.style.display='none'};i.onerror=()=>{i.src=serverURL+'/tv_logo?'+Date.now()};i.src=serverURL+d.cover+'?'+Date.now()}
+  else{i.onload=()=>{i.style.display='block';p.style.display='none'};i.src=serverURL+'/tv_logo?'+Date.now()}
 }
 function renderLB(p){
   if(isAnimating)return;
