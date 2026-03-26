@@ -471,7 +471,8 @@ function showCategory(name, hasImage, imageURL) {
     const nameDisp = document.getElementById('category-name-display');
     nameDisp.innerText = name;
     if (hasImage) {
-        img.src = imageURL + '?' + Date.now();
+        const fullURL = imageURL.startsWith('http') ? imageURL : (serverBase + imageURL);
+        img.src = fullURL + '?' + Date.now();
         img.style.display = 'block';
     } else {
         img.style.display = 'none';
@@ -488,9 +489,10 @@ function updateTrack(data) {
     const ph = document.getElementById('cover-placeholder');
 
     if (data.cover && data.cover !== '') {
+        const fullCoverURL = data.cover.startsWith('http') ? data.cover : (serverBase + data.cover);
         img.onload = () => { img.style.display = 'block'; ph.style.display = 'none'; };
         img.onerror = () => { img.style.display = 'none'; ph.style.display = 'flex'; };
-        img.src = data.cover;
+        img.src = fullCoverURL;
     } else {
         img.style.display = 'none';
         ph.style.display = 'flex';
