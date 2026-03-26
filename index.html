@@ -354,37 +354,17 @@
             background: rgba(255, 215, 0, 0.1);
         }
 
-        /* Success State (Vibrant Green) */
-        body.correct-answer #ambient {
-            background: radial-gradient(circle at 50% 50%, rgba(46, 204, 113, 0.25) 0%, transparent 70%);
+        #correct-screen, #cheater-screen {
+            position: fixed; inset: 0; z-index: 10000;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 40px; color: white; text-align: center; backdrop-filter: blur(25px);
         }
-        body.correct-answer #buzzer {
-            background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
-            box-shadow: 0 0 60px rgba(46, 204, 113, 0.7), inset 0 0 30px rgba(255,255,255,0.3) !important;
-            border-color: #f1c40f !important;
-            transform: scale(1.08) !important;
-        }
-        body.correct-answer .buzzer-glow {
-            background: #2ecc71 !important;
-            opacity: 0.8 !important;
-            filter: blur(50px);
-        }
-        body.correct-answer #status-text {
-            color: #2ecc71 !important;
-            text-shadow: 0 0 20px rgba(46, 204, 113, 0.6);
-            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        body.correct-answer #status-sub {
-            color: #ecf0f1 !important;
-            opacity: 0.9;
-        }
+        #cheater-screen { background: rgba(255, 0, 0, 0.9); }
+        #correct-screen { background: rgba(39, 174, 96, 0.9); }
+        
+        #correct-screen.visible, #cheater-screen.visible { display: flex; animation: fadeIn 0.4s ease; }
 
-        @keyframes bounceIn {
-            0% { transform: scale(0.3); opacity: 0; }
-            50% { transform: scale(1.1); }
-            70% { transform: scale(0.9); }
-            100% { transform: scale(1); opacity: 1; }
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .perm-hint {
             font-size: 13px;
@@ -460,6 +440,12 @@
         <h1 style="font-size: 40px; font-weight: 900; margin-bottom: 20px;">⚠️ ALERTE ⚠️</h1>
         <p style="font-size: 20px; opacity: 0.9;">L'animateur a signalé un comportement suspect.<br>Tes points ont été
             déduits.</p>
+    </div>
+
+    <div id="correct-screen">
+        <h1 style="font-size: 40px; font-weight: 900; margin-bottom: 20px;">✅ RÉUSSITE ✅</h1>
+        <p style="font-size: 24px; font-weight: 700;">BONNE RÉPONSE !</p>
+        <p style="font-size: 20px; opacity: 0.9; margin-top: 10px;">Félicitations, tu marques des points !</p>
     </div>
 
     <script>
@@ -626,14 +612,11 @@
                     break;
                 case 'correct':
                     if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
-                    document.body.classList.add('correct-answer');
-                    const oldStatusText = document.getElementById('status-text').innerText;
-                    const oldStatusSub = document.getElementById('status-sub').innerText;
-                    updateStatus("BONNE RÉPONSE !", "Félicitations, tu marques des points !");
+                    const correctScreen = document.getElementById('correct-screen');
+                    correctScreen.classList.add('visible');
                     setTimeout(() => {
-                        document.body.classList.remove('correct-answer');
-                        updateStatus(oldStatusText, oldStatusSub);
-                    }, 6000);
+                        correctScreen.classList.remove('visible');
+                    }, 5000);
                     break;
                 case 'wrong':
                     if (navigator.vibrate) navigator.vibrate([400]);
