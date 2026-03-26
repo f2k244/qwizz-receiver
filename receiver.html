@@ -103,6 +103,29 @@
     .cheater-info{font-size:3rem;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.5vmin}
     .cheater-penalty-badge{background:#ff4b2b;color:white;font-size:5rem;font-weight:900;padding:2vmin 6vmin;border-radius:2vmin;margin-top:6vmin;box-shadow:0 5px 15px rgba(255,75,43,0.4)}
     
+    /* Styles Variations */
+    #cheater-overlay.style-defilement{background:rgba(255,0,0,0.9);height:12vmin;top:0;bottom:auto;flex-direction:row;justify-content:center;padding:0;border:none;box-shadow:0 5px 15px rgba(0,0,0,0.5)}
+    #cheater-overlay.style-defilement .cheater-card{background:transparent;border:none;box-shadow:none;flex-direction:row;width:100%;padding:0;transform:none;animation:none}
+    #cheater-overlay.style-defilement .cheater-header{font-size:2rem;margin:0 5vmin 0 0;letter-spacing:0.5vmin;white-space:nowrap}
+    #cheater-overlay.style-defilement .cheater-name-big{font-size:4rem;margin:0;white-space:nowrap}
+    #cheater-overlay.style-defilement .cheater-penalty-badge{font-size:3rem;margin:0 0 0 5vmin;padding:1vmin 3vmin}
+
+    #cheater-overlay.style-glitch .cheater-card{background:black;border-color:cyan;animation:glitchAnim .2s infinite}
+    #cheater-overlay.style-glitch .cheater-header{color:magenta;text-shadow:2px 0 red, -2px 0 blue}
+    @keyframes glitchAnim{0%{transform:translate(2px,2px)}25%{transform:translate(-2px,-2px)}50%{transform:translate(-2px,2px)}75%{transform:translate(2px,-2px)}100%{transform:translate(0)}}
+
+    #cheater-overlay.style-notification{background:transparent;backdrop-filter:none;justify-content:flex-end;align-items:flex-start;padding:4vmin}
+    #cheater-overlay.style-notification .cheater-card{width:50vmin;padding:4vmin;transform:translateX(60vmin);animation:notifIn .5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards}
+    @keyframes notifIn{to{transform:translateX(0)}}
+
+    #cheater-overlay.style-pulsation{background:rgba(255,0,0,0.2);animation:pulseRed 1s infinite alternate}
+    @keyframes pulseRed{from{box-shadow:inset 0 0 100px rgba(255,0,0,0.3)}to{box-shadow:inset 0 0 250px rgba(255,0,0,0.8)}}
+
+    #cheater-overlay.style-danger{background:repeating-linear-gradient(45deg, #000, #000 4vmin, #ffcc00 4vmin, #ffcc00 8vmin);padding:4vmin}
+    #cheater-overlay.style-danger .cheater-card{background:#000;border:1vmin solid #ffcc00}
+    #cheater-overlay.style-danger .cheater-header{color:#ffcc00}
+    #cheater-overlay.style-danger .cheater-penalty-badge{background:#ffcc00;color:#000}
+
     @keyframes popIn{from{transform:scale(0.8);opacity:0}to{transform:scale(1);opacity:1}}
     @keyframes scan{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -201,7 +224,7 @@ function handle(d){
   else if(d.type==='end_game')showPodium(d.data);
   else if(d.type==='mode_switch')showRules(d.mode, d.rules);
   else if(d.type==='category_transition')showCat(d.name, d.hasImage, d.imageURL, d.showName, d.duration);
-  else if(d.type==='cheater_alert')showCheater(d.name, d.penalty);
+  else if(d.type==='cheater_alert')showCheater(d.name, d.penalty, d.style);
 }
 
 function applyA(d){
@@ -284,13 +307,17 @@ function showCat(name, hasImage, imageURL, showName, dur) {
     }
 }
 
-function showCheater(name, penalty) {
+function showCheater(name, penalty, style) {
     const over = document.getElementById('cheater-overlay');
+    // Sanitize style name for CSS class
+    const styleClass = 'style-' + (style || 'Cinéma').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
+    
+    over.className = 'visible ' + styleClass;
     document.getElementById('cheater-name-text').innerText = name;
     document.getElementById('cheater-penalty-text').innerText = '-' + penalty + ' pts';
-    over.classList.add('visible');
+    
     if (window.cheaterTimeout) clearTimeout(window.cheaterTimeout);
-    window.cheaterTimeout = setTimeout(() => { over.classList.remove('visible'); }, 6000);
+    window.cheaterTimeout = setTimeout(() => { over.classList.remove('visible'); over.className = ''; }, 6000);
 }
 
 function renderLB(p){
