@@ -94,14 +94,18 @@
     .anim-cascade{animation:cascadeIn .45s forwards}
     .anim-wipe{animation:wipeIn .5s ease forwards}
     .anim-neon{animation:neonFadeIn .7s ease forwards}
-    .anim-zoom{animation:zoomIn .55s forwards}
-    
-    #cheater-overlay{position:fixed;top:15%;left:50%;transform:translateX(-50%);background:rgba(180,0,0,0.95);border:0.8vmin solid white;padding:5vmin 12vmin;border-radius:3vmin;z-index:3000;display:none;flex-direction:column;align-items:center;box-shadow:0 0 15vmin rgba(255,0,0,0.6);animation:cheaterBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);backdrop-filter:blur(10px)}
+    #cheater-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(9,7,43,0.85);z-index:4000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);animation:fadeIn .5s forwards}
     #cheater-overlay.visible{display:flex}
-    .cheater-title{font-size:4.5rem;font-weight:900;color:white;text-shadow:0 0 2vmin black;margin-bottom:1vmin;letter-spacing:1vmin}
-    .cheater-name{font-size:7rem;font-weight:900;color:#FFD700;text-shadow:0 0 3vmin rgba(0,0,0,0.5);text-transform:uppercase}
-    .cheater-penalty{font-size:3.5rem;font-weight:900;color:white;background:rgba(0,0,0,0.4);padding:1.5vmin 4vmin;border-radius:2vmin;margin-top:2.5vmin;border:0.3vmin solid rgba(255,255,255,0.2)}
-    @keyframes cheaterBounce{0%{transform:translateX(-50%) translateY(-100px) scale(0.8);opacity:0}100%{transform:translateX(-50%) translateY(0) scale(1);opacity:1}}
+    .cheater-card{background:#1A1A3A;border:0.8vmin solid #ff4b2b;padding:8vmin 15vmin;border-radius:4vmin;display:flex;flex-direction:column;align-items:center;box-shadow:0 0 10vmin rgba(255,75,43,0.4);transform:scale(0);animation:popIn .6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;position:relative;overflow:hidden}
+    .cheater-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1vmin;background:linear-gradient(90deg, transparent, #ff4b2b, transparent);animation:scan 2s linear infinite}
+    .cheater-header{color:#ff4b2b;font-size:3.5rem;font-weight:900;letter-spacing:2vmin;margin-bottom:4vmin}
+    .cheater-name-big{font-size:9rem;font-weight:900;color:white;margin-bottom:2vmin;text-shadow:0 0 3vmin rgba(255,255,255,0.3)}
+    .cheater-info{font-size:3rem;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.5vmin}
+    .cheater-penalty-badge{background:#ff4b2b;color:white;font-size:5rem;font-weight:900;padding:2vmin 6vmin;border-radius:2vmin;margin-top:6vmin;box-shadow:0 5px 15px rgba(255,75,43,0.4)}
+    
+    @keyframes popIn{from{transform:scale(0.8);opacity:0}to{transform:scale(1);opacity:1}}
+    @keyframes scan{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
   </style>
 </head>
 <body>
@@ -140,9 +144,12 @@
   </div>
   <div id="podium-overlay"><div class="logo-area" style="display:block"><img id="podium-logo"></div><h1 id="podium-title">CLASSEMENT FINAL</h1><div class="podium-container" id="podium-steps"></div></div>
   <div id="cheater-overlay">
-    <div class="cheater-title">⚠️ TRICHE ! ⚠️</div>
-    <div id="cheater-name-text" class="cheater-name">JOUEUR</div>
-    <div id="cheater-penalty-text" class="cheater-penalty">-50 pts</div>
+    <div class="cheater-card">
+      <div class="cheater-header">ALERTE TRICHE</div>
+      <div id="cheater-name-text" class="cheater-name-big">PLAYER</div>
+      <div class="cheater-info">Sanction confirmée</div>
+      <div id="cheater-penalty-text" class="cheater-penalty-badge">-50 PTS</div>
+    </div>
   </div>
   <div class="logo-area hidden" id="main-logo-wrap"><img id="logo-img"></div>
 
