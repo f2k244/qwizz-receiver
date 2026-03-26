@@ -104,14 +104,16 @@
     .cheater-penalty-badge{background:#ff4b2b;color:white;font-size:5rem;font-weight:900;padding:2vmin 6vmin;border-radius:2vmin;margin-top:6vmin;box-shadow:0 5px 15px rgba(255,75,43,0.4)}
     
     /* Styles Variations */
-    #cheater-overlay.style-defilement{background:#b40000;height:12vmin;top:0;bottom:auto;flex-direction:row;justify-content:flex-start;padding:0;border:none;border-bottom:0.8vmin solid #ffcc00;box-shadow:0 10px 30px rgba(0,0,0,0.5);z-index:200000;overflow:hidden;backdrop-filter:none}
+    #cheater-overlay.style-defilement{background:linear-gradient(90deg, #b40000, #ff1a1a);height:10vmin;top:0;bottom:auto;flex-direction:row;justify-content:flex-start;padding:0;border:none;border-bottom:0.8vmin solid #ffcc00;box-shadow:0 10px 40px rgba(0,0,0,0.6);z-index:200000;overflow:hidden;backdrop-filter:none}
     #cheater-overlay.style-defilement .cheater-card{background:transparent;border:none;box-shadow:none;flex-direction:row;width:100%;height:100%;padding:0;transform:none;animation:slideDown .5s ease forwards;align-items:center;justify-content:flex-start}
-    #cheater-overlay.style-defilement .cheater-header{background:#ffcc00;color:black;font-size:3vmin;height:100%;display:flex;align-items:center;padding:0 5vmin;margin:0;letter-spacing:0.5vmin;z-index:2;box-shadow:10px 0 20px rgba(0,0,0,0.3)}
-    #cheater-overlay.style-defilement .cheater-name-big{font-size:5vmin;margin:0;white-space:nowrap;animation:marquee 15s linear infinite;padding-left:100%;flex:1}
-    #cheater-overlay.style-defilement .cheater-info, #cheater-overlay.style-defilement .cheater-penalty-badge{display:none}
+    .ticker-badge{background:#ffcc00;color:black;font-size:2.8vmin;font-weight:900;height:100%;display:flex;align-items:center;padding:0 4vmin;margin:0;letter-spacing:0.3vmin;z-index:2;box-shadow:10px 0 25px rgba(0,0,0,0.4);gap:1.5vmin;flex-shrink:0}
+    .ticker-dot{width:1.5vmin;height:1.5vmin;background:#b40000;border-radius:50%;animation:pulseDot .8s infinite alternate}
+    #cheater-overlay.style-defilement .cheater-name-big{font-size:4.5vmin;font-weight:800;margin:0;white-space:nowrap;animation:marqueePremium 12s linear infinite;padding-left:100%;flex:1;text-shadow:2px 2px 4px rgba(0,0,0,0.3);will-change:transform}
+    #cheater-overlay.style-defilement .cheater-info, #cheater-overlay.style-defilement .cheater-penalty-badge, #cheater-overlay.style-defilement .cheater-header{display:none}
     
-    @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-250%)}}
-    @keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+    @keyframes marqueePremium{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(-250%,0,0)}}
+    @keyframes pulseDot{from{opacity:0.3;transform:scale(0.8)}to{opacity:1;transform:scale(1.1)}}
+    @keyframes slideDown{from{transform:translate3d(0,-100%,0)}to{transform:translate3d(0,0,0)}}
 
     #cheater-overlay.style-glitch .cheater-card{background:black;border-color:cyan;animation:glitchAnim .2s infinite}
     #cheater-overlay.style-glitch .cheater-header{color:magenta;text-shadow:2px 0 red, -2px 0 blue}
@@ -322,10 +324,10 @@ function showCheater(name, penalty, style) {
     over.className = 'visible ' + styleClass;
     
     if (styleClass === 'style-defilement') {
-        nameEl.innerText = `⚠️ TRICHE DÉTECTÉE : ${name.toUpperCase()} (SANCTION : -${penalty} PTS) —– REPLAY : ${name.toUpperCase()} A TRICHÉ —– ⚠️`;
+        over.innerHTML = `<div class="cheater-card"><div class="ticker-badge"><div class="ticker-dot"></div>ALERTE TRICHE</div><div id="cheater-name-text" class="cheater-name-big">⚠️ TRICHE DÉTECTÉE : ${name.toUpperCase()} (SANCTION : -${penalty} PTS) —– REPLAY : ${name.toUpperCase()} A TRICHÉ —– ⚠️</div></div>`;
     } else {
-        nameEl.innerText = name;
-        penaltyEl.innerText = '-' + penalty + ' pts';
+        // Essential to restore the standard structure if it was overwritten
+        over.innerHTML = `<div class="cheater-card"><div class="cheater-header">ALERTE TRICHE</div><div id="cheater-name-text" class="cheater-name-big">${name}</div><div class="cheater-info">Sanction confirmée</div><div id="cheater-penalty-text" class="cheater-penalty-badge">-${penalty} pts</div></div>`;
     }
     
     if (window.cheaterTimeout) clearTimeout(window.cheaterTimeout);
