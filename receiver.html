@@ -95,6 +95,13 @@
     .anim-wipe{animation:wipeIn .5s ease forwards}
     .anim-neon{animation:neonFadeIn .7s ease forwards}
     .anim-zoom{animation:zoomIn .55s forwards}
+    
+    #cheater-overlay{position:fixed;top:15%;left:50%;transform:translateX(-50%);background:rgba(180,0,0,0.95);border:0.8vmin solid white;padding:5vmin 12vmin;border-radius:3vmin;z-index:3000;display:none;flex-direction:column;align-items:center;box-shadow:0 0 15vmin rgba(255,0,0,0.6);animation:cheaterBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);backdrop-filter:blur(10px)}
+    #cheater-overlay.visible{display:flex}
+    .cheater-title{font-size:4.5rem;font-weight:900;color:white;text-shadow:0 0 2vmin black;margin-bottom:1vmin;letter-spacing:1vmin}
+    .cheater-name{font-size:7rem;font-weight:900;color:#FFD700;text-shadow:0 0 3vmin rgba(0,0,0,0.5);text-transform:uppercase}
+    .cheater-penalty{font-size:3.5rem;font-weight:900;color:white;background:rgba(0,0,0,0.4);padding:1.5vmin 4vmin;border-radius:2vmin;margin-top:2.5vmin;border:0.3vmin solid rgba(255,255,255,0.2)}
+    @keyframes cheaterBounce{0%{transform:translateX(-50%) translateY(-100px) scale(0.8);opacity:0}100%{transform:translateX(-50%) translateY(0) scale(1);opacity:1}}
   </style>
 </head>
 <body>
@@ -132,6 +139,11 @@
     </div>
   </div>
   <div id="podium-overlay"><div class="logo-area" style="display:block"><img id="podium-logo"></div><h1 id="podium-title">CLASSEMENT FINAL</h1><div class="podium-container" id="podium-steps"></div></div>
+  <div id="cheater-overlay">
+    <div class="cheater-title">⚠️ TRICHE ! ⚠️</div>
+    <div id="cheater-name-text" class="cheater-name">JOUEUR</div>
+    <div id="cheater-penalty-text" class="cheater-penalty">-50 pts</div>
+  </div>
   <div class="logo-area hidden" id="main-logo-wrap"><img id="logo-img"></div>
 
 <script>
@@ -182,6 +194,7 @@ function handle(d){
   else if(d.type==='end_game')showPodium(d.data);
   else if(d.type==='mode_switch')showRules(d.mode, d.rules);
   else if(d.type==='category_transition')showCat(d.name, d.hasImage, d.imageURL, d.showName, d.duration);
+  else if(d.type==='cheater_alert')showCheater(d.name, d.penalty);
 }
 
 function applyA(d){
@@ -262,6 +275,15 @@ function showCat(name, hasImage, imageURL, showName, dur) {
     if (dur && dur > 0) {
         window.catTimeout = setTimeout(() => { over.classList.remove('visible'); }, dur * 1000);
     }
+}
+
+function showCheater(name, penalty) {
+    const over = document.getElementById('cheater-overlay');
+    document.getElementById('cheater-name-text').innerText = name;
+    document.getElementById('cheater-penalty-text').innerText = '-' + penalty + ' pts';
+    over.classList.add('visible');
+    if (window.cheaterTimeout) clearTimeout(window.cheaterTimeout);
+    window.cheaterTimeout = setTimeout(() => { over.classList.remove('visible'); }, 6000);
 }
 
 function renderLB(p){
