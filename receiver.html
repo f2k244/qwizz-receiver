@@ -104,11 +104,14 @@
     .cheater-penalty-badge{background:#ff4b2b;color:white;font-size:5rem;font-weight:900;padding:2vmin 6vmin;border-radius:2vmin;margin-top:6vmin;box-shadow:0 5px 15px rgba(255,75,43,0.4)}
     
     /* Styles Variations */
-    #cheater-overlay.style-defilement{background:rgba(180,0,0,0.95);height:15vmin;top:0;bottom:auto;flex-direction:row;justify-content:center;padding:0;border:none;box-shadow:0 10px 30px rgba(0,0,0,0.5);z-index:100001}
-    #cheater-overlay.style-defilement .cheater-card{background:transparent;border:none;box-shadow:none;flex-direction:row;width:100%;padding:0;transform:none;animation:none}
-    #cheater-overlay.style-defilement .cheater-header{font-size:2rem;margin:0 5vmin 0 0;letter-spacing:0.5vmin;white-space:nowrap}
-    #cheater-overlay.style-defilement .cheater-name-big{font-size:4rem;margin:0;white-space:nowrap}
-    #cheater-overlay.style-defilement .cheater-penalty-badge{font-size:3rem;margin:0 0 0 5vmin;padding:1vmin 3vmin}
+    #cheater-overlay.style-defilement{background:#b40000;height:12vmin;top:0;bottom:auto;flex-direction:row;justify-content:flex-start;padding:0;border:none;border-bottom:0.8vmin solid #ffcc00;box-shadow:0 10px 30px rgba(0,0,0,0.5);z-index:200000;overflow:hidden;backdrop-filter:none}
+    #cheater-overlay.style-defilement .cheater-card{background:transparent;border:none;box-shadow:none;flex-direction:row;width:100%;height:100%;padding:0;transform:none;animation:slideDown .5s ease forwards;align-items:center;justify-content:flex-start}
+    #cheater-overlay.style-defilement .cheater-header{background:#ffcc00;color:black;font-size:3vmin;height:100%;display:flex;align-items:center;padding:0 5vmin;margin:0;letter-spacing:0.5vmin;z-index:2;box-shadow:10px 0 20px rgba(0,0,0,0.3)}
+    #cheater-overlay.style-defilement .cheater-name-big{font-size:5vmin;margin:0;white-space:nowrap;animation:marquee 15s linear infinite;padding-left:100%;flex:1}
+    #cheater-overlay.style-defilement .cheater-info, #cheater-overlay.style-defilement .cheater-penalty-badge{display:none}
+    
+    @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-250%)}}
+    @keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
 
     #cheater-overlay.style-glitch .cheater-card{background:black;border-color:cyan;animation:glitchAnim .2s infinite}
     #cheater-overlay.style-glitch .cheater-header{color:magenta;text-shadow:2px 0 red, -2px 0 blue}
@@ -313,23 +316,20 @@ function showCheater(name, penalty, style) {
     const nameEl = document.getElementById('cheater-name-text');
     const penaltyEl = document.getElementById('cheater-penalty-text');
     
-    if (!over || !nameEl || !penaltyEl) {
-        console.error("Cheater overlay elements missing!");
-        return;
-    }
+    if (!over || !nameEl || !penaltyEl) return;
 
-    // Sanitize style name for CSS class
     const styleClass = 'style-' + (style || 'Cinéma').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
-    
     over.className = 'visible ' + styleClass;
-    nameEl.innerText = name;
-    penaltyEl.innerText = '-' + penalty + ' pts';
+    
+    if (styleClass === 'style-defilement') {
+        nameEl.innerText = `⚠️ TRICHE DÉTECTÉE : ${name.toUpperCase()} (SANCTION : -${penalty} PTS) —– REPLAY : ${name.toUpperCase()} A TRICHÉ —– ⚠️`;
+    } else {
+        nameEl.innerText = name;
+        penaltyEl.innerText = '-' + penalty + ' pts';
+    }
     
     if (window.cheaterTimeout) clearTimeout(window.cheaterTimeout);
-    window.cheaterTimeout = setTimeout(() => { 
-        over.classList.remove('visible'); 
-        over.className = ''; 
-    }, 6000);
+    window.cheaterTimeout = setTimeout(() => { over.classList.remove('visible'); over.className = ''; }, 8000);
 }
 
 function renderLB(p){
