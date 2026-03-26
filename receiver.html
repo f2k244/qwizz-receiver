@@ -181,7 +181,7 @@ function handle(d){
   else if(d.type==='isPaused')toggleP(d);
   else if(d.type==='end_game')showPodium(d.data);
   else if(d.type==='mode_switch')showRules(d.mode, d.rules);
-  else if(d.type==='category_transition')showCat(d.name, d.hasImage, d.imageURL);
+  else if(d.type==='category_transition')showCat(d.name, d.hasImage, d.imageURL, d.showName, d.duration);
 }
 
 function applyA(d){
@@ -209,6 +209,7 @@ function applyA(d){
 
 function updateT(d){
   hasTrack=true;
+  document.getElementById('category-overlay').classList.remove('visible');
   document.getElementById('idle').classList.add('gone');
   document.getElementById('podium-overlay').classList.remove('visible');
   document.getElementById('player').classList.add('visible');
@@ -235,20 +236,32 @@ function showRules(mode, rules) {
     setTimeout(() => { over.classList.remove('visible'); }, 6000);
 }
 
-function showCat(name, hasImage, imageURL) {
+function showCat(name, hasImage, imageURL, showName, dur) {
     const over = document.getElementById('category-overlay');
     const img = document.getElementById('category-img');
     const nameDisp = document.getElementById('category-name-display');
-    nameDisp.innerText = name;
+    
+    if (showName === false) {
+        nameDisp.style.display = 'none';
+    } else {
+        nameDisp.style.display = 'block';
+        nameDisp.innerText = name;
+    }
+    
     if (hasImage) {
-        const fullURL = imageURL.startsWith('http') ? imageURL : (serverURL + imageURL);
+        const fullURL = (imageURL && imageURL.startsWith('http')) ? imageURL : (serverURL + imageURL);
         img.src = fullURL + '?' + Date.now();
         img.style.display = 'block';
     } else {
         img.style.display = 'none';
     }
+    
     over.classList.add('visible');
-    setTimeout(() => { over.classList.remove('visible'); }, 4000);
+    
+    if (window.catTimeout) clearTimeout(window.catTimeout);
+    if (dur && dur > 0) {
+        window.catTimeout = setTimeout(() => { over.classList.remove('visible'); }, dur * 1000);
+    }
 }
 
 function renderLB(p){
