@@ -184,7 +184,9 @@
 <script>
 var castCtx=cast.framework.CastReceiverContext.getInstance(),serverURL='',socket,appState={showCheaterStatus:true,revealAnim:'random'},isAnimating=false,hasTrack=false;
 castCtx.addCustomMessageListener('urn:x-cast:com.qwizz.control',e=>{if(e.data&&e.data.serverURL)initS(e.data.serverURL)});
-castCtx.start();
+const options = new cast.framework.CastReceiverOptions();
+options.maxInactivity = 86400; // 24h (Essentially disables sleep while app is open)
+castCtx.start(options);
 
 function initS(u){
   serverURL=u;
