@@ -2,548 +2,444 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QWIZZ Receiver</title>
-    <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QWIZZ Buzzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #09072B;
-            --blue: #00A8FF;
-            --purple: #8A2BE2;
-            --white: #FFFFFF;
-            --gray: #E0E0E0;
-            --panel: #1A1A3A;
+            --bg-deep: #09072B;
+            --accent-blue: #00A8FF;
+            --accent-purple: #8A2BE2;
+            --text-main: #FFFFFF;
+            --glass: rgba(26, 26, 58, 0.8);
+            --buzzer-btn: linear-gradient(135deg, #00A8FF, #8A2BE2);
+            --font-family: 'Outfit', sans-serif;
         }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body, html {
-            width: 100%;
-            height: 100%;
-            background: var(--bg);
-            color: var(--white);
-            font-family: 'Outfit', sans-serif;
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             overflow: hidden;
+            touch-action: manipulation;
         }
 
-        /* ── Background ambient glow ── */
         #ambient {
-            position: fixed;
-            inset: 0;
-            background:
-                radial-gradient(ellipse 60% 50% at 20% 50%, rgba(0,168,255,0.12) 0%, transparent 70%),
-                radial-gradient(ellipse 40% 40% at 80% 20%, rgba(138,43,226,0.10) 0%, transparent 70%);
-            pointer-events: none;
-            transition: opacity 1s;
+            position: fixed; inset: 0; z-index: -1;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(0, 168, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(138, 43, 226, 0.1) 0%, transparent 50%);
         }
 
-        /* ── Idle screen ── */
-        #idle {
-            position: fixed;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 24px;
-            transition: opacity 0.8s;
+        /* SCREEN: USERNAME */
+        #username-screen {
+            position: fixed; inset: 0; z-index: 1000;
+            background: var(--bg-deep);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 30px; text-align: center;
+            transition: opacity 0.5s ease, transform 0.5s ease;
         }
 
-        #idle h1 {
-            font-size: 96px;
-            font-weight: 900;
-            letter-spacing: 8px;
-            background: linear-gradient(135deg, var(--blue), var(--purple));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: none;
+        .logo { width: 280px; margin-bottom: 40px; filter: drop-shadow(0 0 20px rgba(0,168,255,0.4)); }
+        
+        .input-group { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 15px; }
+        
+        input {
+            width: 100%; padding: 18px; border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--glass);
+            color: white; font-size: 18px; font-family: inherit;
+            text-align: center; backdrop-filter: blur(10px);
+            transition: border-color 0.3s;
+        }
+        input:focus { border-color: var(--accent-blue); outline: none; }
+
+        .btn-primary {
+            width: 100%; padding: 18px; border-radius: 16px; border: none;
+            background: var(--accent-blue); color: white;
+            font-size: 18px; font-weight: 900; letter-spacing: 1px;
+            cursor: pointer; box-shadow: 0 10px 30px rgba(0, 168, 255, 0.4);
+            transition: transform 0.2s, background 0.3s;
+        }
+        .btn-primary:active { transform: scale(0.96); }
+
+        /* SCREEN: BUZZER */
+        #buzzer-container {
+            display: flex; flex-direction: column; align-items: center; gap: 50px;
+            opacity: 0; transition: opacity 0.8s;
         }
 
-        #idle p {
-            font-size: 24px;
-            color: var(--gray);
-            opacity: 0.6;
-            letter-spacing: 2px;
+        .buzzer-wrapper {
+            position: relative; width: 280px; height: 280px;
+            display: flex; align-items: center; justify-content: center;
         }
 
-        /* ── Player screen ── */
-        #player {
-            position: fixed;
-            inset: 0;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            padding: 60px;
-            gap: 60px;
-            align-items: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.8s;
+        .buzzer-glow {
+            position: absolute; inset: -20px;
+            background: var(--buzzer-btn);
+            border-radius: 50%; opacity: 0.2;
+            filter: blur(40px);
+            animation: pulse-glow 3s infinite ease-in-out;
         }
 
-        /* ── Cover art ── */
-        #cover-wrap {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        @keyframes pulse-glow { 0%, 100% { transform: scale(1); opacity: 0.15; } 50% { transform: scale(1.1); opacity: 0.35; } }
+
+        #buzzer {
+            width: 240px; height: 240px; border-radius: 50%;
+            background: var(--buzzer-btn);
+            border: 8px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 20px 50px rgba(0, 0, 0, 0.5),
+                inset 0 0 30px rgba(255, 255, 255, 0.2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 42px; font-weight: 900; color: white;
+            text-transform: uppercase; letter-spacing: 4px;
+            cursor: pointer; transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 2;
         }
 
-        #cover {
-            width: 480px;
-            height: 480px;
-            border-radius: 24px;
-            border: 2px solid rgba(255,255,255,0.15);
-            object-fit: cover;
-            box-shadow:
-                0 30px 80px rgba(0,0,0,0.6),
-                0 0 60px rgba(0,168,255,0.15);
+        #buzzer:active { transform: scale(0.92); box-shadow: 0 5px 20px rgba(0, 0, 0, 0.6); }
+
+        #buzzer.disabled {
+            background: #1A1A3A; filter: grayscale(0.8);
+            border-color: rgba(255, 255, 255, 0.05);
+            opacity: 0.5; transform: scale(0.98); pointer-events: none;
+        }
+
+        #status-area { text-align: center; }
+        #status-text { font-size: 20px; font-weight: 700; color: var(--accent-blue); text-transform: uppercase; margin-bottom: 8px; }
+        #status-sub { font-size: 14px; opacity: 0.6; }
+
+        /* OVERLAYS */
+        #flash-overlay { position: fixed; inset: 0; background: white; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.05s; }
+        
+        .loader {
+            width: 40px; height: 40px; border: 3px solid rgba(0, 168, 255, 0.1);
+            border-top-color: var(--accent-blue); border-radius: 50%;
+            animation: spin 1s linear infinite; margin: 20px auto;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Phase 9 Overlays */
+        .overlay-screen {
+            position: fixed; inset: 0; z-index: 5000;
+            background: var(--bg-deep); display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            padding: 40px; text-align: center; backdrop-filter: blur(20px);
+        }
+        .overlay-screen.visible { display: flex; animation: fadeIn 0.5s ease; }
+        #pause-screen.visible, #podium-screen.visible, #cheater-screen.visible { display: flex; opacity: 1; }
+        #cheater-screen { 
+            position: fixed; inset: 0; z-index: 10000;
+            background: rgba(255, 0, 0, 0.9); 
             display: none;
-        }
-
-        #cover-placeholder {
-            width: 480px;
-            height: 480px;
-            border-radius: 24px;
-            border: 2px dashed rgba(0,168,255,0.3);
-            background: var(--panel);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 140px;
-        }
-
-        /* ── Right panel ── */
-        .right {
-            display: flex;
-            flex-direction: column;
-            gap: 48px;
-        }
-
-        /* Logo */
-        .logo-text {
-            font-size: 40px;
-            font-weight: 900;
-            letter-spacing: 4px;
-            color: var(--blue);
-            text-shadow: 0 0 30px rgba(0,168,255,0.4);
-        }
-
-        /* Track info */
-        .track-block { margin-bottom: 0; }
-        .track-title {
-            font-size: 54px;
-            font-weight: 700;
-            line-height: 1.1;
-            margin-bottom: 12px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .track-artist {
-            font-size: 30px;
-            color: var(--gray);
-            font-weight: 300;
-        }
-
-        /* Leaderboard */
-        .leaderboard {
-            background: rgba(26,26,58,0.8);
-            border: 1px solid rgba(0,168,255,0.2);
-            border-radius: 20px;
-            padding: 28px 32px;
-            backdrop-filter: blur(10px);
-        }
-        .lb-title {
-            font-size: 17px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            color: var(--purple);
-            text-transform: uppercase;
-            margin-bottom: 20px;
-        }
-        .lb-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-        .lb-row:last-child { border-bottom: none; }
-        .lb-rank { width: 36px; font-size: 20px; }
-        .lb-name { flex: 1; font-size: 24px; font-weight: 500; }
-        .lb-score { font-size: 24px; font-weight: 700; color: var(--blue); }
-
-        /* Status badge */
-        #status-badge {
-            display: none;
-            align-items: center;
-            gap: 8px;
-            background: rgba(138,43,226,0.2);
-            border: 1px solid var(--purple);
-            border-radius: 50px;
-            padding: 8px 20px;
-            font-size: 14px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            color: var(--purple);
-            width: fit-content;
-        }
-        #status-badge.show { display: flex; }
-
-        /* Bottom bar */
-        #bottom-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 20px 60px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: linear-gradient(to top, rgba(9,7,43,0.9), transparent);
-        }
-        #server-hint {
-            font-size: 13px;
-            color: rgba(255,255,255,0.25);
-            letter-spacing: 1px;
-        }
-        #connection-dot {
-            width: 10px; height: 10px;
-            border-radius: 50%;
-            background: #f44;
-            box-shadow: 0 0 8px #f44;
-            transition: background 0.4s, box-shadow 0.4s;
-        }
-        #connection-dot.connected { background: var(--blue); box-shadow: 0 0 8px var(--blue); }
-
-        /* Transitions */
-        .fade { opacity: 0; transition: opacity 0.6s; }
-        .fade.in { opacity: 1; }
-
-        @keyframes pulse {
-            0%,100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        .pulsing { animation: pulse 2s infinite; }
-
-        /* QR Code Overlay */
-        #qr-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.85);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.5s;
-            z-index: 100;
-            backdrop-filter: blur(10px);
-        }
-        #qr-overlay h2 {
-            font-size: 80px;
-            font-weight: 900;
-            margin-bottom: 50px;
-            color: var(--white);
-            text-shadow: 0 0 30px rgba(0, 168, 255, 0.5);
-        }
-        .qr-box {
-            background: var(--white);
-            padding: 25px;
-            border-radius: 40px;
-            box-shadow: 0 0 80px rgba(0, 168, 255, 0.5);
-        }
-        .qr-box img {
-            width: 600px;
-            height: 600px;
-            border-radius: 20px;
-            display: block;
-        }
-        /* New Overlays */
-        #pause-overlay, #rules-overlay, #category-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(9,7,43,0.95);
-            backdrop-filter: blur(30px);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 9000;
+            flex-direction: column; align-items: center; justify-content: center;
+            padding: 40px;
+            color: white;
             text-align: center;
-            padding: 8vmin;
-            transition: opacity 0.5s ease;
+            backdrop-filter: blur(20px);
         }
-        #pause-overlay.visible, #rules-overlay.visible, #category-overlay.visible {
-            display: flex;
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        #pause-screen h1 { color: var(--accent-blue); font-size: 40px; margin-bottom: 20px; font-weight: 900; }
+        #pause-screen p { font-size: 20px; opacity: 0.8; line-height: 1.4; }
+
+        #podium-screen h1 { background: linear-gradient(to right, #FFD700, var(--accent-blue)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-size: 32px; font-weight: 900; margin-bottom: 40px; }
+        .podium-list { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 15px; }
+        .podium-item { background: var(--glass); padding: 20px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); }
+        .podium-rank { font-size: 24px; font-weight: 900; color: var(--accent-blue); min-width: 30px; }
+        .podium-name { font-size: 20px; font-weight: 700; flex: 1; margin-left: 15px; text-align: left; }
+        .podium-score { font-size: 18px; font-weight: 900; }
+        .podium-item.gold { border-color: #FFD700; background: rgba(255, 215, 0, 0.1); }
+        
+        /* Correct Answer State */
+        body.correct-answer #buzzer {
+            background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+            box-shadow: 0 0 60px rgba(39, 174, 96, 0.8) !important;
+            border-color: #f1c40f !important;
+            transform: scale(1.05);
         }
-
-        #pause-overlay h1 { font-size: 8rem; color: var(--blue); font-weight: 900; letter-spacing: 2vmin; margin-bottom: 4vmin; }
-        #pause-msg { font-size: 2.5rem; color: white; }
-
-        .rules-card, .category-card {
-            background: rgba(26,26,58,0.8);
-            border: 2px solid var(--blue);
-            border-radius: 4vmin;
-            padding: 6vmin;
-            max-width: 80vw;
-            box-shadow: 0 0 100px rgba(0,168,255,0.2);
-            animation: zoomIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        body.correct-answer .buzzer-glow {
+            background: #2ecc71 !important;
+            opacity: 0.6;
         }
-        .rules-mode-name { font-size: 5rem; font-weight: 900; color: var(--blue); text-transform: uppercase; margin-bottom: 2vmin; letter-spacing: 1vmin; }
-        .rules-description { font-size: 2.5rem; line-height: 1.4; color: white; opacity: 0.9; font-weight: 400; }
-
-        .category-image { width: 50vmin; height: 50vmin; border-radius: 4vmin; object-fit: cover; border: 3px solid var(--blue); box-shadow: 0 0 80px rgba(0,168,255,0.4); margin-bottom: 4vmin; }
-        .category-name-big { font-size: 8rem; font-weight: 900; color: white; text-transform: uppercase; letter-spacing: 1.5vmin; text-shadow: 0 0 40px rgba(255,255,255,0.2); }
-
-        @keyframes zoomIn {
-            0% { opacity: 0; transform: scale(0.3) rotate(-3deg); }
-            100% { opacity: 1; transform: scale(1) rotate(0deg); }
+        body.correct-answer #status-text {
+            color: #2ecc71 !important;
+            text-shadow: 0 0 15px rgba(39, 174, 96, 0.6);
         }
+        
+        .perm-hint { font-size: 13px; color: var(--accent-blue); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; justify-content: center; }
     </style>
 </head>
 <body>
+    <div id="ambient"></div>
+    <div id="flash-overlay"></div>
 
-<div id="ambient"></div>
-
-<!-- IDLE SCREEN -->
-<div id="idle">
-    <h1>QWIZZ</h1>
-    <p class="pulsing">EN ATTENTE DE LA PARTIE...</p>
-</div>
-
-<!-- PLAYER SCREEN -->
-<div id="player">
-    <div id="cover-wrap">
-        <img id="cover" src="" alt="pochette">
-        <div id="cover-placeholder">🎵</div>
-    </div>
-
-    <div class="right">
-        <span class="logo-text">QWIZZ</span>
-
-        <div class="track-block">
-            <div class="track-title" id="track-title">En attente...</div>
-            <div class="track-artist" id="track-artist">Prêt à buzzer ?</div>
-        </div>
-
-        <div class="leaderboard">
-            <div class="lb-title">🏆 Classement</div>
-            <div id="lb-list">
-                <div class="lb-row">
-                    <span class="lb-rank">—</span>
-                    <span class="lb-name">En attente des joueurs</span>
-                    <span class="lb-score">—</span>
-                </div>
+    <!-- SCREEN: JOIN -->
+    <div id="username-screen">
+        <img src="/client_logo" class="logo" onerror="this.src='https://raw.githubusercontent.com/joprex/QWIZZ/main/Assets.xcassets/QwizzLogo.imageset/QwizzLogo.png'; this.onerror=null;">
+        <h1 style="font-size: 28px; font-weight: 900; margin-bottom: 30px;">PRÊT À QWIZZER ?</h1>
+        <div class="input-group">
+            <input type="text" id="username" placeholder="Ton pseudo" autocomplete="off" />
+            <input type="password" id="password" placeholder="Code (si requis)" autocomplete="off" style="display: none;" />
+            <div class="perm-hint">
+                <input type="checkbox" id="perm-check" checked style="width: 20px; height: 20px; margin: 0;">
+                <span>Activer Vibreur & Flash 📸</span>
             </div>
+            <button class="btn-primary" onclick="joinGame()">VALIDER</button>
         </div>
-
-        <div id="status-badge">🚫 JOUEUR BLOQUÉ</div>
+        <p style="margin-top: 30px; font-size: 12px; opacity: 0.4;">Connecté au serveur QWIZZ local</p>
     </div>
-</div>
 
-<!-- BOTTOM BAR -->
-<div id="bottom-bar">
-    <span id="server-hint"></span>
-    <div id="connection-dot"></div>
-</div>
-
-<div id="qr-overlay">
-    <h2>REJOIGNEZ LA PARTIE !</h2>
-    <div class="qr-box">
-        <img id="qr-img" src="">
+    <!-- SCREEN: PAUSE -->
+    <div id="pause-screen" class="overlay-screen">
+        <img src="/client_logo" class="logo" style="width:150px; margin-bottom:30px">
+        <h1>PAUSE</h1>
+        <p id="pause-msg">Un petit moment de répit...</p>
+        <div class="loader" style="margin-top:40px"></div>
     </div>
-</div>
 
-<!-- NEW OVERLAYS -->
-<div id="pause-overlay"><h1>PAUSE</h1><p id="pause-msg">...</p></div>
-<div id="rules-overlay">
-    <div class="rules-card">
-        <h1 id="rules-mode" class="rules-mode-name">MODE</h1>
-        <p id="rules-text" class="rules-description"></p>
+    <!-- SCREEN: PODIUM -->
+    <div id="podium-screen" class="overlay-screen">
+        <h1>🏆 CLASSEMENT FINAL 🏆</h1>
+        <div class="podium-list" id="podium-data">
+            <!-- Winners here -->
+        </div>
+        <button class="btn-primary" onclick="window.location.reload()" style="margin-top:40px; background: rgba(255,255,255,0.05); box-shadow: none; border: 1px solid rgba(255,255,255,0.1);">QUITTER</button>
     </div>
-</div>
-<div id="category-overlay">
-    <div class="category-card">
-        <img id="category-img" class="category-image" style="display:none">
-        <h1 id="category-name-display" class="category-name-big">CATEGORY</h1>
+
+    <!-- SCREEN: BUZZER -->
+    <div id="buzzer-container">
+        <div style="position: absolute; top: 20px; width: 100%; display: flex; justify-content: center; padding: 0 40px;">
+            <img src="/client_logo" class="logo" style="width: 100%; max-width: 380px; height: auto; margin: 0;" onerror="this.src='https://raw.githubusercontent.com/joprex/QWIZZ/main/Assets.xcassets/QwizzLogo.imageset/QwizzLogo.png'; this.onerror=null;">
+        </div>
+        <div class="buzzer-wrapper">
+            <div class="buzzer-glow"></div>
+            <div id="buzzer" class="disabled" onclick="buzz()">BUZZ</div>
+        </div>
+        
+        <div id="status-area">
+            <div id="status-text">Synchronisation...</div>
+            <div id="status-sub">Prépare ton doigt !</div>
+        </div>
     </div>
-</div>
+    
+    <div id="cheater-screen"> 
+        <h1 style="font-size: 40px; font-weight: 900; margin-bottom: 20px;">⚠️ ALERTE ⚠️</h1>
+        <p style="font-size: 20px; opacity: 0.9;">L'animateur a signalé un comportement suspect.<br>Tes points ont été déduits.</p>
+    </div>
 
-<script>
-// ── Cast Receiver Setup ──────────────────────────────────
-const context = cast.framework.CastReceiverContext.getInstance();
-const playerManager = context.getPlayerManager();
+    <script>
+        let ws;
+        let username = localStorage.getItem('qwizz_username') || "";
+        let uuid = localStorage.getItem('qwizz_uuid');
+        let isBlocked = true;
+        let flashDuration = 0.5;
+        let flashOnBuzz = true;
+        let videoTrack = null;
 
-let socket = null;
-let serverBase = null;
-let reconnectTimer = null;
-
-// Intercept media load to extract custom server URL
-playerManager.setMessageInterceptor(
-    cast.framework.messages.MessageType.LOAD,
-    request => {
-        const customData = request.media && request.media.customData;
-        if (customData && customData.serverURL) {
-            serverBase = customData.serverURL;
-            document.getElementById('server-hint').textContent = 'Serveur: ' + serverBase;
-            connectWebSocket(serverBase);
+        if (!uuid) {
+            uuid = (crypto && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('qwizz_uuid', uuid);
         }
-        showPlayerScreen();
-        return request;
-    }
-);
 
-context.start({ disableIdleTimeout: true });
+        window.onload = () => {
+            const logos = document.querySelectorAll('.logo');
+            logos.forEach(img => {
+                img.src = '/client_logo';
+                img.onerror = () => { img.style.display = 'none'; };
+            });
 
-// ── WebSocket ────────────────────────────────────────────
-function connectWebSocket(base) {
-    const wsURL = base.replace('http://', 'ws://') + '/ws';
-    clearTimeout(reconnectTimer);
+            if (username.length > 0) {
+                document.getElementById('username-screen').style.opacity = '0';
+                setTimeout(() => { document.getElementById('username-screen').style.display = 'none'; }, 500);
+                connectWebSocket();
+            }
+        };
 
-    try {
-        socket = new WebSocket(wsURL);
-    } catch(e) {
-        scheduleReconnect(base);
-        return;
-    }
+        async function joinGame() {
+            const name = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
+            if (!name) return;
+            
+            // Request camera for flash if enabled
+            if (document.getElementById('perm-check').checked) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                    videoTrack = stream.getVideoTracks()[0];
+                    if (navigator.vibrate) navigator.vibrate(50); // Test vibration
+                } catch (e) { console.warn("Cam flash or vibro not available:", e); }
+            }
 
-    socket.onopen = () => {
-        document.getElementById('connection-dot').classList.add('connected');
-        socket.send(JSON.stringify({ type: 'identify', role: 'tv' }));
-    };
+            username = name;
+            localStorage.setItem('qwizz_username', username);
+            document.getElementById('username-screen').style.opacity = '0';
+            setTimeout(() => { document.getElementById('username-screen').style.display = 'none'; }, 500);
+            connectWebSocket(pass);
+        }
 
-    socket.onmessage = (evt) => {
-        try {
-            const data = JSON.parse(evt.data);
-            handleMessage(data);
-        } catch(e) {}
-    };
+        function connectWebSocket(password = '') {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+            
+            ws.onopen = () => {
+                ws.send(JSON.stringify({ type: 'join', name: username, id: uuid, password: password }));
+                document.getElementById('buzzer-container').style.opacity = '1';
+                updateStatus("Connecté", "En attente de l'animateur...");
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleServerMessage(data);
+            };
+            
+            ws.onclose = () => {
+                updateStatus("Déconnecté", "Reconnexion en cours...");
+                setTimeout(connectWebSocket, 2000);
+            };
+        }
 
-    socket.onclose = () => {
-        document.getElementById('connection-dot').classList.remove('connected');
-        scheduleReconnect(base);
-    };
+        function updateStatus(main, sub = "") {
+            document.getElementById('status-text').innerText = main;
+            document.getElementById('status-sub').innerText = sub;
+        }
 
-    socket.onerror = () => {
-        document.getElementById('connection-dot').classList.remove('connected');
-    };
-}
+        function handleServerMessage(data) {
+            const buzzer = document.getElementById('buzzer');
+            
+            switch(data.type) {
+                case 'appearance':
+                    if (data.data.buzzerBackgroundColor) document.body.style.backgroundColor = data.data.buzzerBackgroundColor;
+                    if (data.data.buzzerButtonGradient) buzzer.style.background = data.data.buzzerButtonGradient;
+                    flashDuration = data.data.flashDuration || 0.5;
+                    flashOnBuzz = data.data.flashOnBuzz !== false;
+                    break;
 
-function scheduleReconnect(base) {
-    reconnectTimer = setTimeout(() => connectWebSocket(base), 3000);
-}
+                case 'state':
+                    const amIBlocked = data.blocked && data.blocked.includes(uuid);
+                    if (data.state === 'playing') {
+                        if (amIBlocked) {
+                            isBlocked = true;
+                            buzzer.classList.add('disabled');
+                            updateStatus("Bloqué", "Attends la prochaine question");
+                            document.body.style.filter = "sepia(1) hue-rotate(-50deg)";
+                        } else {
+                            isBlocked = false;
+                            buzzer.classList.remove('disabled');
+                            updateStatus("Écoute...", "Buzz dès que tu sais !");
+                            document.body.style.filter = "none";
+                        }
+                    } else {
+                        isBlocked = true;
+                        buzzer.classList.add('disabled');
+                        if (data.state === 'revealed') {
+                            updateStatus("Réponse trouvée", ""); // Explicitly clear sub
+                        }
+                        else if (data.state === 'paused') updateStatus("En pause...");
+                    }
+                    break;
 
-// ── Message handlers ─────────────────────────────────────
-function handleMessage(data) {
-    if (data.type === 'track_update') updateTrack(data);
-    else if (data.type === 'leaderboard') updateLeaderboard(data.players);
-    else if (data.type === 'state') updateState(data.state);
-    else if (data.type === 'show_qr') toggleQR(data.show);
-    else if (data.type === 'isPaused') togglePause(data.data, data.pauseMessage);
-    else if (data.type === 'mode_switch') showRules(data.mode, data.rules);
-    else if (data.type === 'category_transition') showCategory(data.name, data.hasImage, data.imageURL);
-}
+                case 'your_turn':
+                    if (data.targetId === uuid) {
+                        isBlocked = true; // Still can't re-buzz
+                        buzzer.classList.remove('disabled');
+                        updateStatus("C'EST TON TOUR !", "Donne ta réponse à haute voix");
+                        triggerVisualFeedback();
+                    } else {
+                        updateStatus(data.target || "Quelqu'un", "est en train de répondre...");
+                        buzzer.classList.add('disabled');
+                    }
+                    break;
 
-function togglePause(paused, msg) {
-    const over = document.getElementById('pause-overlay');
-    if (paused) {
-        over.classList.add('visible');
-        document.getElementById('pause-msg').innerText = msg || "Prenez un QWIZZ, on revient d'ici peu !";
-    } else {
-        over.classList.remove('visible');
-    }
-}
+                case 'error':
+                    if (data.message.includes("Mot de passe")) {
+                        document.getElementById('password').style.display = 'block';
+                        document.getElementById('username-screen').style.display = 'flex';
+                        document.getElementById('username-screen').style.opacity = '1';
+                    } else {
+                        alert(data.message);
+                    }
+                    break;
+                case 'isPaused':
+                    const pauseScreen = document.getElementById('pause-screen');
+                    if (data.data) {
+                        document.getElementById('pause-msg').innerText = data.pauseMessage || "Prenez un QWIZZ, on revient d'ici peu !";
+                        pauseScreen.classList.add('visible');
+                    } else {
+                        pauseScreen.classList.remove('visible');
+                    }
+                    break;
+                case 'end_game':
+                    const podiumScreen = document.getElementById('podium-screen');
+                    const podiumList = document.getElementById('podium-data');
+                    podiumList.innerHTML = data.data.map((p, i) => `
+                        <div class="podium-item ${i===0?'gold':''}">
+                            <div class="podium-rank">${i+1}</div>
+                            <div class="podium-name">${p.name}</div>
+                            <div class="podium-score">${p.score} pts</div>
+                        </div>
+                    `).join('');
+                    podiumScreen.classList.add('visible');
+                    break;
+                case 'leaderboard':
+                    const me = data.players.find(p => p.id === uuid);
+                    const cheaterScreen = document.getElementById('cheater-screen');
+                    if (me && me.isCheating) {
+                        cheaterScreen.classList.add('visible');
+                        setTimeout(() => { cheaterScreen.classList.remove('visible'); }, 5000);
+                    } else {
+                        cheaterScreen.classList.remove('visible');
+                    }
+                    break;
+                case 'correct':
+                    if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+                    document.body.classList.add('correct-answer');
+                    updateStatus("BONNE RÉPONSE !", "Félicitations, tu marques des points !");
+                    setTimeout(() => { 
+                        document.body.classList.remove('correct-answer');
+                    }, 5000);
+                    break;
+                case 'wrong':
+                    if (navigator.vibrate) navigator.vibrate([400]);
+                    break;
+            }
+        }
 
-function showRules(mode, rules) {
-    const over = document.getElementById('rules-overlay');
-    document.getElementById('rules-mode').innerText = mode;
-    document.getElementById('rules-text').innerText = rules;
-    over.classList.add('visible');
-    setTimeout(() => { over.classList.remove('visible'); }, 6000);
-}
+        async function triggerVisualFeedback() {
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+            
+            // Screen Flash
+            const overlay = document.getElementById('flash-overlay');
+            overlay.style.opacity = '1';
+            setTimeout(() => overlay.style.opacity = '0', 200);
 
-function showCategory(name, hasImage, imageURL) {
-    const over = document.getElementById('category-overlay');
-    const img = document.getElementById('category-img');
-    const nameDisp = document.getElementById('category-name-display');
-    nameDisp.innerText = name;
-    if (hasImage) {
-        const fullURL = imageURL.startsWith('http') ? imageURL : (serverBase + imageURL);
-        img.src = fullURL + '?' + Date.now();
-        img.style.display = 'block';
-    } else {
-        img.style.display = 'none';
-    }
-    over.classList.add('visible');
-    setTimeout(() => { over.classList.remove('visible'); }, 4000);
-}
+            // Camera Torch Flash
+            if (flashOnBuzz && videoTrack) {
+                try {
+                    const capabilities = videoTrack.getCapabilities();
+                    if (capabilities.torch) {
+                        await videoTrack.applyConstraints({ advanced: [{ torch: true }] });
+                        setTimeout(async () => {
+                            try { await videoTrack.applyConstraints({ advanced: [{ torch: false }] }); } catch(err){}
+                        }, (flashDuration || 0.5) * 1000);
+                    }
+                } catch (e) { console.warn("Torch error:", e); }
+            }
+        }
 
-function updateTrack(data) {
-    document.getElementById('track-title').textContent = data.title || '?';
-    document.getElementById('track-artist').textContent = data.artist || '';
-
-    const img = document.getElementById('cover');
-    const ph = document.getElementById('cover-placeholder');
-
-    if (data.cover && data.cover !== '') {
-        const fullCoverURL = data.cover.startsWith('http') ? data.cover : (serverBase + data.cover);
-        img.onload = () => { img.style.display = 'block'; ph.style.display = 'none'; };
-        img.onerror = () => { img.style.display = 'none'; ph.style.display = 'flex'; };
-        img.src = fullCoverURL;
-    } else {
-        img.style.display = 'none';
-        ph.style.display = 'flex';
-    }
-
-    showPlayerScreen();
-}
-
-function updateLeaderboard(players) {
-    if (!players || players.length === 0) {
-        document.getElementById('lb-list').innerHTML =
-            '<div class="lb-row"><span class="lb-rank">—</span><span class="lb-name">En attente des joueurs</span><span class="lb-score">—</span></div>';
-        return;
-    }
-
-    const medals = ['🥇', '🥈', '🥉'];
-    const top = [...players].sort((a, b) => b.score - a.score).slice(0, 5);
-
-    document.getElementById('lb-list').innerHTML = top.map((p, i) => `
-        <div class="lb-row">
-            <span class="lb-rank">${medals[i] || (i+1)}</span>
-            <span class="lb-name">${p.name}</span>
-            <span class="lb-score">${p.score} pts</span>
-        </div>`).join('');
-}
-
-function updateState(state) {
-    const badge = document.getElementById('status-badge');
-    badge.className = state === 'blocked' ? 'show' : '';
-}
-
-function toggleQR(show) {
-    const qr = document.getElementById('qr-overlay');
-    if (show && serverBase) {
-        // Use serverBase directly from the Chromecast LOAD intercept
-        const url = serverBase.replace('ws://', 'http://').replace('/ws', '');
-        document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=' + encodeURIComponent(url) + '&bgcolor=ffffff&color=09072B&margin=0';
-        qr.style.opacity = '1';
-        qr.style.pointerEvents = 'auto';
-    } else {
-        qr.style.opacity = '0';
-        qr.style.pointerEvents = 'none';
-    }
-}
-
-// ── UI ───────────────────────────────────────────────────
-function showPlayerScreen() {
-    document.getElementById('idle').style.opacity = '0';
-    document.getElementById('idle').style.pointerEvents = 'none';
-    document.getElementById('player').style.opacity = '1';
-}
-</script>
+        function buzz() {
+            if (isBlocked || !ws || ws.readyState !== WebSocket.OPEN) return;
+            ws.send(JSON.stringify({ type: 'buzz', name: username, id: uuid, time: Date.now() }));
+            if (navigator.vibrate) navigator.vibrate(50);
+        }
+    </script>
 </body>
 </html>
