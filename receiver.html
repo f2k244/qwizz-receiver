@@ -130,6 +130,17 @@
     #cheater-overlay.style-danger .cheater-card{background:#000;border:1vmin solid #ffcc00}
     #cheater-overlay.style-danger .cheater-header{color:#ffcc00}
     #cheater-overlay.style-danger .cheater-penalty-badge{background:#ffcc00;color:#000}
+    
+    #cheater-overlay.style-cinema { background: transparent; backdrop-filter: none; }
+    #cheater-overlay.style-cinema::before, #cheater-overlay.style-cinema::after { content: ''; position: fixed; left: 0; right: 0; height: 15vh; background: #000; z-index: 100001; transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    #cheater-overlay.style-cinema::before { top: 0; transform: translateY(-100%); }
+    #cheater-overlay.style-cinema::after { bottom: 0; transform: translateY(100%); }
+    #cheater-overlay.style-cinema.visible::before, #cheater-overlay.style-cinema.visible::after { transform: translateY(0); }
+    #cheater-overlay.style-cinema .cheater-card { border: none; background: rgba(26,26,58,0.95); box-shadow: 0 0 100px rgba(255,0,0,0.5); }
+
+    #cheater-overlay.style-flash-classement { background: transparent; backdrop-filter: none; }
+    #cheater-overlay.style-flash-classement.visible ~ #leaderboard { animation: flashRed 0.5s infinite; }
+    @keyframes flashRed { 0%, 100% { background: rgba(26,26,58,.95); } 50% { background: rgba(255, 0, 0, 0.8); transform: scale(1.02); } }
 
     @keyframes popIn{from{transform:scale(0.8);opacity:0}to{transform:scale(1);opacity:1}}
     @keyframes scan{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
@@ -349,23 +360,30 @@ function showCat(name, hasImage, imageURL, showName, dur) {
 function showCheater(name, penalty, style) {
     console.log("Cheater detected:", name, penalty, style);
     const over = document.getElementById('cheater-overlay');
-    const nameEl = document.getElementById('cheater-name-text');
-    const penaltyEl = document.getElementById('cheater-penalty-text');
     
-    if (!over || !nameEl || !penaltyEl) return;
+    if (!over) return;
+
+    // Reset state to trigger re-animation
+    over.classList.remove('visible');
+    over.className = ''; 
+    void over.offsetWidth; // Force reflow
 
     const styleClass = 'style-' + (style || 'Cinéma').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
-    over.className = 'visible ' + styleClass;
     
     if (styleClass === 'style-defilement') {
         over.innerHTML = `<div class="cheater-card"><div class="ticker-badge"><div class="ticker-dot"></div>ALERTE TRICHE</div><div id="cheater-name-text" class="cheater-name-big">⚠️ TRICHE DÉTECTÉE : ${name.toUpperCase()} (SANCTION : -${penalty} PTS) —– REPLAY : ${name.toUpperCase()} A TRICHÉ —– ⚠️</div></div>`;
     } else {
-        // Essential to restore the standard structure if it was overwritten
         over.innerHTML = `<div class="cheater-card"><div class="cheater-header">ALERTE TRICHE</div><div id="cheater-name-text" class="cheater-name-big">${name}</div><div class="cheater-info">Sanction confirmée</div><div id="cheater-penalty-text" class="cheater-penalty-badge">-${penalty} pts</div></div>`;
     }
     
+    over.classList.add('visible');
+    over.classList.add(styleClass);
+    
     if (window.cheaterTimeout) clearTimeout(window.cheaterTimeout);
-    window.cheaterTimeout = setTimeout(() => { over.classList.remove('visible'); over.className = ''; }, 8000);
+    window.cheaterTimeout = setTimeout(() => { 
+        over.classList.remove('visible'); 
+        setTimeout(() => { over.className = ''; }, 600); // Wait for transition
+    }, styleClass === 'style-defilement' ? 12000 : 8000);
 }
 
 function renderLB(p){
