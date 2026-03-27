@@ -183,7 +183,16 @@
 
 <script>
 var castCtx=cast.framework.CastReceiverContext.getInstance(),serverURL='',socket,appState={showCheaterStatus:true,revealAnim:'random'},isAnimating=false,hasTrack=false;
-castCtx.addCustomMessageListener('urn:x-cast:com.qwizz.control',e=>{if(e.data&&e.data.serverURL)initS(e.data.serverURL)});
+castCtx.addCustomMessageListener('urn:x-cast:com.qwizz.control',e=>{
+  if(e.data&&e.data.serverURL)initS(e.data.serverURL);
+  if(e.data&&e.data.type==='reveal'){
+    // Explicit reveal from sender
+    var i=document.getElementById('cover');
+    if(i && i.src.includes('_blurred')){
+      i.src=i.src.replace('_blurred','_clear').split('&t=')[0].split('?t=')[0]+(i.src.includes('?')?'&':'?')+'t='+Date.now();
+    }
+  }
+});
 const options = new cast.framework.CastReceiverOptions();
 options.maxInactivity = 86400; // 24h (Essentially disables sleep while app is open)
 castCtx.start(options);
@@ -271,7 +280,7 @@ function updateT(d){
     var fullCover = d.cover.startsWith('http') ? d.cover : (serverURL + d.cover);
     i.onload=()=>{i.style.display='block';p.style.display='none'};
     i.onerror=()=>{i.src=serverURL+'/tv_logo?'+Date.now()};
-    i.src=fullCover+'?'+Date.now();
+    i.src=fullCover+(fullCover.includes('?')?'&':'?')+Date.now();
   } else {
     i.onload=()=>{i.style.display='block';p.style.display='none'};
     i.src=serverURL+'/tv_logo?'+Date.now();
