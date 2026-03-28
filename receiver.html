@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>QWIZZ Chromecast Receiver V5.0.4</title>
+  <title>QWIZZ Chromecast Receiver V5.0.5-Ultimate</title>
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
@@ -93,7 +93,7 @@
     .logo-area img { width: 25vmin; height: auto; object-fit: contain; filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.6)) }
 
     .track-info { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); opacity: 1; }
-    .track-info.is-hidden { opacity: 0.8; }
+    .track-info.is-hidden { opacity: 0.85; filter: grayscale(1); }
     .track-title { font-size: 6rem; font-weight: 900; line-height: 1.1; margin-bottom: 2rem; text-shadow: 0 4px 40px rgba(0, 0, 0, 0.6) }
     .track-artist { font-size: 3rem; color: #E0E0E0; font-weight: 300; opacity: 0.9; }
 
@@ -114,19 +114,8 @@
       bottom: 5vmin; right: 5vmin; width: 35vw; display: block
     }
 
-    .lb-header {
-        font-weight: 900; letter-spacing: 0.5vmin; color: var(--blue);
-        text-transform: uppercase; margin-bottom: 4vmin; font-size: 3.5rem;
-        text-align: center; border-bottom: 1px solid rgba(0,168,255,0.1); padding-bottom: 2vmin;
-    }
-
-    .lb-row {
-      display: flex; align-items: center; gap: 3vmin;
-      background: rgba(255, 255, 255, 0.03); padding: 2vmin 3vmin;
-      border-radius: 2vmin; margin-bottom: 1.5vmin; opacity: 1;
-      border: 1px solid rgba(255,255,255,0.05);
-    }
-
+    .lb-header { font-weight: 900; letter-spacing: 0.5vmin; color: var(--blue); text-transform: uppercase; margin-bottom: 4vmin; font-size: 3.5rem; text-align: center; border-bottom: 1px solid rgba(0,168,255,0.1); padding-bottom: 2vmin; }
+    .lb-row { display: flex; align-items: center; gap: 3vmin; background: rgba(255, 255, 255, 0.03); padding: 2vmin 3vmin; border-radius: 2vmin; margin-bottom: 1.5vmin; opacity: 1; border: 1px solid rgba(255,255,255,0.05); }
     .lb-rank { width: 6vmin; font-weight: 900; font-size: 2.5rem; text-align: center; color: rgba(255,255,255,0.4); }
     .lb-name { flex: 1; font-weight: 700; font-size: 2.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lb-score { font-weight: 900; color: var(--blue); font-size: 2.8rem; }
@@ -146,7 +135,6 @@
       text-align: center; box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7);
       top: 4vmin; right: 4vmin;
     }
-    
     #qr-overlay.visible { display: block; }
 
     #qr-img { width: var(--qr-size); height: var(--qr-size); background: #fff; padding: 1.5vmin; border-radius: 2vmin; }
@@ -157,10 +145,8 @@
       align-items: center; justify-content: center; z-index: 8000;
       text-align: center; padding: 5vmin;
     }
-
     #pause-overlay.visible, #category-overlay.visible { display: flex; }
 
-    @keyframes rotate { to { transform: rotate(360deg); } }
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: translateY(0); } }
 
     #debug-log {
@@ -282,18 +268,18 @@
       
       currentTrackData = d;
       lastTrackId = d.trackID;
-      isRevealed = (d.gameState === 'revealed');
+      isRevealed = (d.gameState === 'revealed' || d.reveal === true);
       
       document.getElementById('idle').classList.add('gone');
       document.getElementById('player').classList.add('visible');
       document.body.classList.remove('video-revealed');
       document.getElementById('category-overlay').classList.remove('visible');
       
-      var hideInfo = d.shouldBlur && !isRevealed;
       var infoContainer = document.getElementById('track-info-container');
-      infoContainer.classList.toggle('is-hidden', hideInfo);
+      infoContainer.classList.toggle('is-hidden', !isRevealed);
       
-      if (hideInfo) {
+      // BLIND TEST CORE: Hide metadata unless revealed
+      if (!isRevealed) {
           document.getElementById('track-title').textContent = "QUEL EST LE TITRE ?";
           document.getElementById('track-artist').textContent = "???";
       } else {
@@ -304,17 +290,23 @@
       var i = document.getElementById('cover'), b = document.getElementById('cover-blurred'), p = document.getElementById('cover-placeholder');
       if(d.cover) {
         var src = (d.cover.startsWith('http') ? d.cover : serverURL + d.cover) + '&t=' + Date.now();
+        
+        // Blurred (Only if requested AND not revealed)
         b.src = src; 
         b.onload = () => { if(d.shouldBlur && !isRevealed) { b.style.opacity = '1'; p.style.display = 'none'; } };
         
+        // Clear (Only if revealed OR not blurred)
         i.src = src; 
-        i.style.opacity = hideInfo ? '0' : '1';
-        p.style.display = hideInfo ? 'flex' : 'none';
-        
-        if(!d.shouldBlur || isRevealed) {
-            b.style.opacity = '0'; i.style.opacity = '1'; p.style.display = 'none';
-            // Only force video visible if it's actually a video track
-            if (d.isVideo) document.body.classList.add('video-revealed'); 
+        if (isRevealed) {
+            i.style.opacity = '1'; b.style.opacity = '0'; p.style.display = 'none';
+            if (d.isVideo) document.body.classList.add('video-revealed');
+        } else {
+            i.style.opacity = '0';
+            if (d.shouldBlur) {
+                // b.onload takes care of its own opacity
+            } else {
+                b.style.opacity = '0'; p.style.display = 'flex';
+            }
         }
       } else {
         p.style.display = 'flex'; i.style.opacity = '0'; b.style.opacity = '0';
@@ -326,16 +318,16 @@
     function revealInfo() {
       if(!currentTrackData) return;
       isRevealed = true;
+      log("REVEAL TRIGGERED");
       document.getElementById('track-title').textContent = currentTrackData.title || "";
       document.getElementById('track-artist').textContent = currentTrackData.artist || "";
       document.getElementById('track-info-container').classList.remove('is-hidden');
-      
-      if (currentTrackData.isVideo) document.body.classList.add('video-revealed');
       
       var i = document.getElementById('cover'), b = document.getElementById('cover-blurred'), p = document.getElementById('cover-placeholder');
       if(i) i.style.opacity = '1';
       if(b) b.style.opacity = '0';
       if(p) p.style.display = 'none';
+      if (currentTrackData.isVideo) document.body.classList.add('video-revealed');
     }
 
     function renderLB(players) {
@@ -380,6 +372,7 @@
     }
 
     function startPoll() {
+      document.getElementById('leaderboard').style.display = 'none'; // Guard against initial flash
       if(window.pollTimer) clearInterval(window.pollTimer);
       window.pollTimer = setInterval(() => {
         if(!serverURL) return;
@@ -394,7 +387,7 @@
 
     context.addCustomMessageListener('urn:x-cast:com.qwizz.control', e => handle(e.data));
     context.start();
-    log("Receiver Started V5.0.4");
+    log("Receiver Started V5.0.5-Ultimate");
   </script>
 </body>
 </html>
