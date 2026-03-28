@@ -308,8 +308,12 @@ const playerManager = castCtx.getPlayerManager();
 playerManager.setMessageInterceptor(
   cast.framework.messages.MessageType.LOAD,
   loadRequestData => {
-    const url = loadRequestData.media ? loadRequestData.media.contentId : "unknown";
-    log("LOAD intercepted: " + url);
+    const media = loadRequestData.media || {};
+    const url = media.contentId || media.contentUrl || "NOT_FOUND";
+    log("LOAD URL: " + url);
+    if (url === "NOT_FOUND") {
+      log("Media Keys: " + Object.keys(media).join(', '));
+    }
     if (loadRequestData.media && loadRequestData.media.customData) {
       if (loadRequestData.media.customData.mute !== undefined) {
         const m = loadRequestData.media.customData.mute;
