@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -7,192 +8,995 @@
   <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
-    :root { --bg:#09072B; --blue:#00A8FF; --purple:#8A2BE2; --font:'Outfit',sans-serif; --qr-size:22vmin; }
-    *{margin:0;padding:0;box-sizing:border-box}
-    body,html{width:100%;height:100%;background:var(--bg);color:#fff;font-family:var(--font);overflow:hidden;font-size:1.5vmin}
-    
-    #ambient{position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 20% 50%,rgba(0,168,255,.12) 0%,transparent 70%),radial-gradient(ellipse 40% 40% at 80% 20%,rgba(138,43,226,.10) 0%,transparent 70%);pointer-events:none;z-index:0}
-    
-    #splash{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3vmin;z-index:10000;transition:opacity 1s ease}
-    #splash.hidden { opacity:0; pointer-events:none; }
-    #splash h1{font-size:6rem;font-weight:900;letter-spacing:1.5vmin;color:var(--blue);text-shadow:0 0 40px rgba(0,168,255,.4);display:none}
-    #splash-logo{width:80vmin;height:auto;filter:drop-shadow(0 0 60px rgba(0,168,255,0.7));display:none}
-    
-    #idle{position:fixed;inset:0;background:var(--bg);display:flex;justify-content:center;align-items:center;z-index:100;transition:opacity .8s ease}
-    #idle.gone{opacity:0;pointer-events:none}
-    .idle-content{display:flex;flex-direction:column;align-items:center;text-align:center;animation:fadeInUp 1.2s ease-out}
-    .idle-logo{width:85vmin;height:auto;margin-bottom:4vmin;filter:drop-shadow(0 0 80px rgba(0,168,255,0.7));display:none}
-    .idle-title{font-size:7rem;font-weight:900;letter-spacing:1.5vmin;color:var(--blue);text-shadow:0 0 60px rgba(0,168,255,0.4);display:none}
+    :root {
+      --bg: #09072B;
+      --blue: #00A8FF;
+      --purple: #8A2BE2;
+      --font: 'Outfit', sans-serif;
+      --qr-size: 22vmin;
+    }
 
-    #player{position:fixed;inset:0;display:grid;grid-template-columns:40vw 1fr;padding:8vmin;gap:8vmin;align-items:center;opacity:0;pointer-events:none;transition:opacity .8s;z-index:10}
-    #player.visible{opacity:1}
-    .cover-wrapper{position:relative;width:55vmin;height:55vmin;border-radius:3vmin;overflow:hidden;border:0.3vmin solid rgba(255,255,255,.2);box-shadow:0 40px 100px rgba(0,0,0,.7);background:rgba(0,0,0,0.3)}
-    #cover, #cover-blurred {
-        position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-        opacity:0;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
     }
-    #cover { z-index:2; }
-    #cover-blurred { z-index:1; filter:blur(20px) brightness(0.8); }
-    #cover-placeholder{position:absolute;inset:0;border-radius:2.5vmin;border:2px dashed rgba(0,168,255,0.2);display:flex;align-items:center;justify-content:center;font-size:20rem;color:rgba(0,168,255,.2);z-index:0}
-    
-    .logo-area{position:fixed;top:4vmin;right:6vmin;z-index:9999}
-    .logo-area img{width:25vmin;height:auto;object-fit:contain;display:none;filter:drop-shadow(0 0 20px rgba(0,0,0,0.5))}
-    
-    .track-title{font-size:5rem;font-weight:900;line-height:1.1;margin-bottom:1.5rem;text-shadow:0 4px 30px rgba(0,0,0,0.5)}
-    .track-artist{font-size:2.5rem;color:#E0E0E0;font-weight:300}
-    
-    #leaderboard{position:fixed;background:rgba(26,26,58,.95);border:1px solid rgba(0,168,255,.3);border-radius:3vmin;padding:4vmin;backdrop-filter:blur(30px);z-index:9000;display:none}
-    #leaderboard.mode-full{inset:8vmin;display:flex;flex-direction:column;justify-content:center;align-items:center}
-    #leaderboard.mode-bottom-right{bottom:4vmin;right:4vmin;width:30vw;display:block}
-    #leaderboard.hidden { display: none !important; }
-    
-    .lb-title{font-weight:900;letter-spacing:2px;color:var(--blue);text-transform:uppercase;margin-bottom:3vmin;font-size:2.5rem}
-    .lb-row{display:flex;align-items:center;gap:2vmin;background:rgba(255,255,255,.05);padding:1.5vmin 2vmin;border-radius:1.5vmin;margin-bottom:1vmin;opacity:0}
-    .lb-rank{width:5vmin;font-weight:900;font-size:2rem;text-align:center}
-    .lb-name{flex:1;font-weight:700;font-size:2rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .lb-score{font-weight:900;color:var(--blue);font-size:2rem}
-    .lb-row.cheater{background:rgba(255,0,0,0.15);border:1px solid rgba(255,0,0,0.4)}
-    
-    #qr-overlay{position:fixed;z-index:10000;display:none;background:rgba(26,26,58,0.98);backdrop-filter:blur(20px);padding:3vmin;border-radius:4vmin;border:1px solid var(--blue);text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.6)}
-    #qr-overlay.visible{display:flex!important;flex-direction:column;align-items:center;gap:2vmin}
-    #qr-overlay.pos-center{top:50%;left:50%;transform:translate(-50%,-50%)}
-    #qr-overlay.pos-bottom-right{bottom:4vmin;right:4vmin}
-    #qr-overlay.pos-bottom-left{bottom:4vmin;left:4vmin}
-    #qr-overlay.pos-top-right{top:4vmin;right:4vmin}
-    #qr-overlay.pos-top-left{top:4vmin;left:4vmin}
-    #qr-img{width:var(--qr-size);height:var(--qr-size);background:#fff;padding:1.5vmin;border-radius:2vmin}
-    
-    #pause-overlay, #rules-overlay, #category-overlay {
-      position:fixed;inset:0;background:rgba(9,7,43,0.98);backdrop-filter:blur(40px);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:8000;text-align:center;padding:5vmin;
+
+    body,
+    html {
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      color: #fff;
+      font-family: var(--font);
+      overflow: hidden;
+      font-size: 1.5vmin
     }
-    #pause-overlay.visible, #rules-overlay.visible, #category-overlay.visible { display:flex; }
-    #pause-overlay h1{font-size:8rem;color:var(--blue);font-weight:900;letter-spacing:2vmin;margin-bottom:4vmin}
-    
-    .rules-card, .category-card {
-      background: rgba(26,26,58,0.8);
+
+    #ambient {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 20% 50%, rgba(0, 168, 255, .12) 0%, transparent 70%), radial-gradient(ellipse 40% 40% at 80% 20%, rgba(138, 43, 226, .10) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0
+    }
+
+    #splash {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3vmin;
+      z-index: 10000;
+      transition: opacity 1s ease
+    }
+
+    #splash.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #splash h1 {
+      font-size: 6rem;
+      font-weight: 900;
+      letter-spacing: 1.5vmin;
+      color: var(--blue);
+      text-shadow: 0 0 40px rgba(0, 168, 255, .4);
+      display: none
+    }
+
+    #splash-logo {
+      width: 80vmin;
+      height: auto;
+      filter: drop-shadow(0 0 60px rgba(0, 168, 255, 0.7));
+      display: none
+    }
+
+    #idle {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      transition: opacity .8s ease
+    }
+
+    #idle.gone {
+      opacity: 0;
+      pointer-events: none
+    }
+
+    .idle-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      animation: fadeInUp 1.2s ease-out
+    }
+
+    .idle-logo {
+      width: 85vmin;
+      height: auto;
+      margin-bottom: 4vmin;
+      filter: drop-shadow(0 0 80px rgba(0, 168, 255, 0.7));
+      display: none
+    }
+
+    .idle-title {
+      font-size: 7rem;
+      font-weight: 900;
+      letter-spacing: 1.5vmin;
+      color: var(--blue);
+      text-shadow: 0 0 60px rgba(0, 168, 255, 0.4);
+      display: none
+    }
+
+    #player {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      grid-template-columns: 40vw 1fr;
+      padding: 8vmin;
+      gap: 8vmin;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .8s;
+      z-index: 10
+    }
+
+    #player.visible {
+      opacity: 1
+    }
+
+    .cover-wrapper {
+      position: relative;
+      width: 55vmin;
+      height: 55vmin;
+      border-radius: 3vmin;
+      overflow: hidden;
+      border: 0.3vmin solid rgba(255, 255, 255, .2);
+      box-shadow: 0 40px 100px rgba(0, 0, 0, .7);
+      background: rgba(0, 0, 0, 0.3)
+    }
+
+    #cover,
+    #cover-blurred {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+      opacity: 0;
+    }
+
+    #cover {
+      z-index: 2;
+    }
+
+    #cover-blurred {
+      z-index: 1;
+      filter: blur(20px) brightness(0.8);
+    }
+
+    #cover-placeholder {
+      position: absolute;
+      inset: 0;
+      border-radius: 2.5vmin;
+      border: 2px dashed rgba(0, 168, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20rem;
+      color: rgba(0, 168, 255, .2);
+      z-index: 0
+    }
+
+    .logo-area {
+      position: fixed;
+      top: 4vmin;
+      right: 6vmin;
+      z-index: 9999
+    }
+
+    .logo-area img {
+      width: 25vmin;
+      height: auto;
+      object-fit: contain;
+      display: none;
+      filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.5))
+    }
+
+    .track-title {
+      font-size: 5rem;
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      text-shadow: 0 4px 30px rgba(0, 0, 0, 0.5)
+    }
+
+    .track-artist {
+      font-size: 2.5rem;
+      color: #E0E0E0;
+      font-weight: 300
+    }
+
+    #leaderboard {
+      position: fixed;
+      background: rgba(26, 26, 58, .95);
+      border: 1px solid rgba(0, 168, 255, .3);
+      border-radius: 3vmin;
+      padding: 4vmin;
+      backdrop-filter: blur(30px);
+      z-index: 9000;
+      display: none
+    }
+
+    #leaderboard.mode-full {
+      inset: 8vmin;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center
+    }
+
+    #leaderboard.mode-bottom-right {
+      bottom: 4vmin;
+      right: 4vmin;
+      width: 30vw;
+      display: block
+    }
+
+    #leaderboard.hidden {
+      display: none !important;
+    }
+
+    .lb-title {
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: var(--blue);
+      text-transform: uppercase;
+      margin-bottom: 3vmin;
+      font-size: 2.5rem
+    }
+
+    .lb-row {
+      display: flex;
+      align-items: center;
+      gap: 2vmin;
+      background: rgba(255, 255, 255, .05);
+      padding: 1.5vmin 2vmin;
+      border-radius: 1.5vmin;
+      margin-bottom: 1vmin;
+      opacity: 0
+    }
+
+    .lb-rank {
+      width: 5vmin;
+      font-weight: 900;
+      font-size: 2rem;
+      text-align: center
+    }
+
+    .lb-name {
+      flex: 1;
+      font-weight: 700;
+      font-size: 2rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .lb-score {
+      font-weight: 900;
+      color: var(--blue);
+      font-size: 2rem
+    }
+
+    .lb-row.cheater {
+      background: rgba(255, 0, 0, 0.15);
+      border: 1px solid rgba(255, 0, 0, 0.4)
+    }
+
+    #qr-overlay {
+      position: fixed;
+      z-index: 10000;
+      display: none;
+      background: rgba(26, 26, 58, 0.98);
+      backdrop-filter: blur(20px);
+      padding: 3vmin;
+      border-radius: 4vmin;
+      border: 1px solid var(--blue);
+      text-align: center;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6)
+    }
+
+    #qr-overlay.visible {
+      display: flex !important;
+      flex-direction: column;
+      align-items: center;
+      gap: 2vmin
+    }
+
+    #qr-overlay.pos-center {
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%)
+    }
+
+    #qr-overlay.pos-bottom-right {
+      bottom: 4vmin;
+      right: 4vmin
+    }
+
+    #qr-overlay.pos-bottom-left {
+      bottom: 4vmin;
+      left: 4vmin
+    }
+
+    #qr-overlay.pos-top-right {
+      top: 4vmin;
+      right: 4vmin
+    }
+
+    #qr-overlay.pos-top-left {
+      top: 4vmin;
+      left: 4vmin
+    }
+
+    #qr-img {
+      width: var(--qr-size);
+      height: var(--qr-size);
+      background: #fff;
+      padding: 1.5vmin;
+      border-radius: 2vmin
+    }
+
+    #pause-overlay,
+    #rules-overlay,
+    #category-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 7, 43, 0.98);
+      backdrop-filter: blur(40px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 8000;
+      text-align: center;
+      padding: 5vmin;
+    }
+
+    #pause-overlay.visible,
+    #rules-overlay.visible,
+    #category-overlay.visible {
+      display: flex;
+    }
+
+    #pause-overlay h1 {
+      font-size: 8rem;
+      color: var(--blue);
+      font-weight: 900;
+      letter-spacing: 2vmin;
+      margin-bottom: 4vmin
+    }
+
+    .rules-card,
+    .category-card {
+      background: rgba(26, 26, 58, 0.8);
       border: 2px solid var(--blue);
       border-radius: 4vmin;
       padding: 6vmin;
       max-width: 80vw;
-      box-shadow: 0 0 100px rgba(0,168,255,0.2);
+      box-shadow: 0 0 100px rgba(0, 168, 255, 0.2);
       animation: zoomIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    .rules-mode-name { font-size: 5rem; font-weight: 900; color: var(--blue); text-transform: uppercase; margin-bottom: 2vmin; letter-spacing: 1vmin; }
-    .rules-description { font-size: 2.5rem; line-height: 1.4; color: white; opacity: 0.9; font-weight: 400; }
-    .category-image { width: 45vmin; height: 45vmin; border-radius: 4vmin; object-fit: cover; border: 3px solid var(--blue); box-shadow: 0 0 80px rgba(0,168,255,0.4); margin-bottom: 4vmin; }
-    .category-name-big { font-size: 8rem; font-weight: 900; color: white; text-transform: uppercase; letter-spacing: 1.5vmin; text-shadow: 0 0 40px rgba(255,255,255,0.2); }
 
-    #podium-overlay{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9500;padding:6vmin}
-    #podium-overlay.visible{display:flex}
-    #podium-title{font-size:5.5rem;font-weight:900;color:var(--blue);letter-spacing:1.5vmin;text-transform:uppercase;margin-bottom:4vmin;text-align:center}
-    .podium-container{display:flex;align-items:flex-end;gap:5vmin;margin-top:8vmin}
-    .podium-step{display:flex;flex-direction:column;align-items:center;gap:2vmin;animation:fadeInUp 1s cubic-bezier(0.34, 1.56, 0.64, 1) backwards}
+    .rules-mode-name {
+      font-size: 5rem;
+      font-weight: 900;
+      color: var(--blue);
+      text-transform: uppercase;
+      margin-bottom: 2vmin;
+      letter-spacing: 1vmin;
+    }
 
-    @keyframes fadeInUp{from{opacity:0;transform:translateY(50px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes rotate{to{transform:rotate(360deg)}}
-    @keyframes zoomIn{0%{opacity:0;transform:scale(.3) rotate(-6deg)}65%{transform:scale(1.08) rotate(1deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
-    @keyframes suspenseIn{0%{opacity:0;transform:translateX(-60px);filter:blur(6px)}60%{filter:blur(0)}100%{opacity:1;transform:translateX(0)}}
-    @keyframes cascadeIn{0%{opacity:0;transform:translateY(-40px) scaleY(.6)}70%{transform:translateY(4px)}100%{opacity:1;transform:translateY(0) scaleY(1)}}
-    @keyframes wipeIn{from{opacity:1;clip-path:inset(0 100% 0 0 round 1.5vmin)}to{opacity:1;clip-path:inset(0 0% 0 0 round 1.5vmin)}}
-    @keyframes neonFadeIn{from{opacity:0;filter:brightness(4) blur(2px)}to{opacity:1;filter:brightness(1)}}
-    
-    .anim-suspense{animation:suspenseIn .7s forwards}
-    .anim-cascade{animation:cascadeIn .45s forwards}
-    .anim-wipe{animation:wipeIn .5s ease forwards}
-    .anim-neon{animation:neonFadeIn .7s ease forwards}
-    #cheater-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(9,7,43,0.85);z-index:100000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);animation:fadeIn .5s forwards}
-    #cheater-overlay.visible{display:flex}
-    .cheater-card{background:#1A1A3A;border:0.8vmin solid #ff4b2b;padding:8vmin 15vmin;border-radius:4vmin;display:flex;flex-direction:column;align-items:center;box-shadow:0 0 10vmin rgba(255,75,43,0.4);transform:scale(0);animation:popIn .6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;position:relative;overflow:hidden}
-    .cheater-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1vmin;background:linear-gradient(90deg, transparent, #ff4b2b, transparent);animation:scan 2s linear infinite}
-    .cheater-header{color:#ff4b2b;font-size:3.5rem;font-weight:900;letter-spacing:2vmin;margin-bottom:4vmin}
-    .cheater-name-big{font-size:9rem;font-weight:900;color:white;margin-bottom:2vmin;text-shadow:0 0 3vmin rgba(255,255,255,0.3)}
-    .cheater-info{font-size:3rem;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.5vmin}
-    .cheater-penalty-badge{background:#ff4b2b;color:white;font-size:5rem;font-weight:900;padding:2vmin 6vmin;border-radius:2vmin;margin-top:6vmin;box-shadow:0 5px 15px rgba(255,75,43,0.4)}
-    
+    .rules-description {
+      font-size: 2.5rem;
+      line-height: 1.4;
+      color: white;
+      opacity: 0.9;
+      font-weight: 400;
+    }
+
+    .category-image {
+      width: 45vmin;
+      height: 45vmin;
+      border-radius: 4vmin;
+      object-fit: cover;
+      border: 3px solid var(--blue);
+      box-shadow: 0 0 80px rgba(0, 168, 255, 0.4);
+      margin-bottom: 4vmin;
+    }
+
+    .category-name-big {
+      font-size: 8rem;
+      font-weight: 900;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 1.5vmin;
+      text-shadow: 0 0 40px rgba(255, 255, 255, 0.2);
+    }
+
+    #podium-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9500;
+      padding: 6vmin
+    }
+
+    #podium-overlay.visible {
+      display: flex
+    }
+
+    #podium-title {
+      font-size: 5.5rem;
+      font-weight: 900;
+      color: var(--blue);
+      letter-spacing: 1.5vmin;
+      text-transform: uppercase;
+      margin-bottom: 4vmin;
+      text-align: center
+    }
+
+    .podium-container {
+      display: flex;
+      align-items: flex-end;
+      gap: 5vmin;
+      margin-top: 8vmin
+    }
+
+    .podium-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2vmin;
+      animation: fadeInUp 1s cubic-bezier(0.34, 1.56, 0.64, 1) backwards
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes rotate {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    @keyframes zoomIn {
+      0% {
+        opacity: 0;
+        transform: scale(.3) rotate(-6deg)
+      }
+
+      65% {
+        transform: scale(1.08) rotate(1deg)
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1) rotate(0)
+      }
+    }
+
+    @keyframes suspenseIn {
+      0% {
+        opacity: 0;
+        transform: translateX(-60px);
+        filter: blur(6px)
+      }
+
+      60% {
+        filter: blur(0)
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateX(0)
+      }
+    }
+
+    @keyframes cascadeIn {
+      0% {
+        opacity: 0;
+        transform: translateY(-40px) scaleY(.6)
+      }
+
+      70% {
+        transform: translateY(4px)
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0) scaleY(1)
+      }
+    }
+
+    @keyframes wipeIn {
+      from {
+        opacity: 1;
+        clip-path: inset(0 100% 0 0 round 1.5vmin)
+      }
+
+      to {
+        opacity: 1;
+        clip-path: inset(0 0% 0 0 round 1.5vmin)
+      }
+    }
+
+    @keyframes neonFadeIn {
+      from {
+        opacity: 0;
+        filter: brightness(4) blur(2px)
+      }
+
+      to {
+        opacity: 1;
+        filter: brightness(1)
+      }
+    }
+
+    .anim-suspense {
+      animation: suspenseIn .7s forwards
+    }
+
+    .anim-cascade {
+      animation: cascadeIn .45s forwards
+    }
+
+    .anim-wipe {
+      animation: wipeIn .5s ease forwards
+    }
+
+    .anim-neon {
+      animation: neonFadeIn .7s ease forwards
+    }
+
+    #cheater-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(9, 7, 43, 0.85);
+      z-index: 100000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+      animation: fadeIn .5s forwards
+    }
+
+    #cheater-overlay.visible {
+      display: flex
+    }
+
+    .cheater-card {
+      background: #1A1A3A;
+      border: 0.8vmin solid #ff4b2b;
+      padding: 8vmin 15vmin;
+      border-radius: 4vmin;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 0 10vmin rgba(255, 75, 43, 0.4);
+      transform: scale(0);
+      animation: popIn .6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      position: relative;
+      overflow: hidden
+    }
+
+    .cheater-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1vmin;
+      background: linear-gradient(90deg, transparent, #ff4b2b, transparent);
+      animation: scan 2s linear infinite
+    }
+
+    .cheater-header {
+      color: #ff4b2b;
+      font-size: 3.5rem;
+      font-weight: 900;
+      letter-spacing: 2vmin;
+      margin-bottom: 4vmin
+    }
+
+    .cheater-name-big {
+      font-size: 9rem;
+      font-weight: 900;
+      color: white;
+      margin-bottom: 2vmin;
+      text-shadow: 0 0 3vmin rgba(255, 255, 255, 0.3)
+    }
+
+    .cheater-info {
+      font-size: 3rem;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.5vmin
+    }
+
+    .cheater-penalty-badge {
+      background: #ff4b2b;
+      color: white;
+      font-size: 5rem;
+      font-weight: 900;
+      padding: 2vmin 6vmin;
+      border-radius: 2vmin;
+      margin-top: 6vmin;
+      box-shadow: 0 5px 15px rgba(255, 75, 43, 0.4)
+    }
+
     /* Styles Variations */
-    #cheater-overlay.style-defilement{background:linear-gradient(90deg, #b40000, #ff1a1a);height:10vmin;top:0;bottom:auto;flex-direction:row;justify-content:flex-start;padding:0;border:none;border-bottom:0.8vmin solid #ffcc00;box-shadow:0 10px 40px rgba(0,0,0,0.6);z-index:200000;overflow:hidden;backdrop-filter:none}
-    #cheater-overlay.style-defilement .cheater-card{background:transparent;border:none;box-shadow:none;flex-direction:row;width:100%;height:100%;padding:0;transform:none;animation:slideDown .5s ease forwards;align-items:center;justify-content:flex-start}
-    .ticker-badge{background:#ffcc00;color:black;font-size:2.8vmin;font-weight:900;height:100%;display:flex;align-items:center;padding:0 4vmin;margin:0;letter-spacing:0.3vmin;z-index:2;box-shadow:10px 0 25px rgba(0,0,0,0.4);gap:1.5vmin;flex-shrink:0}
-    .ticker-dot{width:1.5vmin;height:1.5vmin;background:#b40000;border-radius:50%;animation:pulseDot .8s infinite alternate}
-    #cheater-overlay.style-defilement .cheater-name-big{font-size:4.5vmin;font-weight:800;margin:0;white-space:nowrap;animation:marqueePremium 12s linear infinite;padding-left:100%;flex:1;text-shadow:2px 2px 4px rgba(0,0,0,0.3);will-change:transform}
-    #cheater-overlay.style-defilement .cheater-info, #cheater-overlay.style-defilement .cheater-penalty-badge, #cheater-overlay.style-defilement .cheater-header{display:none}
-    
-    @keyframes marqueePremium{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(-250%,0,0)}}
-    @keyframes pulseDot{from{opacity:0.3;transform:scale(0.8)}to{opacity:1;transform:scale(1.1)}}
-    @keyframes slideDown{from{transform:translate3d(0,-100%,0)}to{transform:translate3d(0,0,0)}}
+    #cheater-overlay.style-defilement {
+      background: linear-gradient(90deg, #b40000, #ff1a1a);
+      height: 10vmin;
+      top: 0;
+      bottom: auto;
+      flex-direction: row;
+      justify-content: flex-start;
+      padding: 0;
+      border: none;
+      border-bottom: 0.8vmin solid #ffcc00;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+      z-index: 200000;
+      overflow: hidden;
+      backdrop-filter: none
+    }
 
-    #cheater-overlay.style-glitch .cheater-card{background:black;border-color:cyan;animation:glitchAnim .2s infinite}
-    #cheater-overlay.style-glitch .cheater-header{color:magenta;text-shadow:2px 0 red, -2px 0 blue}
-    @keyframes glitchAnim{0%{transform:translate(2px,2px)}25%{transform:translate(-2px,-2px)}50%{transform:translate(-2px,2px)}75%{transform:translate(2px,-2px)}100%{transform:translate(0)}}
+    #cheater-overlay.style-defilement .cheater-card {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      flex-direction: row;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      transform: none;
+      animation: slideDown .5s ease forwards;
+      align-items: center;
+      justify-content: flex-start
+    }
 
-    #cheater-overlay.style-notification{background:transparent;backdrop-filter:none;justify-content:flex-end;align-items:flex-start;padding:4vmin}
-    #cheater-overlay.style-notification .cheater-card{width:50vmin;padding:4vmin;transform:translateX(60vmin);animation:notifIn .5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards}
-    @keyframes notifIn{to{transform:translateX(0)}}
+    .ticker-badge {
+      background: #ffcc00;
+      color: black;
+      font-size: 2.8vmin;
+      font-weight: 900;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      padding: 0 4vmin;
+      margin: 0;
+      letter-spacing: 0.3vmin;
+      z-index: 2;
+      box-shadow: 10px 0 25px rgba(0, 0, 0, 0.4);
+      gap: 1.5vmin;
+      flex-shrink: 0
+    }
 
-    #cheater-overlay.style-pulsation{background:rgba(255,0,0,0.2);animation:pulseRed 1s infinite alternate}
-    @keyframes pulseRed{from{box-shadow:inset 0 0 100px rgba(255,0,0,0.3)}to{box-shadow:inset 0 0 250px rgba(255,0,0,0.8)}}
+    .ticker-dot {
+      width: 1.5vmin;
+      height: 1.5vmin;
+      background: #b40000;
+      border-radius: 50%;
+      animation: pulseDot .8s infinite alternate
+    }
 
-    #cheater-overlay.style-danger{background:repeating-linear-gradient(45deg, #000, #000 4vmin, #ffcc00 4vmin, #ffcc00 8vmin);padding:4vmin}
-    #cheater-overlay.style-danger .cheater-card{background:#000;border:1vmin solid #ffcc00}
-    #cheater-overlay.style-danger .cheater-header{color:#ffcc00}
-    #cheater-overlay.style-danger .cheater-penalty-badge{background:#ffcc00;color:#000}
-    
-    #cheater-overlay.style-cinema { background: transparent; backdrop-filter: none; }
-    #cheater-overlay.style-cinema::before, #cheater-overlay.style-cinema::after { content: ''; position: fixed; left: 0; right: 0; height: 15vh; background: #000; z-index: 100001; transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
-    #cheater-overlay.style-cinema::before { top: 0; transform: translateY(-100%); }
-    #cheater-overlay.style-cinema::after { bottom: 0; transform: translateY(100%); }
-    #cheater-overlay.style-cinema.visible::before, #cheater-overlay.style-cinema.visible::after { transform: translateY(0); }
-    #cheater-overlay.style-cinema .cheater-card { border: none; background: rgba(26,26,58,0.95); box-shadow: 0 0 100px rgba(255,0,0,0.5); }
+    #cheater-overlay.style-defilement .cheater-name-big {
+      font-size: 4.5vmin;
+      font-weight: 800;
+      margin: 0;
+      white-space: nowrap;
+      animation: marqueePremium 12s linear infinite;
+      padding-left: 100%;
+      flex: 1;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      will-change: transform
+    }
 
-    #cheater-overlay.style-flash-classement { background: transparent; backdrop-filter: none; }
-    #cheater-overlay.style-flash-classement.visible ~ #leaderboard { animation: flashRed 0.5s infinite; }
-    @keyframes flashRed { 0%, 100% { background: rgba(26,26,58,.95); } 50% { background: rgba(255, 0, 0, 0.8); transform: scale(1.02); } }
+    #cheater-overlay.style-defilement .cheater-info,
+    #cheater-overlay.style-defilement .cheater-penalty-badge,
+    #cheater-overlay.style-defilement .cheater-header {
+      display: none
+    }
 
-    @keyframes popIn{from{transform:scale(0.8);opacity:0}to{transform:scale(1);opacity:1}}
-    @keyframes scan{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
-    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-    
+    @keyframes marqueePremium {
+      0% {
+        transform: translate3d(0, 0, 0)
+      }
+
+      100% {
+        transform: translate3d(-250%, 0, 0)
+      }
+    }
+
+    @keyframes pulseDot {
+      from {
+        opacity: 0.3;
+        transform: scale(0.8)
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1.1)
+      }
+    }
+
+    @keyframes slideDown {
+      from {
+        transform: translate3d(0, -100%, 0)
+      }
+
+      to {
+        transform: translate3d(0, 0, 0)
+      }
+    }
+
+    #cheater-overlay.style-glitch .cheater-card {
+      background: black;
+      border-color: cyan;
+      animation: glitchAnim .2s infinite
+    }
+
+    #cheater-overlay.style-glitch .cheater-header {
+      color: magenta;
+      text-shadow: 2px 0 red, -2px 0 blue
+    }
+
+    @keyframes glitchAnim {
+      0% {
+        transform: translate(2px, 2px)
+      }
+
+      25% {
+        transform: translate(-2px, -2px)
+      }
+
+      50% {
+        transform: translate(-2px, 2px)
+      }
+
+      75% {
+        transform: translate(2px, -2px)
+      }
+
+      100% {
+        transform: translate(0)
+      }
+    }
+
+    #cheater-overlay.style-notification {
+      background: transparent;
+      backdrop-filter: none;
+      justify-content: flex-end;
+      align-items: flex-start;
+      padding: 4vmin
+    }
+
+    #cheater-overlay.style-notification .cheater-card {
+      width: 50vmin;
+      padding: 4vmin;
+      transform: translateX(60vmin);
+      animation: notifIn .5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards
+    }
+
+    @keyframes notifIn {
+      to {
+        transform: translateX(0)
+      }
+    }
+
+    #cheater-overlay.style-pulsation {
+      background: rgba(255, 0, 0, 0.2);
+      animation: pulseRed 1s infinite alternate
+    }
+
+    @keyframes pulseRed {
+      from {
+        box-shadow: inset 0 0 100px rgba(255, 0, 0, 0.3)
+      }
+
+      to {
+        box-shadow: inset 0 0 250px rgba(255, 0, 0, 0.8)
+      }
+    }
+
+    #cheater-overlay.style-danger {
+      background: repeating-linear-gradient(45deg, #000, #000 4vmin, #ffcc00 4vmin, #ffcc00 8vmin);
+      padding: 4vmin
+    }
+
+    #cheater-overlay.style-danger .cheater-card {
+      background: #000;
+      border: 1vmin solid #ffcc00
+    }
+
+    #cheater-overlay.style-danger .cheater-header {
+      color: #ffcc00
+    }
+
+    #cheater-overlay.style-danger .cheater-penalty-badge {
+      background: #ffcc00;
+      color: #000
+    }
+
+    #cheater-overlay.style-cinema {
+      background: transparent;
+      backdrop-filter: none;
+    }
+
+    #cheater-overlay.style-cinema::before,
+    #cheater-overlay.style-cinema::after {
+      content: '';
+      position: fixed;
+      left: 0;
+      right: 0;
+      height: 15vh;
+      background: #000;
+      z-index: 100001;
+      transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    #cheater-overlay.style-cinema::before {
+      top: 0;
+      transform: translateY(-100%);
+    }
+
+    #cheater-overlay.style-cinema::after {
+      bottom: 0;
+      transform: translateY(100%);
+    }
+
+    #cheater-overlay.style-cinema.visible::before,
+    #cheater-overlay.style-cinema.visible::after {
+      transform: translateY(0);
+    }
+
+    #cheater-overlay.style-cinema .cheater-card {
+      border: none;
+      background: rgba(26, 26, 58, 0.95);
+      box-shadow: 0 0 100px rgba(255, 0, 0, 0.5);
+    }
+
+    #cheater-overlay.style-flash-classement {
+      background: transparent;
+      backdrop-filter: none;
+    }
+
+    #cheater-overlay.style-flash-classement.visible~#leaderboard {
+      animation: flashRed 0.5s infinite;
+    }
+
+    @keyframes flashRed {
+
+      0%,
+      100% {
+        background: rgba(26, 26, 58, .95);
+      }
+
+      50% {
+        background: rgba(255, 0, 0, 0.8);
+        transform: scale(1.02);
+      }
+    }
+
+    @keyframes popIn {
+      from {
+        transform: scale(0.8);
+        opacity: 0
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1
+      }
+    }
+
+    @keyframes scan {
+      0% {
+        transform: translateX(-100%)
+      }
+
+      100% {
+        transform: translateX(100%)
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
     cast-media-player {
-      position: fixed; inset: 0; z-index: 5;
-      opacity: 0; transition: opacity 0.8s ease;
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      opacity: 0;
+      transition: opacity 0.8s ease;
       --theme-hue: 200;
       background: var(--bg);
     }
-    body.video-revealed cast-media-player { opacity: 1; z-index: 100 !important; }
-    body.video-revealed #player { display: none !important; }
-    body.video-revealed #ambient { display: none !important; }
-    
-    #media-element {
-        width: 100% !important;
-        height: 100% !important;
-        object-fit: contain !important;
+
+    body.video-revealed cast-media-player {
+      opacity: 1;
+      z-index: 100 !important;
     }
-    
-    #category-persistent.visible { opacity: 1; }
-    
+
+    body.video-revealed #player {
+      display: none !important;
+    }
+
+    body.video-revealed #ambient {
+      display: none !important;
+    }
+
+    #media-element {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain !important;
+    }
+
+    #category-persistent.visible {
+      opacity: 1;
+    }
+
     #debug-log {
-      position: fixed; bottom: 2vmin; left: 2vmin;
-      z-index: 100000; background: rgba(0,0,0,0.7);
-      color: #0f0; font-family: monospace; font-size: 1.2vmin;
-      padding: 1vmin; border-radius: 1vmin;
-      max-width: 40vw; max-height: 20vh; overflow-y: auto;
-      pointer-events: none; display: none;
+      position: fixed;
+      bottom: 2vmin;
+      left: 2vmin;
+      z-index: 100000;
+      background: rgba(0, 0, 0, 0.7);
+      color: #0f0;
+      font-family: monospace;
+      font-size: 1.2vmin;
+      padding: 1vmin;
+      border-radius: 1vmin;
+      max-width: 40vw;
+      max-height: 20vh;
+      overflow-y: auto;
+      pointer-events: none;
+      display: none;
     }
   </style>
 </head>
+
 <body>
   <div id="ambient"></div>
   <div id="splash">
     <h1 id="splash-text">QWIZZ</h1>
     <img id="splash-logo">
-    <div style="width:5vmin;height:5vmin;border:0.5vmin solid rgba(0,168,255,0.2);border-top-color:var(--blue);border-radius:50%;animation:rotate 1s linear infinite;margin-top:2vmin"></div>
+    <div
+      style="width:5vmin;height:5vmin;border:0.5vmin solid rgba(0,168,255,0.2);border-top-color:var(--blue);border-radius:50%;animation:rotate 1s linear infinite;margin-top:2vmin">
+    </div>
     <p id="splash-status" style="font-size:1.5rem;opacity:0.6;margin-top:2vmin">Connexion...</p>
   </div>
   <div id="idle">
     <div class="idle-content">
       <img id="idle-logo" class="idle-logo">
       <div class="idle-title" id="idle-title-text" style="display:block">PRÊT À QWIZZER ?</div>
-      <div class="idle-sub" style="font-size:2rem;color:rgba(255,255,255,.4);margin-top:2rem">En attente du début de la partie...</div>
+      <div class="idle-sub" style="font-size:2rem;color:rgba(255,255,255,.4);margin-top:2rem">En attente du début de la
+        partie...</div>
     </div>
   </div>
   <div id="player">
@@ -203,24 +1007,40 @@
         <img id="cover">
       </div>
     </div>
-    <div style="display:flex;flex-direction:column;justify-content:center"><div class="track-title" id="track-title"></div><div class="track-artist" id="track-artist"></div></div>
+    <div style="display:flex;flex-direction:column;justify-content:center">
+      <div class="track-title" id="track-title"></div>
+      <div class="track-artist" id="track-artist"></div>
+    </div>
   </div>
-  <div id="leaderboard" class="mode-full hidden"><div class="lb-title">🏆 Classement</div><div id="lb-list" style="width:100%"></div></div>
-  <div id="qr-overlay"><div style="font-size:2rem;color:var(--blue);font-weight:900;margin-bottom:1.5vmin">Scanner pour Rejoindre</div><img id="qr-img"></div>
-  <div id="pause-overlay"><h1>PAUSE</h1><div id="pause-msg" style="font-size:3rem;max-width:80vw;line-height:1.4"></div></div>
+  <div id="leaderboard" class="mode-full hidden">
+    <div class="lb-title">🏆 Classement</div>
+    <div id="lb-list" style="width:100%"></div>
+  </div>
+  <div id="qr-overlay">
+    <div style="font-size:2rem;color:var(--blue);font-weight:900;margin-bottom:1.5vmin">Scanner pour Rejoindre</div><img
+      id="qr-img">
+  </div>
+  <div id="pause-overlay">
+    <h1>PAUSE</h1>
+    <div id="pause-msg" style="font-size:3rem;max-width:80vw;line-height:1.4"></div>
+  </div>
   <div id="rules-overlay">
     <div class="rules-card">
-        <h1 id="rules-mode" class="rules-mode-name">MODE</h1>
-        <p id="rules-text" class="rules-description"></p>
+      <h1 id="rules-mode" class="rules-mode-name">MODE</h1>
+      <p id="rules-text" class="rules-description"></p>
     </div>
   </div>
   <div id="category-overlay">
     <div class="category-card">
-        <img id="category-img" class="category-image" style="display:none">
-        <h1 id="category-name-display" class="category-name-big">CATEGORY</h1>
+      <img id="category-img" class="category-image" style="display:none">
+      <h1 id="category-name-display" class="category-name-big">CATEGORY</h1>
     </div>
   </div>
-  <div id="podium-overlay"><div class="logo-area" style="display:block"><img id="podium-logo"></div><h1 id="podium-title">CLASSEMENT FINAL</h1><div class="podium-container" id="podium-steps"></div></div>
+  <div id="podium-overlay">
+    <div class="logo-area" style="display:block"><img id="podium-logo"></div>
+    <h1 id="podium-title">CLASSEMENT FINAL</h1>
+    <div class="podium-container" id="podium-steps"></div>
+  </div>
   <div id="cheater-overlay">
     <div class="cheater-card">
       <div class="cheater-header">ALERTE TRICHE</div>
@@ -234,342 +1054,363 @@
   <cast-media-player></cast-media-player>
   <div id="debug-log"></div>
 
-<script>
-// LEGACY GLOBAL VARIABLES
-var serverURL = '';
-var appState = { showCheaterStatus: true, revealAnim: 'random', mute: false };
-var isAnimating = false;
-var hasTrack = false;
-var currentTrackData = null;
+  <script>
+    // LEGACY GLOBAL VARIABLES
+    var serverURL = '';
+    var appState = { showCheaterStatus: true, revealAnim: 'random', mute: false };
+    var isAnimating = false;
+    var hasTrack = false;
+    var currentTrackData = null;
 
-function log(m) {
-  var l = document.getElementById('debug-log');
-  if (!l) return;
-  var d = document.createElement('div');
-  d.textContent = '[' + new Date().toLocaleTimeString() + '] ' + m;
-  l.appendChild(d);
-  l.scrollTop = l.scrollHeight;
-  console.log(m);
-}
-
-// FORCE DEBUG LOG VISIBLE IMMEDIATELY
-document.getElementById('debug-log').style.display = 'block';
-document.getElementById('splash-status').innerText = "Initialisation ES5...";
-
-var castCtx, playerManager;
-try {
-  castCtx = cast.framework.CastReceiverContext.getInstance();
-  playerManager = castCtx.getPlayerManager();
-  log("Cast SDK objects acquired");
-} catch (e) {
-  log("FATAL INIT ERROR: " + (e.message || e));
-  document.getElementById('splash-status').innerText = "ERREUR: " + (e.message || e);
-}
-
-function revealCover(){
-  log("Reveal requested");
-  var i = document.getElementById('cover');
-  var b = document.getElementById('cover-blurred');
-  if(i && currentTrackData && currentTrackData.cover_clear){
-    var fullClear = currentTrackData.cover_clear.indexOf('http') === 0 ? currentTrackData.cover_clear : (serverURL + currentTrackData.cover_clear);
-    i.src = fullClear + (fullClear.indexOf('?') !== -1 ? '&' : '?') + Date.now();
-    i.style.opacity = '1';
-    if(b) b.style.opacity = '0';
-    i.style.transform = 'scale(1.05)';
-    setTimeout(function(){ i.style.transform='scale(1)'; }, 300);
-  } else {
-    log("REVEAL: video only");
-    document.body.classList.add('video-revealed');
-  }
-}
-
-function setMute(m){
-  appState.mute = m;
-  log("SET_MUTE: " + m);
-  castCtx.setSystemVolume({ muted: m, level: m ? 0.0 : 1.0 });
-  if (playerManager) {
-    var el = playerManager.getMediaElement();
-    if (el) {
-       el.muted = m;
-       el.volume = m ? 0.0 : 1.0;
+    function log(m) {
+      var l = document.getElementById('debug-log');
+      if (!l) return;
+      var d = document.createElement('div');
+      d.textContent = '[' + new Date().toLocaleTimeString() + '] ' + m;
+      l.appendChild(d);
+      l.scrollTop = l.scrollHeight;
+      console.log(m);
     }
-  }
-}
 
-function initS(u){
-  if (!u || u === serverURL) return;
-  serverURL = u;
-  log("SERVER URL SYNC: " + u);
-  
-  document.getElementById('splash').classList.add('hidden');
-  document.getElementById('splash-status').innerText = "Connecté à l'iPad";
-  
-  var ids = ['splash-logo','idle-logo','logo-img','podium-logo'];
-  for (var k=0; k<ids.length; k++) {
-    (function(id) {
-       var el = document.getElementById(id);
-       if (!el) return;
-       el.onload = function() {
-           el.style.display = 'block';
-           if(id === 'splash-logo') document.getElementById('splash-text').style.display = 'none';
-           if(id === 'idle-logo') document.getElementById('idle-title-text').style.display = 'block';
-       };
-       el.src = u + '/tv_logo?' + Date.now();
-    })(ids[k]);
-  }
-  startPoll();
-}
+    // FORCE DEBUG LOG VISIBLE IMMEDIATELY
+    document.getElementById('debug-log').style.display = 'block';
+    document.getElementById('splash-status').innerText = "Initialisation ES5...";
 
-var lastCategoryTime = 0;
-
-function handle(d){
-  if (!d) return;
-  
-  // 1. Handle Full State Snapshot (Polling)
-  if (d.players) renderLB(d.players);
-  if (d.track) updateT(d.track);
-  if (d.isPaused !== undefined) toggleP({ data: d.isPaused, pauseMessage: d.pauseMessage });
-  
-  // 1.5 Handle Polled Events (Category)
-  if (d.category_event && d.category_event.timestamp > lastCategoryTime) {
-    lastCategoryTime = d.category_event.timestamp;
-    showCat(d.category_event.name, d.category_event.hasImage, d.category_event.imageURL, d.category_event.showName, d.category_event.duration);
-  }
-  
-  // 2. Handle Discrete Events (WebSocket / Control Channel)
-  if(d.type==='appearance') applyA(d.data);
-  else if(d.type==='track_update') updateT(d);
-  else if(d.type==='leaderboard') renderLB(d.players);
-  else if(d.type==='show_qr') toggleQR(d);
-  else if(d.type==='isPaused') toggleP(d);
-  else if(d.type==='end_game') showPodium(d.data);
-  else if(d.type==='mode_switch') showRules(d.mode, d.rules);
-  else if(d.type==='category_transition' && d.timestamp > lastCategoryTime) {
-    lastCategoryTime = d.timestamp;
-    showCat(d.name, d.hasImage, d.imageURL, d.showName, d.duration);
-  }
-  else if(d.type==='cheater_alert') showCheater(d.name, d.penalty, d.style);
-  
-  // 3. Global properties
-  if (d.reveal === true) revealCover();
-  if (d.mute !== undefined) setMute(d.mute);
-  if (d.showCategoryPermanently !== undefined) {
-    var cp = document.getElementById('category-persistent');
-    if (d.showCategoryPermanently) cp.classList.add('visible');
-    else cp.classList.remove('visible');
-  }
-}
-
-function applyA(d){
-  var r = document.documentElement;
-  if(d.tvBackgroundColor) r.style.setProperty('--bg', d.tvBackgroundColor);
-  if(d.qrSize) r.style.setProperty('--qr-size', d.qrSize + 'px');
-  if(d.qrPosition){
-    var q = document.getElementById('qr-overlay');
-    q.className = 'pos-' + d.qrPosition + (q.classList.contains('visible') ? ' visible' : '');
-  }
-  if(d.showCheaterStatus !== undefined) appState.showCheaterStatus = d.showCheaterStatus;
-  if(d.scoreRevealAnimation) appState.revealAnim = d.scoreRevealAnimation;
-  var lb = document.getElementById('leaderboard');
-  if(d.scoreAnimationMode){
-    lb.classList.remove('mode-full','mode-bottom-right');
-    lb.classList.add('mode-' + d.scoreAnimationMode);
-  }
-  if(d.showScores === true){
-      lb.style.display = (d.scoreAnimationMode === 'bottom-right') ? 'block' : 'flex';
-      lb.classList.remove('hidden');
-  } else if(d.showScores === false){
-      lb.style.display = 'none';
-      lb.classList.add('hidden');
-  }
-}
-
-function updateT(d){
-  if (!d || (d.trackID === "" && !d.title)) {
-    // Return to idle if track is empty
-    document.getElementById('idle').classList.remove('gone');
-    document.getElementById('player').classList.remove('visible');
-    return;
-  }
-  
-  currentTrackData = d;
-  hasTrack = true;
-  document.getElementById('category-overlay').classList.remove('visible');
-  document.getElementById('idle').classList.add('gone');
-  document.getElementById('podium-overlay').classList.remove('visible');
-  document.getElementById('player').classList.add('visible');
-  document.getElementById('main-logo-wrap').classList.remove('hidden');
-  document.body.classList.remove('video-revealed');
-  
-  var catP = document.getElementById('category-persistent');
-  if (d.showCategoryPermanently && d.category) {
-    catP.textContent = d.category;
-    catP.classList.add('visible');
-  } else {
-    catP.classList.remove('visible');
-  }
-
-  document.getElementById('track-title').textContent = d.title;
-  document.getElementById('track-artist').textContent = d.artist;
-  
-  var i = document.getElementById('cover');
-  var b = document.getElementById('cover-blurred');
-  var p = document.getElementById('cover-placeholder');
-  
-  if(d.cover){
-    var fullSrc = d.cover.indexOf('http') === 0 ? d.cover : (serverURL + d.cover);
-    var timestamped = fullSrc + (fullSrc.indexOf('?') !== -1 ? '&' : '?') + Date.now();
-    
-    // If it's blurred, show blurred layer and hide net layer
-    if(d.shouldBlur){
-      if(b){ 
-        b.src = timestamped; 
-        b.onload = function() { b.style.opacity = '1'; p.style.display = 'none'; };
-      }
-      if(i) i.style.opacity = '0';
-    } else {
-      // Direct net display
-      if(i){ 
-        i.src = timestamped; 
-        i.onload = function() { i.style.opacity = '1'; p.style.display = 'none'; };
-      }
-      if(b) b.style.opacity = '0';
+    var castCtx, playerManager;
+    try {
+      castCtx = cast.framework.CastReceiverContext.getInstance();
+      playerManager = castCtx.getPlayerManager();
+      log("Cast SDK objects acquired");
+    } catch (e) {
+      log("FATAL INIT ERROR: " + (e.message || e));
+      document.getElementById('splash-status').innerText = "ERREUR: " + (e.message || e);
     }
-  } else {
-    p.style.display = 'flex';
-    if(i) { i.src = ""; i.style.opacity = '0'; }
-    if(b) { b.src = ""; b.style.opacity = '0'; }
+
+    function revealCover() {
+      log("Reveal requested");
+      var i = document.getElementById('cover');
+      var b = document.getElementById('cover-blurred');
+      if (i && currentTrackData && currentTrackData.cover_clear) {
+        var fullClear = currentTrackData.cover_clear.indexOf('http') === 0 ? currentTrackData.cover_clear : (serverURL + currentTrackData.cover_clear);
+        i.src = fullClear + (fullClear.indexOf('?') !== -1 ? '&' : '?') + Date.now();
+        i.style.opacity = '1';
+        if (b) b.style.opacity = '0';
+        i.style.transform = 'scale(1.05)';
+        setTimeout(function () { i.style.transform = 'scale(1)'; }, 300);
+      } else {
+        log("REVEAL: video only");
+        document.body.classList.add('video-revealed');
+      }
+    }
+
+    function setMute(m) {
+      appState.mute = m;
+      log("SET_MUTE: " + m);
+      castCtx.setSystemVolume({ muted: m, level: m ? 0.0 : 1.0 });
+      if (playerManager) {
+        var el = playerManager.getMediaElement();
+        if (el) {
+          el.muted = m;
+          el.volume = m ? 0.0 : 1.0;
+        }
+      }
+    }
+
+    function initS(u) {
+      if (!u || u === serverURL) return;
+      serverURL = u;
+      log("SERVER URL SYNC: " + u);
+
+      document.getElementById('splash').classList.add('hidden');
+      document.getElementById('splash-status').innerText = "Connecté à l'iPad";
+
+      var ids = ['splash-logo', 'idle-logo', 'logo-img', 'podium-logo'];
+      for (var k = 0; k < ids.length; k++) {
+        (function (id) {
+          var el = document.getElementById(id);
+          if (!el) return;
+          el.onload = function () {
+            el.style.display = 'block';
+            if (id === 'splash-logo') document.getElementById('splash-text').style.display = 'none';
+            if (id === 'idle-logo') document.getElementById('idle-title-text').style.display = 'block';
+          };
+          el.src = u + '/tv_logo?' + Date.now();
+        })(ids[k]);
+      }
+      startPoll();
+    }
+
+    var lastCategoryTime = 0;
+
+    function handle(d) {
+      if (!d) return;
+
+      // 1. Handle Full State Snapshot (Polling)
+      if (d.players) renderLB(d.players);
+      if (d.track) updateT(d.track);
+      if (d.isPaused !== undefined) toggleP({ data: d.isPaused, pauseMessage: d.pauseMessage });
+
+      // 1.5 Handle Polled Events (Category)
+      if (d.category_event && d.category_event.timestamp > lastCategoryTime) {
+        lastCategoryTime = d.category_event.timestamp;
+        showCat(d.category_event.name, d.category_event.hasImage, d.category_event.imageURL, d.category_event.showName, d.category_event.duration);
+      }
+
+      // 2. Handle Discrete Events (WebSocket / Control Channel)
+      if (d.type === 'appearance') applyA(d.data);
+      else if (d.type === 'track_update') updateT(d);
+      else if (d.type === 'leaderboard') renderLB(d.players);
+      else if (d.type === 'show_qr') toggleQR(d);
+      else if (d.type === 'isPaused') toggleP(d);
+      else if (d.type === 'end_game') showPodium(d.data);
+      else if (d.type === 'mode_switch') showRules(d.mode, d.rules);
+      else if (d.type === 'category_transition' && d.timestamp > lastCategoryTime) {
+        lastCategoryTime = d.timestamp;
+        showCat(d.name, d.hasImage, d.imageURL, d.showName, d.duration);
+      }
+      else if (d.type === 'cheater_alert') showCheater(d.name, d.penalty, d.style);
+
+      // 3. Global properties
+      if (d.reveal === true) revealCover();
+      if (d.mute !== undefined) setMute(d.mute);
+      if (d.showCategoryPermanently !== undefined) {
+        var cp = document.getElementById('category-persistent');
+        if (d.showCategoryPermanently) cp.classList.add('visible');
+        else cp.classList.remove('visible');
+      }
+    }
+
+    function applyA(d) {
+      var r = document.documentElement;
+      if (d.tvBackgroundColor) r.style.setProperty('--bg', d.tvBackgroundColor);
+      if (d.qrSize) r.style.setProperty('--qr-size', d.qrSize + 'px');
+      if (d.qrPosition) {
+        var q = document.getElementById('qr-overlay');
+        q.className = 'pos-' + d.qrPosition + (q.classList.contains('visible') ? ' visible' : '');
+      }
+      if (d.showCheaterStatus !== undefined) appState.showCheaterStatus = d.showCheaterStatus;
+      if (d.scoreRevealAnimation) appState.revealAnim = d.scoreRevealAnimation;
+      var lb = document.getElementById('leaderboard');
+      if (d.scoreAnimationMode) {
+        lb.classList.remove('mode-full', 'mode-bottom-right');
+        lb.classList.add('mode-' + d.scoreAnimationMode);
+      }
+      if (d.showScores === true) {
+        lb.style.display = (d.scoreAnimationMode === 'bottom-right') ? 'block' : 'flex';
+        lb.classList.remove('hidden');
+      } else if (d.showScores === false) {
+        lb.style.display = 'none';
+        lb.classList.add('hidden');
+      }
+    }
+
+    var lastTrackId = null;
+    function updateT(d) {
+      if (!d || (d.trackID === "" && !d.title)) {
+        lastTrackId = null;
+        // Return to idle if track is empty
+        document.getElementById('idle').classList.remove('gone');
+        document.getElementById('player').classList.remove('visible');
+        return;
+      }
+      
+      if (d.trackID === lastTrackId && d.shouldBlur === (currentTrackData ? currentTrackData.shouldBlur : null)) {
+        return;
+      }
+      lastTrackId = d.trackID;
+
+      currentTrackData = d;
+      hasTrack = true;
+      document.getElementById('category-overlay').classList.remove('visible');
+      document.getElementById('idle').classList.add('gone');
+      document.getElementById('podium-overlay').classList.remove('visible');
+      document.getElementById('player').classList.add('visible');
+      document.getElementById('main-logo-wrap').classList.remove('hidden');
+      document.body.classList.remove('video-revealed');
+
+      var catP = document.getElementById('category-persistent');
+      if (d.showCategoryPermanently && d.category) {
+        catP.textContent = d.category;
+        catP.classList.add('visible');
+      } else {
+        catP.classList.remove('visible');
+      }
+
+      document.getElementById('track-title').textContent = d.title;
+      document.getElementById('track-artist').textContent = d.artist;
+
+      var i = document.getElementById('cover');
+      var b = document.getElementById('cover-blurred');
+      var p = document.getElementById('cover-placeholder');
+
+      if (d.cover) {
+        var fullSrc = d.cover.indexOf('http') === 0 ? d.cover : (serverURL + d.cover);
+        var timestamped = fullSrc + (fullSrc.indexOf('?') !== -1 ? '&' : '?') + Date.now();
+
+        // If it's blurred, show blurred layer and hide net layer
+        if (d.shouldBlur) {
+          if (b) {
+            b.src = timestamped;
+            b.onload = function () { b.style.opacity = '1'; p.style.display = 'none'; };
+          }
+          if (i) i.style.opacity = '0';
+        } else {
+          // Direct net display
+          if (i) {
+            i.src = timestamped;
+            i.onload = function () { i.style.opacity = '1'; p.style.display = 'none'; };
+          }
+          if (b) b.style.opacity = '0';
+        }
+      } else {
+        p.style.display = 'flex';
+        if (i) { i.src = ""; i.style.opacity = '0'; }
+        if (b) { b.src = ""; b.style.opacity = '0'; }
+      }
+    }
+
+    function setMute(m) {
+    log("Setting MUTE: " + m);
+    if (window.castReceiverContext) {
+        window.castReceiverContext.setSystemMuted(m);
+    }
+}
+
+function setMute(m) {
+  if (window.castReceiverContext) {
+    window.castReceiverContext.setSystemMuted(m);
   }
 }
 
 function showRules(mode, rules) {
-    var over = document.getElementById('rules-overlay');
-    document.getElementById('rules-mode').innerText = mode;
-    document.getElementById('rules-text').innerText = rules;
-    over.classList.add('visible');
-    setTimeout(function(){ over.classList.remove('visible'); }, 6000);
-}
+      var over = document.getElementById('rules-overlay');
+      document.getElementById('rules-mode').innerText = mode;
+      document.getElementById('rules-text').innerText = rules;
+      over.classList.add('visible');
+      setTimeout(function () { over.classList.remove('visible'); }, 6000);
+    }
 
-function showCat(name, hasImage, imageURL, showName, dur) {
-    var over = document.getElementById('category-overlay');
-    var img = document.getElementById('category-img');
-    var nameDisp = document.getElementById('category-name-display');
-    if (showName === false) nameDisp.style.display = 'none';
-    else { nameDisp.style.display = 'block'; nameDisp.innerText = name; }
-    
-    if (hasImage) {
+    function showCat(name, hasImage, imageURL, showName, dur) {
+      var over = document.getElementById('category-overlay');
+      var img = document.getElementById('category-img');
+      var nameDisp = document.getElementById('category-name-display');
+      if (showName === false) nameDisp.style.display = 'none';
+      else { nameDisp.style.display = 'block'; nameDisp.innerText = name; }
+
+      if (hasImage) {
         var fullURL = (imageURL && imageURL.indexOf('http') === 0) ? imageURL : (serverURL + imageURL);
         img.src = fullURL + '?' + Date.now();
         img.style.display = 'block';
-    } else img.style.display = 'none';
-    
-    over.classList.add('visible');
-    if (window.catTimeout) clearTimeout(window.catTimeout);
-    if (dur && dur > 0) {
-        window.catTimeout = setTimeout(function(){ over.classList.remove('visible'); }, dur * 1000);
+      } else img.style.display = 'none';
+
+      over.classList.add('visible');
+      if (window.catTimeout) clearTimeout(window.catTimeout);
+      if (dur && dur > 0) {
+        window.catTimeout = setTimeout(function () { over.classList.remove('visible'); }, dur * 1000);
+      }
     }
-}
 
-function showCheater(name, penalty, style) {
-    var over = document.getElementById('cheater-overlay');
-    if (!over) return;
-    over.classList.remove('visible');
-    over.className = ''; 
-    void over.offsetWidth; 
-    var styleClass = 'style-' + (style || 'Cinema').toLowerCase();
-    
-    over.innerHTML = '<div class="cheater-card"><div class="cheater-header">ALERTE TRICHE</div><div class="cheater-name-big">' + name + '</div><div class="cheater-info">Sanction confirmée</div><div class="cheater-penalty-badge">-' + penalty + ' pts</div></div>';
-    over.classList.add('visible');
-    over.classList.add(styleClass);
-    
-    if (window.cheaterTimeout) clearTimeout(window.cheaterTimeout);
-    window.cheaterTimeout = setTimeout(function(){ over.classList.remove('visible'); }, 8000);
-}
+    function showCheater(name, penalty, style) {
+      var over = document.getElementById('cheater-overlay');
+      if (!over) return;
+      over.classList.remove('visible');
+      over.className = '';
+      void over.offsetWidth;
+      var styleClass = 'style-' + (style || 'Cinema').toLowerCase();
 
-function renderLB(p){
-  if(isAnimating) return;
-  var l = document.getElementById('lb-list');
-  var s = p.sort(function(a,b){return b.score-a.score}).slice(0,10);
-  l.innerHTML = s.map(function(x,i){
-    var c = x.isCheating && appState.showCheaterStatus;
-    return '<div class="lb-row ' + (c?'cheater':'') + '" style="opacity:1"><span class="lb-rank">' + (i+1) + '</span><span class="lb-name">' + esc(x.name) + (c?' ⚠️ TRICHE':'') + '</span><span class="lb-score">' + x.score + ' pts</span></div>';
-  }).join('');
-}
+      over.innerHTML = '<div class="cheater-card"><div class="cheater-header">ALERTE TRICHE</div><div class="cheater-name-big">' + name + '</div><div class="cheater-info">Sanction confirmée</div><div class="cheater-penalty-badge">-' + penalty + ' pts</div></div>';
+      over.classList.add('visible');
+      over.classList.add(styleClass);
 
-function toggleQR(d){
-  var q = document.getElementById('qr-overlay');
-  if(d.show){
-    var qrTarget = d.url || serverURL;
-    document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=' + encodeURIComponent(qrTarget);
-    q.classList.add('visible');
-  } else q.classList.remove('visible');
-}
-
-function toggleP(d){
-  var o = document.getElementById('pause-overlay');
-  if(d.data){ o.classList.add('visible'); document.getElementById('pause-msg').textContent = d.pauseMessage; }
-  else o.classList.remove('visible');
-}
-
-function showPodium(data) {
-  var over = document.getElementById('podium-overlay');
-  var container = document.getElementById('podium-steps');
-  over.classList.add('visible');
-  container.innerHTML = '<div class="podium-step">Podium prêt</div>'; // Simplified for diagnostic
-}
-
-function startPoll(){
-  function doPoll(){
-    if(!serverURL) return;
-    fetch(serverURL + '/tv_state')
-      .then(function(r){ return r.json(); })
-      .then(function(s){ handle(s); })
-      .catch(function(e){})
-      .finally(function(){ setTimeout(doPoll, 1000); });
-  }
-  doPoll();
-}
-
-function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-
-// REGISTRATION
-if (playerManager) {
-  playerManager.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, function(req) {
-    log("LOAD Event detected");
-    
-    // Sync Server URL from customData immediately
-    if (req.media && req.media.customData && req.media.customData.serverURL) {
-      initS(req.media.customData.serverURL);
+      if (window.cheaterTimeout) clearTimeout(window.cheaterTimeout);
+      window.cheaterTimeout = setTimeout(function () { over.classList.remove('visible'); }, 8000);
     }
-    
-    // UI Jump-start: Hide idle screens immediately because we're loading a track
-    document.getElementById('splash').classList.add('hidden');
-    document.getElementById('idle').classList.add('gone');
-    
-    if (req.media && req.media.metadata) {
-      var meta = req.media.metadata;
-      document.getElementById('track-title').textContent = meta.title || "";
-      document.getElementById('track-artist').textContent = meta.artist || "";
-      document.getElementById('player').classList.add('visible');
-      document.getElementById('main-logo-wrap').classList.remove('hidden');
-      log("Jump-started UI from meta: " + (meta.title || "No Title"));
+
+    function renderLB(p) {
+      if (isAnimating) return;
+      var l = document.getElementById('lb-list');
+      var s = p.sort(function (a, b) { return b.score - a.score }).slice(0, 10);
+      l.innerHTML = s.map(function (x, i) {
+        var c = x.isCheating && appState.showCheaterStatus;
+        return '<div class="lb-row ' + (c ? 'cheater' : '') + '" style="opacity:1"><span class="lb-rank">' + (i + 1) + '</span><span class="lb-name">' + esc(x.name) + (c ? ' ⚠️ TRICHE' : '') + '</span><span class="lb-score">' + x.score + ' pts</span></div>';
+      }).join('');
     }
-    
-    return req;
-  });
 
-  castCtx.addCustomMessageListener('urn:x-cast:com.qwizz.control', function(e) {
-    log("Control Message: " + JSON.stringify(e.data));
-    if (e.data && e.data.serverURL) initS(e.data.serverURL);
-    else handle(e.data);
-  });
+    function toggleQR(d) {
+      var q = document.getElementById('qr-overlay');
+      if (d.show) {
+        var qrTarget = d.url || serverURL;
+        document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=' + encodeURIComponent(qrTarget);
+        q.classList.add('visible');
+      } else q.classList.remove('visible');
+    }
 
-  var opt = new cast.framework.CastReceiverOptions();
-  opt.maxInactivity = 86400;
-  log("Starting Cast Context...");
-  castCtx.start(opt);
-  log("Cast Context STARTED");
-}
-</script>
+    function toggleP(d) {
+      var o = document.getElementById('pause-overlay');
+      if (d.data) { o.classList.add('visible'); document.getElementById('pause-msg').textContent = d.pauseMessage; }
+      else o.classList.remove('visible');
+    }
+
+    function showPodium(data) {
+      var over = document.getElementById('podium-overlay');
+      var container = document.getElementById('podium-steps');
+      over.classList.add('visible');
+      container.innerHTML = '<div class="podium-step">Podium prêt</div>'; // Simplified for diagnostic
+    }
+
+    function startPoll() {
+      function doPoll() {
+        if (!serverURL) return;
+        fetch(serverURL + '/tv_state')
+          .then(function (r) { return r.json(); })
+          .then(function (s) { handle(s); })
+          .catch(function (e) { })
+          .finally(function () { setTimeout(doPoll, 5000); });
+      }
+      doPoll();
+    }
+
+    function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') }
+
+    // REGISTRATION
+    if (playerManager) {
+      playerManager.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, function (req) {
+        log("LOAD Event detected");
+
+        // Sync Server URL from customData immediately
+        if (req.media && req.media.customData && req.media.customData.serverURL) {
+          initS(req.media.customData.serverURL);
+        }
+
+        // UI Jump-start: Hide idle screens immediately because we're loading a track
+        document.getElementById('splash').classList.add('hidden');
+        document.getElementById('idle').classList.add('gone');
+
+        if (req.media && req.media.metadata) {
+          var meta = req.media.metadata;
+          document.getElementById('track-title').textContent = meta.title || "";
+          document.getElementById('track-artist').textContent = meta.artist || "";
+          document.getElementById('player').classList.add('visible');
+          document.getElementById('main-logo-wrap').classList.remove('hidden');
+          log("Jump-started UI from meta: " + (meta.title || "No Title"));
+        }
+
+        return req;
+      });
+
+      castCtx.addCustomMessageListener('urn:x-cast:com.qwizz.control', function (e) {
+        log("Control Message: " + JSON.stringify(e.data));
+        if (e.data && e.data.serverURL) initS(e.data.serverURL);
+        else handle(e.data);
+      });
+
+      var opt = new cast.framework.CastReceiverOptions();
+      opt.maxInactivity = 86400;
+      log("Starting Cast Context...");
+      castCtx.start(opt);
+      log("Cast Context STARTED");
+    }
+  </script>
 </body>
+
 </html>
