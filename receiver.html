@@ -223,16 +223,17 @@
   <div id="debug-log"></div>
 
 <script>
-var castCtx=cast.framework.CastReceiverContext.getInstance(),
-    serverURL='',
+var castCtx = cast.framework.CastReceiverContext.getInstance(),
+    serverURL = '',
     socket,
-    appState={showCheaterStatus:true,revealAnim:'random', mute: false},
-    isAnimating=false,
-    hasTrack=false,
-    currentTrackData=null;
+    appState = { showCheaterStatus: true, revealAnim: 'random', mute: false },
+    isAnimating = false,
+    hasTrack = false,
+    currentTrackData = null;
 
 function log(m) {
   const l = document.getElementById('debug-log');
+  if (!l) return;
   const d = document.createElement('div');
   d.textContent = `[${new Date().toLocaleTimeString()}] ${m}`;
   l.appendChild(d);
@@ -240,121 +241,74 @@ function log(m) {
   console.log(m);
 }
 
-// Show debug log if requested (or keep it hidden by default)
-// To show: window.document.getElementById('debug-log').style.display = 'block';
-
-castCtx.addCustomMessageListener('urn:x-cast:com.qwizz.control',e=>{
-  log("Custom message received: " + JSON.stringify(e.data));
-  if(e.data&&e.data.serverURL)initS(e.data.serverURL);
-  if(e.data&&e.data.type==='reveal'){
-    revealCover();
-  }
-  if(e.data&&e.data.type==='mute'){
-    setMute(e.data.value);
-  }
-  if(e.data&&e.data.type==='debug'){
-    document.getElementById('debug-log').style.display = e.data.show ? 'block' : 'none';
-  }
-});
-
-function revealCover(){
-  log("Reveal requested");
-  document.body.classList.add('video-revealed');
-  var i=document.getElementById('cover');
-  if(i && currentTrackData && currentTrackData.cover_clear){
-    var fullClear = currentTrackData.cover_clear.startsWith('http') ? currentTrackData.cover_clear : (serverURL + currentTrackData.cover_clear);
-    i.src = fullClear + (fullClear.includes('?')?'&':'?') + Date.now();
-    i.style.filter = 'none';
-    i.style.transform = 'scale(1.05)';
-    setTimeout(()=>i.style.transform='scale(1)', 300);
-  }
-}
-
-function setMute(m){
-  appState.mute = m;
-  log("SET_MUTE: Request=" + m);
-  
-  // Set system volume (Muted status + Volume level)
-  castCtx.setSystemVolume({
-    muted: m,
-    level: m ? 0.0 : 1.0
-  });
-  
-  // Also force on the element
-  const playerManager = castCtx.getPlayerManager();
-  if (playerManager) {
-    const el = playerManager.getMediaElement();
-    if (el) {
-       el.muted = m;
-       el.volume = m ? 0.0 : 1.0;
-       log("Element: Muted=" + el.muted + " | Volume=" + el.volume);
-    }
-    
-    // Check global status
-    const status = castCtx.getDeviceVolume();
-    if (status) {
-       log("Device Global Volume: " + status.level + " | Muted: " + status.muted);
-    }
-  }
-}
+// FORCE DEBUG LOG VISIBLE
+document.getElementById('debug-log').style.display = 'block';
 
 const options = new cast.framework.CastReceiverOptions();
 options.maxInactivity = 86400; // 24h
 
 const playerManager = castCtx.getPlayerManager();
 
-// Intercept LOAD to handle initial mute state
+// Intercept LOAD - ULTIMATE SIMPLICITY
 playerManager.setMessageInterceptor(
   cast.framework.messages.MessageType.LOAD,
   loadRequestData => {
     const media = loadRequestData.media || {};
     const url = media.contentId || media.contentUrl || "NOT_FOUND";
-    log("LOAD URL: " + url);
-    if (url === "NOT_FOUND") {
-      log("Media Keys: " + Object.keys(media).join(', '));
-    }
+    log("LOAD URL RECEIVED: " + url);
+    
+    // Force visibility immediately
+    document.getElementById('splash').classList.add('hidden');
+    document.getElementById('idle').classList.add('gone');
+    document.body.classList.add('video-revealed');
+    
     if (loadRequestData.media && loadRequestData.media.customData) {
       if (loadRequestData.media.customData.mute !== undefined) {
-        const m = loadRequestData.media.customData.mute;
-        log("Initial mute from customData: " + m);
-        setMute(m);
+        appState.mute = loadRequestData.media.customData.mute;
+        setMute(appState.mute);
       }
     }
     return loadRequestData;
   }
 );
 
-// Reactive muting and video visibility enforcement
+// Listeners BEFORE start()
 playerManager.addEventListener(cast.framework.events.EventType.PLAYER_STATE_CHANGED, e => {
   log("Player state: " + e.value);
-  if (appState.mute) {
-     setMute(true);
+  if (e.value === 'BUFFERING' || e.value === 'PLAYING') {
+      document.getElementById('splash').classList.add('hidden');
+      document.getElementById('idle').classList.add('gone');
   }
+  if (appState.mute) setMute(true);
 });
 
-// Global error and status listeners
 playerManager.addEventListener(cast.framework.events.EventType.ERROR, e => {
   log("PLAYER ERROR: " + e.detailedErrorCode);
   if (e.error) log("Detail: " + JSON.stringify(e.error));
 });
 
 playerManager.addEventListener(cast.framework.events.EventType.MEDIA_STATUS_CHANGED, e => {
-  const media = playerManager.getMediaInformation();
   const status = playerManager.getPlayerState();
   log("Media Status: " + status);
-  
-  if (appState.mute) {
-     setMute(true);
-  }
-  
-  if (media && media.contentType && media.contentType.includes('video')) {
-    log("Video detected (" + media.contentType + ")");
+  if (status === 'PLAYING') {
+    document.body.classList.add('video-revealed');
+    document.getElementById('splash').classList.add('hidden');
   }
 });
 
-// Start receiver AFTER listeners are ready
+castCtx.addCustomMessageListener('urn:x-cast:com.qwizz.control', e => {
+  log("Custom message: " + JSON.stringify(e.data));
+  if(e.data && e.data.serverURL) initS(e.data.serverURL);
+  if(e.data && e.data.type === 'reveal') revealCover();
+  if(e.data && e.data.type === 'mute') setMute(e.data.value);
+  if(e.data && e.data.type === 'debug') {
+    document.getElementById('debug-log').style.display = e.data.show ? 'block' : 'none';
+  }
+});
+
+// START
 castCtx.start(options);
-log("Receiver started");
+log("Receiver initialized and started");
 
 function initS(u){
   serverURL=u;
