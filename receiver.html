@@ -145,6 +145,22 @@
     @keyframes popIn{from{transform:scale(0.8);opacity:0}to{transform:scale(1);opacity:1}}
     @keyframes scan{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    
+    cast-media-player {
+      position: fixed; inset: 0; z-index: 5;
+      opacity: 0; transition: opacity 0.8s ease;
+      --theme-hue: 200;
+    }
+    body.video-revealed cast-media-player { opacity: 1; }
+    
+    #category-persistent {
+      position: fixed; top: 4vmin; left: 6vmin;
+      z-index: 100; color: var(--blue);
+      font-size: 3rem; font-weight: 900;
+      text-transform: uppercase; letter-spacing: 0.5vmin;
+      opacity: 0; transition: opacity 0.5s ease;
+    }
+    #category-persistent.visible { opacity: 1; }
   </style>
 </head>
 <body>
@@ -190,7 +206,9 @@
       <div id="cheater-penalty-text" class="cheater-penalty-badge">-50 PTS</div>
     </div>
   </div>
+  <div id="category-persistent"></div>
   <div class="logo-area hidden" id="main-logo-wrap"><img id="logo-img"></div>
+  <cast-media-player></cast-media-player>
 
 <script>
 var castCtx=cast.framework.CastReceiverContext.getInstance(),serverURL='',socket,appState={showCheaterStatus:true,revealAnim:'random'},isAnimating=false,hasTrack=false,currentTrackData=null;
@@ -203,6 +221,7 @@ castCtx.addCustomMessageListener('urn:x-cast:com.qwizz.control',e=>{
 });
 
 function revealCover(){
+  document.body.classList.add('video-revealed');
   var i=document.getElementById('cover');
   if(i && currentTrackData && currentTrackData.cover_clear){
     var fullClear = currentTrackData.cover_clear.startsWith('http') ? currentTrackData.cover_clear : (serverURL + currentTrackData.cover_clear);
@@ -260,6 +279,11 @@ function handle(d){
   else if(d.type==='mode_switch')showRules(d.mode, d.rules);
   else if(d.type==='category_transition')showCat(d.name, d.hasImage, d.imageURL, d.showName, d.duration);
   else if(d.type==='cheater_alert')showCheater(d.name, d.penalty, d.style);
+  
+  if (d.showCategoryPermanently !== undefined) {
+    const cp = document.getElementById('category-persistent');
+    if (!d.showCategoryPermanently) cp.classList.remove('visible');
+  }
 }
 
 function applyA(d){
@@ -293,6 +317,16 @@ function updateT(d){
   document.getElementById('podium-overlay').classList.remove('visible');
   document.getElementById('player').classList.add('visible');
   document.getElementById('main-logo-wrap').classList.remove('hidden');
+  document.body.classList.remove('video-revealed');
+  
+  const catP = document.getElementById('category-persistent');
+  if (d.showCategoryPermanently && d.category) {
+    catP.textContent = d.category;
+    catP.classList.add('visible');
+  } else if (d.showCategoryPermanently === false) {
+    catP.classList.remove('visible');
+  }
+
   document.getElementById('track-title').textContent=d.title;
   document.getElementById('track-artist').textContent=d.artist;
   var i=document.getElementById('cover'),p=document.getElementById('cover-placeholder');
