@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>QWIZZ Expert V5.2.0-Ultimate</title>
+  <title>QWIZZ Master V5.3.0-Premium</title>
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
@@ -10,82 +10,106 @@
       --bg: #09072B;
       --blue: #00A8FF;
       --purple: #8A2BE2;
+      --white: #FFFFFF;
       --font: 'Outfit', sans-serif;
-      --qr-size: 24vmin;
     }
 
     * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing: antialiased; }
-    body, html { width:100%; height:100%; background:var(--bg); color:#fff; font-family:var(--font); overflow:hidden; font-size:16px; }
+    body, html { width:100%; height:100%; background:var(--bg); color:var(--white); font-family:var(--font); overflow:hidden; font-size:1.5vmin; }
 
-    #ambient { position:fixed; inset:0; background: radial-gradient(circle at 20% 40%, rgba(0,168,255,0.1), transparent 50%), radial-gradient(circle at 80% 20%, rgba(138,43,226,0.08), transparent 50%); z-index:0; }
+    #ambient { 
+      position:fixed; top:0; left:0; right:0; bottom:0; z-index:0; 
+      background: 
+        radial-gradient(circle at 10% 20%, rgba(0, 168, 255, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(138, 43, 226, 0.08) 0%, transparent 40%),
+        var(--bg);
+    }
 
-    /* Splash / Idle */
-    #idle { position:fixed; inset:0; background:var(--bg); display:flex; justify-content:center; align-items:center; z-index:200; transition:opacity .8s; }
+    /* Idle Splash - High Impact */
+    #idle { 
+      position:fixed; top:0; left:0; right:0; bottom:0; background:var(--bg); 
+      display:flex; justify-content:center; align-items:center; z-index:500; 
+      transition: opacity 0.8s ease-in-out;
+    }
     #idle.gone { opacity:0; pointer-events:none; }
-    .idle-logo { width:80vmin; filter: drop-shadow(0 0 50px var(--blue)); }
+    .idle-logo { width:85vmin; filter: drop-shadow(0 0 60px rgba(0,168,255,0.6)); animation: float 6s ease-in-out infinite; }
 
-    /* Main Flex Layout */
-    #game-scene { position:fixed; inset:0; display:flex; align-items:center; justify-content:space-around; padding:8vmin; opacity:0; transition:opacity .6s; z-index:10; }
-    #game-scene.visible { opacity:1; }
+    /* Main Scene - Premium Layout */
+    #player-scene { 
+      position:fixed; top:0; left:0; right:0; bottom:0; 
+      display:flex; align-items:center; justify-content:center; 
+      padding:10vmin; opacity:0; transition:opacity .6s; z-index:10; 
+    }
+    #player-scene.visible { opacity:1; }
 
-    .player-left { flex:1; display:flex; justify-content:center; align-items:center; }
-    .player-right { flex:1; display:flex; flex-direction:column; justify-content:center; padding-left:5vmin; }
-
-    .cover-frame {
-      position:relative; width:65vmin; height:65vmin; border-radius:4vmin; overflow:hidden;
-      box-shadow: 0 40px 100px rgba(0,0,0,0.9); border: 2px solid rgba(255,255,255,0.1);
+    .content-wrap { display:flex; align-items:center; width:100%; max-width:160vmin; gap:10vmin; }
+    
+    .cover-side { position:relative; width:62vmin; height:62vmin; }
+    .cover-box { 
+      position:relative; width:100%; height:100%; border-radius:5vmin; overflow:hidden;
+      box-shadow: 0 50px 100px rgba(0,0,0,0.9); border: 2.5px solid rgba(255,255,255,0.15);
       background: linear-gradient(135deg, #1A1A3A 0%, #09072B 100%);
     }
 
-    #cover-img, #cover-blurred { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; opacity:0; transition:opacity .6s; }
-    #cover-img { z-index:2; }
-    #cover-blurred { z-index:1; filter:blur(40px) brightness(0.7); }
+    #cover-main, #cover-blurred { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; opacity:0; transition:opacity .7s cubic-bezier(0.4, 0, 0.2, 1); }
+    #cover-main { z-index:2; }
+    #cover-blurred { z-index:1; filter:blur(45px) brightness(0.65); }
 
-    /* NoCover CSS Fallback */
-    #nocover-fallback { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:0; }
-    #nocover-fallback img { width:80%; opacity:0.9; }
+    /* NoCover Default Icon */
+    .nocover-placeholder { position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; z-index:0; }
+    .nocover-placeholder img { width:85%; opacity:0.95; filter: drop-shadow(0 0 30px var(--blue)); }
 
-    .track-title { font-size: 7rem; font-weight: 900; line-height: 1.1; margin-bottom: 2vmin; color:#fff; word-wrap:break-word; }
-    .track-artist { font-size: 3.5rem; font-weight: 300; color: rgba(255,255,255,0.7); }
+    .meta-side { flex:1; display:flex; flex-direction:column; justify-content:center; }
+    .track-title { font-size:7.5rem; font-weight:900; line-height:1.05; letter-spacing:-0.2vmin; margin-bottom:2.5vmin; text-shadow:0 10px 40px rgba(0,0,0,0.8); color:var(--white); }
+    .track-artist { font-size:3.8rem; font-weight:300; color:rgba(255,255,255,0.7); letter-spacing:0.1vmin; }
 
-    /* Components */
-    #leaderboard {
-      position:fixed; background:rgba(15,12,45,0.98); backdrop-filter:blur(50px);
-      border:1px solid rgba(0,168,255,0.3); border-radius:4vmin; padding:4vmin;
-      display:none; z-index:500; box-shadow:0 30px 100px rgba(0,0,0,0.8);
+    /* Leaderboard - Glassmorphism */
+    #leaderboard { 
+      position:fixed; z-index:9000; display:none; 
+      background: rgba(15, 12, 45, 0.95); backdrop-filter: blur(50px);
+      border-radius:5vmin; padding:4.5vmin; border:1px solid rgba(0, 168, 255, 0.3);
+      box-shadow: 0 40px 150px rgba(0,0,0,0.9); transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
     }
-    #leaderboard.mode-full { inset:5vmin; display:flex!important; flex-direction:column; justify-content:center; }
-    #leaderboard.mode-br { bottom:5vmin; right:5vmin; width:36vw; display:block!important; animation: slideIn .6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    #leaderboard.mode-full { top:8vmin; left:8vmin; right:8vmin; bottom:8vmin; display:flex!important; flex-direction:column; justify-content:center; }
+    #leaderboard.mode-br { bottom:5vmin; right:5vmin; width:36vw; display:block!important; animation: slideUp .6s ease; }
 
-    .lb-row { display:flex; align-items:center; padding:1.8vmin 3vmin; background:rgba(255,255,255,0.05); border-radius:2vmin; margin-bottom:1.2vmin; border:1px solid rgba(255,255,255,0.05); }
-    .lb-name { flex:1; font-weight:700; font-size:3rem; padding:0 3vmin; }
-    .lb-score { font-weight:900; font-size:3rem; color:var(--blue); }
-    .lb-rank { font-size:2.8rem; font-weight:900; color:rgba(255,255,255,0.3); width:6vmin; text-align:center; }
+    .lb-row { display:flex; align-items:center; padding:1.8vmin 3.5vmin; background:rgba(255,255,255,0.06); border-radius:2.5vmin; margin-bottom:1.5vmin; border:1px solid rgba(255,255,255,0.08); transition:transform 0.3s ease; }
+    .lb-rank { width:6vmin; font-weight:900; font-size:3rem; color:rgba(255,255,255,0.4); text-align:center; }
+    .lb-name { flex:1; font-weight:700; font-size:3.2rem; padding:0 3vmin; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .lb-score { font-weight:900; font-size:3.2rem; color:var(--blue); min-width:18vmin; text-align:right; }
 
-    /* QR Code */
-    #qr-box { position:fixed; z-index:800; display:none; background:rgba(15,12,45,0.95); padding:3vmin; border-radius:4vmin; border:2px solid var(--blue); backdrop-filter:blur(30px); }
-    #qr-box.visible { display:flex; flex-direction:column; align-items:center; }
+    /* Podium - Show Finale */
+    #overlay-layer { position:fixed; top:0; left:0; width:100%; height:100%; z-index:20000; display:none; background:var(--bg); flex-direction:column; align-items:center; justify-content:center; }
+    #overlay-layer.active { display:flex; animation: fadeIn .5s ease; }
+
+    #podium-wrap { display:flex; align-items:flex-end; gap:6vmin; height:62vh; width:92vw; margin-top:6vh; }
+    .podium-slot { flex:1; display:flex; flex-direction:column; align-items:center; padding:4vmin; border-radius:4vmin 4vmin 0 0; background:rgba(255,255,255,0.05); }
+    .p-rank-1 { height:100%; border:4px solid #FFD700; order:2; background:linear-gradient(180deg, rgba(255,215,0,0.15) 0%, transparent 100%); box-shadow: 0 0 60px rgba(255,215,0,0.2); }
+    .p-rank-2 { height:82%; border:4px solid #C0C0C0; order:1; background:linear-gradient(180deg, rgba(192,192,192,0.1) 0%, transparent 100%); }
+    .p-rank-3 { height:70%; border:4px solid #CD7F32; order:3; background:linear-gradient(180deg, rgba(205,127,50,0.08) 0%, transparent 100%); }
+    .p-medal { font-size:10rem; margin-bottom:3vmin; filter: drop-shadow(0 0 20px rgba(255,255,255,0.4)); }
+    .p-name { font-size:4.5rem; font-weight:900; margin-top:auto; }
+
+    /* QR Code - Modern Float */
+    #qr-float { position:fixed; z-index:10000; display:none; background:rgba(15,12,45,0.96); padding:3.5vmin; border-radius:5vmin; border:2px solid var(--blue); backdrop-filter:blur(30px); text-align:center; box-shadow:0 30px 100px rgba(0,0,0,0.9); }
+    #qr-float.visible { display:block; animation: floatQR 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .qr-img-box { background:#fff; padding:1.8vmin; border-radius:2.5vmin; width:22vmin; height:22vmin; margin:0 auto; }
+    .qr-img-box img { width:100%; height:100%; }
+
     .pos-top-right { top:4vmin; right:4vmin; }
     .pos-top-left { top:4vmin; left:4vmin; }
     .pos-bottom-right { bottom:4vmin; right:4vmin; }
     .pos-bottom-left { bottom:4vmin; left:4vmin; }
     .pos-center { top:50%; left:50%; transform:translate(-50%,-50%); }
 
-    /* Top Layers */
-    #overlay-layer { position:fixed; inset:0; z-index:20000; display:none; background:var(--bg); flex-direction:column; align-items:center; justify-content:center; }
-    #overlay-layer.active { display:flex; }
-
-    #podium-box { display:flex; align-items:flex-end; gap:5vmin; height:60vh; width:90vw; margin-top:5vh; }
-    .podium-seat { flex:1; display:flex; flex-direction:column; align-items:center; padding:3vmin; border-radius:3vmin 3vmin 0 0; background:rgba(255,255,255,0.05); transition: height 1s; }
-    .rank-1 { height:100%; border:3px solid #FFD700; order:2; background:linear-gradient(180deg, rgba(255,215,0,0.1) 0%, transparent 100%); }
-    .rank-2 { height:80%; border:3px solid #C0C0C0; order:1; }
-    .rank-3 { height:65%; border:3px solid #CD7F32; order:3; }
-
-    cast-media-player { position:fixed; inset:0; z-index:1; opacity:0; transition:opacity .6s; }
+    /* System */
+    cast-media-player { position:fixed; top:0; left:0; width:100%; height:100%; z-index:1; opacity:0; transition:opacity .6s; }
     body.video-revealed cast-media-player { opacity:1; z-index:100!important; }
 
-    @keyframes slideIn { from{transform:translateY(50px); opacity:0;} to{transform:translateY(0); opacity:1;} }
-    @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+    @keyframes float { 0% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-30px) rotate(1deg); } 100% { transform: translateY(0px) rotate(0deg); } }
+    @keyframes slideUp { from { transform: translateY(80px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+    @keyframes floatQR { from { transform: scale(0.6) translateY(50px); opacity:0; } to { transform: scale(1) translateY(0); opacity:1; } }
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   </style>
 </head>
 
@@ -96,205 +120,193 @@
     <img id="idle-logo" class="idle-logo">
   </div>
 
-  <div id="game-scene">
-    <div class="player-left">
-      <div class="cover-frame">
-        <div id="nocover-fallback"><img src="nocover.png"></div>
-        <img id="cover-blurred">
-        <img id="cover-img">
+  <div id="player-scene">
+    <div class="content-wrap">
+      <div class="cover-side">
+        <div class="cover-box">
+          <div class="nocover-placeholder"><img src="nocover.png"></div>
+          <img id="cover-blurred">
+          <img id="cover-main">
+        </div>
       </div>
-    </div>
-    <div class="player-right">
-      <div id="track-meta">
-        <div class="track-title" id="t-title"></div>
-        <div class="track-artist" id="t-artist"></div>
+      <div class="meta-side">
+        <div id="track-meta">
+          <div class="track-title" id="t-title"></div>
+          <div class="track-artist" id="t-artist"></div>
+        </div>
       </div>
     </div>
   </div>
 
   <div id="leaderboard" class="mode-br">
-    <div class="lb-header" style="font-size:3.5rem; letter-spacing:1vmin; margin-bottom:3vmin">🏆 CLASSEMENT</div>
-    <div id="lb-items"></div>
+    <div class="lb-header" style="font-size:3.5rem; letter-spacing:0.8vmin; margin-bottom:4vmin">🏆 CLASSEMENT</div>
+    <div id="lb-items" style="width:100%"></div>
   </div>
 
-  <div id="qr-box" class="pos-top-right">
-    <div style="font-size:2.5rem; font-weight:900; margin-bottom:2vmin; color:var(--blue)">REJOINDRE</div>
-    <img id="qr-code" style="width:var(--qr-size); background:#fff; padding:1.5vmin; border-radius:2vmin;">
+  <div id="qr-float" class="pos-top-right">
+    <div style="font-size:2.8rem; font-weight:900; margin-bottom:2.5vmin; color:var(--blue); letter-spacing:0.2vmin">JOIN THE QWIZZ</div>
+    <div class="qr-img-box"><img id="qr-img"></div>
   </div>
 
   <div id="overlay-layer">
-    <div id="cat-display" style="display:none; flex-direction:column; align-items:center;">
-       <h1 id="cat-name" style="font-size:10rem; font-weight:900; letter-spacing:4vmin; text-transform:uppercase;">CATÉGORIE</h1>
+    <div id="cat-screen" style="display:none; flex-direction:column; align-items:center;">
+       <h1 id="cat-title" style="font-size:12rem; font-weight:900; letter-spacing:5vmin; text-transform:uppercase; filter: drop-shadow(0 0 40px var(--blue))">CATEGORY</h1>
     </div>
-    <div id="podium-display" style="display:none; flex-direction:column; align-items:center;">
-       <h1 style="font-size:6rem; font-weight:900; margin-bottom:4vmin; color:var(--blue)">BRAVO !</h1>
-       <div id="podium-box"></div>
+    <div id="podium-screen" style="display:none; flex-direction:column; align-items:center; width:100%">
+       <h1 style="font-size:7rem; font-weight:900; margin-bottom:5vmin; color:var(--blue); text-transform:uppercase">TOP 3</h1>
+       <div id="podium-wrap"></div>
     </div>
   </div>
 
-  <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="sub-logo" style="width:25vmin"></div>
+  <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="top-logo" style="width:25vmin"></div>
   <cast-media-player></cast-media-player>
 
   <script>
-    var serverURL = '';
-    var isRevealed = false;
-    var currentTrack = null;
-    var catTimer = null;
+    // Robust STATE Engine V5.3.0
+    var MASTER_STATE = {
+      serverURL: '',
+      isRevealed: false,
+      currentTrack: null,
+      showScores: false,
+      scoreMode: 'br',
+      showQR: false,
+      qrPos: 'top-right',
+      qrURL: ''
+    };
 
+    var catTimeout = null;
     const ctx = cast.framework.CastReceiverContext.getInstance();
     const pm = ctx.getPlayerManager();
 
-    function initServer(u) {
-      if(!u) return;
-      serverURL = u.endsWith('/') ? u.slice(0,-1) : u;
-      ['idle-logo', 'sub-logo'].forEach(id => {
-        document.getElementById(id).src = serverURL + '/tv_logo?t=' + Date.now();
-      });
-      startPolling();
-    }
-
-    function sync(d) {
+    function updateMaster(d) {
       if(!d) return;
       if(typeof d === 'string') { try{d=JSON.parse(d);}catch(e){return;} }
       
+      console.log("State Updated:", (d.type || d.gameState || "system"));
+      
       if(d.type === 'reload') { window.location.reload(true); return; }
-      if(d.serverURL) initServer(d.serverURL);
+      
+      if(d.serverURL) {
+        MASTER_STATE.serverURL = d.serverURL.endsWith('/') ? d.serverURL.slice(0,-1) : d.serverURL;
+        ['idle-logo', 'top-logo'].forEach(id => { document.getElementById(id).src = MASTER_STATE.serverURL + '/tv_logo?t=' + Date.now(); });
+        if(!window.poll) window.poll = setInterval(() => { fetch(MASTER_STATE.serverURL+'/tv_state').then(r=>r.json()).then(updateMaster).catch(()=>{}); }, 5000);
+      }
+
+      // Track handling
       if(d.type === 'track_update' || d.trackID) renderTrack(d.track || d);
-      if(d.type === 'reveal' || d.reveal === true || d.gameState === 'revealed') reveal();
+      if(d.type === 'reveal' || d.gameState === 'revealed') doReveal();
       
-      // Layout meta
-      if(d.type === 'appearance' || d.showScores !== undefined || d.data) applyLayout(d.data || d);
-      if(d.type === 'show_qr') toggleQR(d.show, d.url, d.position);
+      // Visibility Sync
+      if(d.showScores !== undefined) MASTER_STATE.showScores = (d.showScores === true || d.showScores === "true");
+      if(d.scoreAnimationMode) MASTER_STATE.scoreMode = d.scoreAnimationMode;
+      if(d.showQR !== undefined) MASTER_STATE.showQR = (d.showQR === true || d.showQR === "true");
+      if(d.qrPosition) MASTER_STATE.qrPos = d.qrPosition;
       
-      // Screens
-      if(d.type === 'category_transition') showCategory(d);
-      if(d.type === 'end_game') renderPodium(d.data);
+      // Explicit handle of 'appearance' or 'show_qr' messages
+      if(d.type === 'appearance' && d.data) {
+        if(d.data.showScores !== undefined) MASTER_STATE.showScores = (d.data.showScores === true || d.data.showScores === "true");
+        if(d.data.scoreAnimationMode) MASTER_STATE.scoreMode = d.data.scoreAnimationMode;
+        if(d.data.qrPosition) MASTER_STATE.qrPos = d.data.qrPosition;
+      }
+      if(d.type === 'show_qr') { 
+        MASTER_STATE.showQR = d.show; 
+        if(d.url) MASTER_STATE.qrURL = d.url; 
+        if(d.position) MASTER_STATE.qrPos = d.position;
+      }
+
+      // Re-apply visibility based on master state
+      applyUIVisibility(d);
+      
+      // Overlays
+      if(d.type === 'category_transition') doCategory(d);
+      if(d.type === 'end_game') doPodium(d.data);
     }
 
-    function renderTrack(track) {
-      if(!track || !track.trackID) return;
-      currentTrack = track;
-      isRevealed = (track.gameState === 'revealed' || track.reveal === true);
+    function renderTrack(t) {
+      if(!t || !t.trackID) return;
+      MASTER_STATE.currentTrack = t;
+      MASTER_STATE.isRevealed = (t.gameState === 'revealed' || t.reveal === true);
 
       document.getElementById('idle').classList.add('gone');
-      document.getElementById('game-scene').classList.add('visible');
+      document.getElementById('player-scene').classList.add('visible');
       document.getElementById('overlay-layer').classList.remove('active');
       document.body.classList.remove('video-revealed');
 
-      var i = document.getElementById('cover-img'), b = document.getElementById('cover-blurred');
+      var i = document.getElementById('cover-main'), b = document.getElementById('cover-blurred');
       i.src = ''; b.src = ''; i.style.opacity = '0'; b.style.opacity = '0';
 
-      if(!isRevealed) {
-        document.getElementById('t-title').textContent = "QUEL EST LE TITRE ?";
-        document.getElementById('t-artist').textContent = "???";
-      } else {
-        document.getElementById('t-title').textContent = track.title || "";
-        document.getElementById('t-artist').textContent = track.artist || "";
-      }
+      document.getElementById('t-title').textContent = MASTER_STATE.isRevealed ? (t.title || "") : "QUEL EST LE TITRE ?";
+      document.getElementById('t-artist').textContent = MASTER_STATE.isRevealed ? (t.artist || "") : "???";
 
-      if(track.cover && !track.cover.includes('no_cover')) {
-        var src = (track.cover.startsWith('http') ? track.cover : (serverURL + track.cover)) + '&t=' + Date.now();
-        b.src = src;
-        b.onload = () => { if(track.shouldBlur && !isRevealed) b.style.opacity = '1'; };
-        i.src = src;
-        if(isRevealed) { i.style.opacity = '1'; b.style.opacity = '0'; }
+      if(t.cover && !t.cover.includes('no_cover')) {
+        var src = (t.cover.startsWith('http') ? t.cover : (MASTER_STATE.serverURL + t.cover)) + '&t=' + Date.now();
+        b.src = src; b.onload = () => { if(t.shouldBlur && !MASTER_STATE.isRevealed) b.style.opacity = '1'; };
+        i.src = src; if(MASTER_STATE.isRevealed) { i.style.opacity = '1'; b.style.opacity = '0'; }
       }
-
-      if(isRevealed) reveal();
+      if(MASTER_STATE.isRevealed) doReveal();
     }
 
-    function reveal() {
-      if(!currentTrack) return;
-      isRevealed = true;
-      document.getElementById('t-title').textContent = currentTrack.title || "";
-      document.getElementById('t-artist').textContent = currentTrack.artist || "";
-      
-      var i = document.getElementById('cover-img'), b = document.getElementById('cover-blurred');
-      if(i.src && i.src.length > 5 && !i.src.includes('nocover')) {
-         i.style.opacity = '1'; b.style.opacity = '0';
-      }
-      if(currentTrack.isVideo) document.body.classList.add('video-revealed');
+    function doReveal() {
+      if(!MASTER_STATE.currentTrack) return;
+      MASTER_STATE.isRevealed = true;
+      document.getElementById('t-title').textContent = MASTER_STATE.currentTrack.title || "";
+      document.getElementById('t-artist').textContent = MASTER_STATE.currentTrack.artist || "";
+      var i = document.getElementById('cover-main'), b = document.getElementById('cover-blurred');
+      if(i.src && i.src.length > 5 && !i.src.includes('nocover')) { i.style.opacity = '1'; b.style.opacity = '0'; }
+      if(MASTER_STATE.currentTrack.isVideo) document.body.classList.add('video-revealed');
     }
 
-    function applyLayout(d) {
-      if(!d) return;
+    function applyUIVisibility(d) {
+      // Leaderboard
       var lb = document.getElementById('leaderboard');
-      var show = (d.showScores === true || d.showScores === "true");
-      var mode = d.scoreAnimationMode || 'mode-br';
-      
-      if(show) {
-         lb.className = (mode === 'full' ? 'mode-full' : 'mode-br');
-         lb.style.display = 'block';
-         if(d.players) {
-            var s = d.players.sort((a,b) => b.score - a.score).slice(0, 8);
-            document.getElementById('lb-items').innerHTML = s.map((p, idx) => `
-              <div class="lb-row">
-                <span class="lb-rank">${idx+1}</span>
-                <span class="lb-name">${p.name}</span>
-                <span class="lb-score">${p.score} pts</span>
-              </div>
-            `).join('');
-         }
+      if(MASTER_STATE.showScores) {
+        lb.className = MASTER_STATE.scoreMode === 'full' ? 'mode-full' : 'mode-br';
+        lb.style.display = MASTER_STATE.scoreMode === 'full' ? 'flex' : 'block';
+        if(d && d.players) {
+          var s = d.players.sort((a,b) => b.score - a.score).slice(0, 8);
+          document.getElementById('lb-items').innerHTML = s.map((p, idx) => `<div class="lb-row"><span class="lb-rank">${idx+1}</span><span class="lb-name">${p.name}</span><span class="lb-score">${p.score} pts</span></div>`).join('');
+        }
       } else { lb.style.display = 'none'; }
-      
-      if(d.qrPosition || d.position) toggleQR(null, null, d.qrPosition || d.position);
+
+      // QR Code
+      var qr = document.getElementById('qr-float');
+      if(MASTER_STATE.showQR) {
+        qr.className = 'visible pos-' + MASTER_STATE.qrPos;
+        if(MASTER_STATE.qrURL) document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(MASTER_STATE.qrURL);
+      } else { qr.classList.remove('visible'); qr.style.display = 'none'; }
     }
 
-    function toggleQR(show, url, pos) {
-      var box = document.getElementById('qr-box');
-      if(show === true) box.classList.add('visible');
-      if(show === false) box.classList.remove('visible');
-      if(url) document.getElementById('qr-code').src = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(url);
-      if(pos) { box.className = 'visible pos-' + pos; }
-    }
-
-    function showCategory(d) {
-      document.getElementById('cat-name').textContent = d.name;
+    function doCategory(d) {
+      document.getElementById('cat-title').textContent = d.name;
       document.getElementById('overlay-layer').classList.add('active');
-      document.getElementById('cat-display').style.display = 'flex';
-      document.getElementById('podium-display').style.display = 'none';
-      if(catTimer) clearTimeout(catTimer);
-      catTimer = setTimeout(() => {
-        document.getElementById('overlay-layer').classList.remove('active');
-        document.getElementById('cat-display').style.display = 'none';
-      }, (d.duration || 4) * 1000);
+      document.getElementById('cat-screen').style.display = 'flex';
+      document.getElementById('podium-screen').style.display = 'none';
+      if(catTimeout) clearTimeout(catTimeout);
+      catTimeout = setTimeout(() => { document.getElementById('overlay-layer').classList.remove('active'); }, (d.duration || 4) * 1000);
     }
 
-    function renderPodium(data) {
+    function doPodium(data) {
       if(!data) return;
       var top3 = data.sort((a,b) => b.score - a.score).slice(0, 3);
       var medals = ["🥈", "🥇", "🥉"];
-      document.getElementById('podium-box').innerHTML = top3.map((p, idx) => `
-        <div class="podium-seat rank-${idx+1}">
-          <div style="font-size:8rem; margin-bottom:2vmin">${medals[idx]}</div>
-          <div style="font-size:3.5rem; font-weight:900">${p.name}</div>
-          <div style="font-size:3rem; color:var(--blue)">${p.score} pts</div>
+      document.getElementById('podium-wrap').innerHTML = top3.map((p, idx) => `
+        <div class="podium-slot p-rank-${idx+1}">
+          <div class="p-medal">${medals[idx]}</div>
+          <div class="p-name">${p.name}</div>
+          <div style="font-size:3.5rem; color:var(--blue); font-weight:700">${p.score} pts</div>
         </div>
       `).join('');
       document.getElementById('overlay-layer').classList.add('active');
-      document.getElementById('podium-display').style.display = 'flex';
-      document.getElementById('cat-display').style.display = 'none';
-    }
-
-    function startPolling() {
-      if(window.poll) clearInterval(window.poll);
-      window.poll = setInterval(() => {
-        if(!serverURL) return;
-        fetch(serverURL + '/tv_state').then(r=>r.json()).then(sync).catch(()=>{});
-      }, 5000);
+      document.getElementById('podium-screen').style.display = 'flex';
+      document.getElementById('cat-screen').style.display = 'none';
     }
 
     pm.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, req => {
-      if(req.media && req.media.customData) {
-        if(req.media.customData.serverURL) initServer(req.media.customData.serverURL);
-        if(req.media.customData.trackID) renderTrack(req.media.customData);
-      }
+      if(req.media && req.media.customData) updateMaster(req.media.customData);
       return req;
     });
-
-    ctx.addCustomMessageListener('urn:x-cast:com.qwizz.control', e => sync(e.data));
+    ctx.addCustomMessageListener('urn:x-cast:com.qwizz.control', e => updateMaster(e.data));
     ctx.start();
-    console.log("QWIZZ V5.2.0-Ultimate Started");
   </script>
 </body>
 </html>
