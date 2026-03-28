@@ -156,14 +156,16 @@
     body.video-revealed #player { display: none !important; }
     body.video-revealed #ambient { display: none !important; }
     
-    #category-persistent {
-      position: fixed; top: 4vmin; left: 6vmin;
-      z-index: 100; color: var(--blue);
-      font-size: 3rem; font-weight: 900;
-      text-transform: uppercase; letter-spacing: 0.5vmin;
-      opacity: 0; transition: opacity 0.5s ease;
-    }
     #category-persistent.visible { opacity: 1; }
+    
+    #debug-log {
+      position: fixed; bottom: 2vmin; left: 2vmin;
+      z-index: 100000; background: rgba(0,0,0,0.7);
+      color: #0f0; font-family: monospace; font-size: 1.2vmin;
+      padding: 1vmin; border-radius: 1vmin;
+      max-width: 40vw; max-height: 20vh; overflow-y: auto;
+      pointer-events: none; display: none;
+    }
   </style>
 </head>
 <body>
@@ -212,21 +214,45 @@
   <div id="category-persistent"></div>
   <div class="logo-area hidden" id="main-logo-wrap"><img id="logo-img"></div>
   <cast-media-player></cast-media-player>
+  <div id="debug-log"></div>
 
 <script>
-var castCtx=cast.framework.CastReceiverContext.getInstance(),serverURL='',socket,appState={showCheaterStatus:true,revealAnim:'random'},isAnimating=false,hasTrack=false,currentTrackData=null;
+var castCtx=cast.framework.CastReceiverContext.getInstance(),
+    serverURL='',
+    socket,
+    appState={showCheaterStatus:true,revealAnim:'random', mute: false},
+    isAnimating=false,
+    hasTrack=false,
+    currentTrackData=null;
+
+function log(m) {
+  const l = document.getElementById('debug-log');
+  const d = document.createElement('div');
+  d.textContent = `[${new Date().toLocaleTimeString()}] ${m}`;
+  l.appendChild(d);
+  l.scrollTop = l.scrollHeight;
+  console.log(m);
+}
+
+// Show debug log if requested (or keep it hidden by default)
+// To show: window.document.getElementById('debug-log').style.display = 'block';
+
 castCtx.addCustomMessageListener('urn:x-cast:com.qwizz.control',e=>{
+  log("Custom message received: " + JSON.stringify(e.data));
   if(e.data&&e.data.serverURL)initS(e.data.serverURL);
   if(e.data&&e.data.type==='reveal'){
-    // Explicit reveal from sender
     revealCover();
   }
   if(e.data&&e.data.type==='mute'){
     setMute(e.data.value);
   }
+  if(e.data&&e.data.type==='debug'){
+    document.getElementById('debug-log').style.display = e.data.show ? 'block' : 'none';
+  }
 });
 
 function revealCover(){
+  log("Reveal requested");
   document.body.classList.add('video-revealed');
   var i=document.getElementById('cover');
   if(i && currentTrackData && currentTrackData.cover_clear){
@@ -239,47 +265,77 @@ function revealCover(){
 }
 
 function setMute(m){
-  console.log("Receiver: Setting mute state to:", m);
+  appState.mute = m;
+  log("Setting mute state: " + m);
   castCtx.setSystemVolume({muted: m});
   
-  // Manual fallback for media elements
-  const mediaElements = document.querySelectorAll('video, audio');
-  mediaElements.forEach(el => {
-    el.muted = m;
-    if (m) el.volume = 0;
-    else el.volume = 1;
-  });
+  const applyInternal = () => {
+    const mediaElements = document.querySelectorAll('video, audio');
+    mediaElements.forEach(el => {
+      el.muted = m;
+      if (m) el.volume = 0;
+      else el.volume = 1;
+    });
 
-  // Specifically for cast-media-player built-in elements
-  const playerManager = castCtx.getPlayerManager();
-  if (playerManager) {
-    const mediaElement = playerManager.getMediaElement();
-    if (mediaElement) {
-       mediaElement.muted = m;
-       if (m) mediaElement.volume = 0;
+    const playerManager = castCtx.getPlayerManager();
+    if (playerManager) {
+      const mediaElement = playerManager.getMediaElement();
+      if (mediaElement) {
+         mediaElement.muted = m;
+         if (m) mediaElement.volume = 0;
+      }
     }
-  }
+  };
+
+  applyInternal();
+  // Double-tap to ensure it sticks
+  setTimeout(applyInternal, 200);
+  setTimeout(applyInternal, 1000);
 }
 
 const options = new cast.framework.CastReceiverOptions();
 options.maxInactivity = 86400; // 24h
 castCtx.start(options);
 
-// Intercept LOAD to handle initial mute state
 const playerManager = castCtx.getPlayerManager();
+
+// Intercept LOAD to handle initial mute state
 playerManager.setMessageInterceptor(
   cast.framework.messages.MessageType.LOAD,
   loadRequestData => {
+    log("LOAD intercepted");
     if (loadRequestData.media && loadRequestData.media.customData) {
-      if (loadRequestData.media.customData.mute) {
-        setTimeout(() => setMute(true), 100);
-      } else {
-        setTimeout(() => setMute(false), 100);
+      if (loadRequestData.media.customData.mute !== undefined) {
+        const m = loadRequestData.media.customData.mute;
+        log("Initial mute from customData: " + m);
+        setMute(m);
       }
     }
     return loadRequestData;
   }
 );
+
+// Reactive muting and video visibility enforcement
+playerManager.addEventListener(cast.framework.events.EventType.PLAYER_STATE_CHANGED, e => {
+  log("Player state changed: " + e.value);
+  if (appState.mute) {
+     setMute(true);
+  }
+});
+
+playerManager.addEventListener(cast.framework.events.EventType.MEDIA_STATUS_CHANGED, e => {
+  log("Media status changed");
+  if (appState.mute) {
+     setMute(true);
+  }
+  
+  // Force video visibility if it's a video stream
+  const media = playerManager.getMediaInformation();
+  if (media && media.contentType && media.contentType.includes('video')) {
+    log("Video content detected, ensuring player UI doesn't block it");
+    // CAF internal styles can be tricky, we mostly rely on our body class
+  }
+});
 
 function initS(u){
   serverURL=u;
