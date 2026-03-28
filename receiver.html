@@ -237,11 +237,8 @@ function revealCover(){
 }
 
 function setMute(m){
-  const pm = castCtx.getPlayerManager();
-  if (pm) {
-    if (m) pm.setSystemVolume({muted: true});
-    else pm.setSystemVolume({muted: false});
-  }
+  console.log("Receiver: Setting mute state to:", m);
+  castCtx.setSystemVolume({muted: m});
 }
 
 const options = new cast.framework.CastReceiverOptions();
@@ -253,8 +250,12 @@ const playerManager = castCtx.getPlayerManager();
 playerManager.setMessageInterceptor(
   cast.framework.messages.MessageType.LOAD,
   loadRequestData => {
-    if (loadRequestData.media && loadRequestData.media.customData && loadRequestData.media.customData.mute) {
-      setTimeout(() => setMute(true), 100);
+    if (loadRequestData.media && loadRequestData.media.customData) {
+      if (loadRequestData.media.customData.mute) {
+        setTimeout(() => setMute(true), 100);
+      } else {
+        setTimeout(() => setMute(false), 100);
+      }
     }
     return loadRequestData;
   }
