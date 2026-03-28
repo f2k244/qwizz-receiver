@@ -166,11 +166,17 @@
     }
 
     cast-media-player {
-        position: fixed; inset: 0; z-index: 5; opacity: 0; transition: opacity 0.8s;
-        --theme-hue: 200;
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      opacity: 0;
+      transition: opacity 0.8s;
+      --theme-hue: 200;
     }
+
     body.video-revealed cast-media-player {
-        opacity: 1; z-index: 100 !important;
+      opacity: 1;
+      z-index: 100 !important;
     }
 
     #cover-placeholder {
@@ -1060,8 +1066,10 @@
   <div id="category-persistent"></div>
   <div class="logo-area hidden" id="main-logo-wrap"><img id="logo-img"></div>
   <cast-media-player></cast-media-player>
-  <div id="debug-log"><  <script>
-    // --- QWIZZ EXPERT STATE MACHINE V6.0.0 ---
+  <div id="debug-log"></div>
+
+  <script>
+    // --- QWIZZ EXPERT STATE MACHINE V6.1.0 ---
     var serverURL = '';
     var lastCategoryTime = Date.now();
     var lastTrackId = null;
@@ -1087,7 +1095,7 @@
       console.log(m);
     }
 
-    log("Expert Engine Initializing...");
+    log("Expert Engine V6.1.0 Initializing...");
 
     var ctx = cast.framework.CastReceiverContext.getInstance();
     var playerManager = ctx.getPlayerManager();
@@ -1143,9 +1151,13 @@
          }
          return;
       }
-      if (d.trackID === lastTrackId && d.shouldBlur === (currentState.track ? currentState.track.shouldBlur : null)) return;
+      
+      // If same track AND same blur mode, skip redundant reload
+      if (d.trackID === lastTrackId && d.shouldBlur === (currentState.track ? currentState.track.shouldBlur : null)) {
+         return;
+      }
 
-      log("TRACK: " + d.title);
+      log("TRACK: " + d.title + " (Blur: " + d.shouldBlur + ")");
       lastTrackId = d.trackID;
       currentState.track = d;
 
@@ -1167,6 +1179,7 @@
           if (b) { b.src = src; b.onload = function () { b.style.opacity = '1'; p.style.display = 'none'; }; }
           if (i) i.style.opacity = '0';
         } else {
+          // Clear mode: Show main cover at full opacity, hide blurred layer
           if (i) { i.src = src; i.onload = function () { i.style.opacity = '1'; p.style.display = 'none'; }; }
           if (b) b.style.opacity = '0';
         }
@@ -1285,9 +1298,9 @@
     function esc(s) { return s ? s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : ""; }
 
     playerManager.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, function (req) {
-      log("LOAD");
+      log("LOAD EVENT");
       if (req.media && req.media.customData && req.media.customData.serverURL) initS(req.media.customData.serverURL);
-      if (req.media && req.media.metadata) {
+      if (req.media && req.media.metadata && req.media.customData) {
         updateT({
           trackID: req.media.customData.trackID,
           title: req.media.metadata.title,
@@ -1304,10 +1317,8 @@
     var options = new cast.framework.CastReceiverOptions();
     options.maxInactivity = 86400;
     ctx.start(options);
-    log("Ctx Started");
+    log("Ctx Started (V6.1.0)");
   </script>
 </body>
 </html>
-/body>
-
 </html>
