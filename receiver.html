@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>QWIZZ Cast Receiver V5.0.0</title>
+  <title>QWIZZ Cast Receiver V5.0.2</title>
   <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
@@ -306,6 +306,14 @@ function initS(u){
 
 function handle(d){
   if (!d) return;
+  log("Handling data: " + (d.type || "state_snapshot"));
+  
+  // 1. Handle Full State Snapshot (Polling)
+  if (d.players) renderLB(d.players);
+  if (d.track) updateT(d.track);
+  if (d.isPaused !== undefined) toggleP({ data: d.isPaused, pauseMessage: d.pauseMessage });
+  
+  // 2. Handle Discrete Events (WebSocket / Control Channel)
   if(d.type==='appearance') applyA(d.data);
   else if(d.type==='track_update') updateT(d);
   else if(d.type==='leaderboard') renderLB(d.players);
@@ -316,6 +324,7 @@ function handle(d){
   else if(d.type==='category_transition') showCat(d.name, d.hasImage, d.imageURL, d.showName, d.duration);
   else if(d.type==='cheater_alert') showCheater(d.name, d.penalty, d.style);
   
+  // 3. Global properties
   if (d.reveal === true) revealCover();
   if (d.mute !== undefined) setMute(d.mute);
   if (d.showCategoryPermanently !== undefined) {
@@ -479,9 +488,25 @@ function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g
 if (playerManager) {
   playerManager.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, function(req) {
     log("LOAD Event detected");
+    
+    // Sync Server URL from customData immediately
     if (req.media && req.media.customData && req.media.customData.serverURL) {
       initS(req.media.customData.serverURL);
     }
+    
+    // UI Jump-start: Hide idle screens immediately because we're loading a track
+    document.getElementById('splash').classList.add('hidden');
+    document.getElementById('idle').classList.add('gone');
+    
+    if (req.media && req.media.metadata) {
+      var meta = req.media.metadata;
+      document.getElementById('track-title').textContent = meta.title || "";
+      document.getElementById('track-artist').textContent = meta.artist || "";
+      document.getElementById('player').classList.add('visible');
+      document.getElementById('main-logo-wrap').classList.remove('hidden');
+      log("Jump-started UI from meta: " + (meta.title || "No Title"));
+    }
+    
     return req;
   });
 
