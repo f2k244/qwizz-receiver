@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>QWIZZ Chromecast Receiver V5.0.6-ZeroLatency</title>
+  <title>QWIZZ Chromecast Receiver V5.0.7-Master</title>
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
@@ -84,10 +84,10 @@
 
     #cover-placeholder {
       position: absolute; inset: 0; border-radius: 3vmin;
-      border: 2px dashed rgba(0, 168, 255, 0.3);
       display: flex; align-items: center; justify-content: center;
-      font-size: 25rem; color: rgba(0, 168, 255, .15); z-index: 0
+      z-index: 0; background: rgba(0,0,0,0.2);
     }
+    #cover-placeholder img { width: 80%; height: 80%; object-fit: contain; opacity: 0.9; }
 
     .logo-area { position: fixed; top: 4vmin; right: 6vmin; z-index: 9999 }
     .logo-area img { width: 25vmin; height: auto; object-fit: contain; filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.6)) }
@@ -98,22 +98,22 @@
     .track-artist { font-size: 3rem; color: #E0E0E0; font-weight: 300; opacity: 0.9; }
 
     #leaderboard {
-      position: fixed; background: rgba(15, 12, 45, 0.96);
-      border: 1px solid rgba(0, 168, 255, 0.3);
+      position: fixed; background: rgba(15, 12, 45, 0.98);
+      border: 1px solid rgba(0, 168, 255, 0.35);
       border-radius: 4vmin; padding: 5vmin;
-      backdrop-filter: blur(50px); z-index: 9000;
-      display: none; box-shadow: 0 50px 150px rgba(0,0,0,0.85);
-      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(60px); z-index: 9000;
+      display: none; box-shadow: 0 50px 150px rgba(0,0,0,0.9);
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     #leaderboard.mode-full {
-      inset: 6vmin; display: flex; flex-direction: column;
+      inset: 6vmin; display: flex !important; flex-direction: column;
       justify-content: center; align-items: stretch;
-      background: radial-gradient(circle at center, rgba(26, 26, 58, 0.98) 0%, rgba(9, 7, 43, 0.99) 100%);
+      background: radial-gradient(circle at center, rgba(26, 26, 58, 0.99) 0%, rgba(9, 7, 43, 1) 100%);
     }
 
     #leaderboard.mode-bottom-right {
-      bottom: 5vmin; right: 5vmin; width: 35vw; display: block;
+      bottom: 5vmin; right: 5vmin; width: 35vw; display: block !important;
     }
 
     #leaderboard.mode-full .lb-row { padding: 3vmin 5vmin; margin-bottom: 2vmin; border-radius: 3vmin; }
@@ -123,39 +123,39 @@
     #leaderboard.mode-full .lb-header { font-size: 5rem; margin-bottom: 6vmin; }
 
     .lb-header { font-weight: 900; letter-spacing: 0.5vmin; color: var(--blue); text-transform: uppercase; margin-bottom: 4vmin; font-size: 3.5rem; text-align: center; border-bottom: 1px solid rgba(0,168,255,0.1); padding-bottom: 2vmin; }
-    .lb-row { display: flex; align-items: center; gap: 3vmin; background: rgba(255, 255, 255, 0.04); padding: 2vmin 3vmin; border-radius: 2vmin; margin-bottom: 1.5vmin; opacity: 1; border: 1px solid rgba(255,255,255,0.06); }
+    .lb-row { display: flex; align-items: center; gap: 3vmin; background: rgba(255, 255, 255, 0.05); padding: 2vmin 3vmin; border-radius: 2vmin; margin-bottom: 1.5vmin; opacity: 1; border: 1px solid rgba(255,255,255,0.07); }
     .lb-rank { width: 6vmin; font-weight: 900; font-size: 2.5rem; text-align: center; color: rgba(255,255,255,0.4); }
     .lb-name { flex: 1; font-weight: 700; font-size: 2.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lb-score { font-weight: 900; color: var(--blue); font-size: 2.8rem; }
 
-    .lb-row.rank-1 { background: linear-gradient(90deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05)); border-color: rgba(255, 215, 0, 0.3); }
+    .lb-row.rank-1 { background: linear-gradient(90deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.05)); border-color: rgba(255, 215, 0, 0.4); }
     .lb-row.rank-1 .lb-rank { color: #FFD700; }
-    .lb-row.rank-2 { background: linear-gradient(90deg, rgba(192, 192, 192, 0.12), rgba(192, 192, 192, 0.03)); border-color: rgba(192, 192, 192, 0.25); }
+    .lb-row.rank-2 { background: linear-gradient(90deg, rgba(192, 192, 192, 0.15), rgba(192, 192, 192, 0.03)); border-color: rgba(192, 192, 192, 0.3); }
     .lb-row.rank-2 .lb-rank { color: #C0C0C0; }
-    .lb-row.rank-3 { background: linear-gradient(90deg, rgba(205, 127, 50, 0.1), rgba(205, 127, 50, 0.02)); border-color: rgba(205, 127, 50, 0.2); }
+    .lb-row.rank-3 { background: linear-gradient(90deg, rgba(205, 127, 50, 0.12), rgba(205, 127, 50, 0.02)); border-color: rgba(205, 127, 50, 0.25); }
     .lb-row.rank-3 .lb-rank { color: #CD7F32; }
 
     #qr-overlay {
       position: fixed; z-index: 10000; display: none;
-      background: rgba(15, 12, 45, 0.96); backdrop-filter: blur(25px);
-      padding: 4vmin; border-radius: 5vmin; border: 2px solid var(--blue);
-      text-align: center; box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7);
+      background: rgba(15, 12, 45, 0.98); backdrop-filter: blur(30px);
+      padding: 4vmin; border-radius: 5vmin; border: 2.5px solid var(--blue);
+      text-align: center; box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
+      transition: all 0.5s ease;
     }
     #qr-overlay.visible { display: block; }
 
-    /* Positioning classes */
-    .pos-top-right { top: 4vmin; right: 4vmin; }
-    .pos-top-left { top: 4vmin; left: 4vmin; }
-    .pos-bottom-right { bottom: 4vmin; right: 4vmin; }
-    .pos-bottom-left { bottom: 4vmin; left: 4vmin; }
-    .pos-center { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    .pos-top-right { top: 4vmin; right: 4vmin; bottom: auto; left: auto; transform: none; }
+    .pos-top-left { top: 4vmin; left: 4vmin; bottom: auto; right: auto; transform: none; }
+    .pos-bottom-right { bottom: 4vmin; right: 4vmin; top: auto; left: auto; transform: none; }
+    .pos-bottom-left { bottom: 4vmin; left: 4vmin; top: auto; right: auto; transform: none; }
+    .pos-center { top: 50%; left: 50%; transform: translate(-50%, -50%); bottom: auto; right: auto; }
 
     #qr-img { width: var(--qr-size); height: var(--qr-size); background: #fff; padding: 1.5vmin; border-radius: 2vmin; }
 
     #pause-overlay, #category-overlay {
-      position: fixed; inset: 0; background: rgba(9, 7, 43, 0.98);
+      position: fixed; inset: 0; background: rgba(9, 7, 43, 0.99);
       backdrop-filter: blur(50px); display: none; flex-direction: column;
-      align-items: center; justify-content: center; z-index: 8000;
+      align-items: center; justify-content: center; z-index: 11000;
       text-align: center; padding: 5vmin;
     }
     #pause-overlay.visible, #category-overlay.visible { display: flex; }
@@ -186,7 +186,7 @@
   <div id="player">
     <div style="display:flex;align-items:center;justify-content:center">
       <div class="cover-wrapper">
-        <div id="cover-placeholder">?</div>
+        <div id="cover-placeholder"><img src="nocover.png"></div>
         <img id="cover-blurred">
         <img id="cover">
       </div>
@@ -203,7 +203,7 @@
   </div>
 
   <div id="qr-overlay" class="pos-top-right">
-    <div style="font-size:2.5rem;color:var(--blue);font-weight:900;margin-bottom:2vmin">REJOINDRE LE JEU</div>
+    <div id="qr-label" style="font-size:2.5rem;color:var(--blue);font-weight:900;margin-bottom:2vmin">REJOINDRE LE JEU</div>
     <img id="qr-img">
   </div>
 
@@ -257,14 +257,18 @@
       if(d.serverURL) initS(d.serverURL);
       if(d.players) renderLB(d.players);
       if(d.track) updateT(d.track);
+      
+      if(d.type === 'appearance') applyA(d.data);
+      if(d.type === 'leaderboard') applyA(d);
+      
       if(d.type === 'reveal' || d.reveal === true || d.gameState === 'revealed') revealInfo();
       if(d.isPaused !== undefined) toggleP(d.isPaused, d.pauseMessage);
-      if(d.showScores !== undefined) applyA({showScores: d.showScores, scoreAnimationMode: d.scoreAnimationMode});
-      if(d.showQR !== undefined) toggleQR(d.showQR, d.qrURL, d.qrPosition);
+      if(d.showScores !== undefined) applyA(d);
+      
+      if(d.type === 'show_qr') toggleQR(d.show, d.url, d.position);
+      if(d.qrPosition) toggleQR(null, null, d.qrPosition);
       
       if(d.type === 'track_update') updateT(d);
-      else if(d.type === 'leaderboard') renderLB(d.players);
-      else if(d.type === 'show_qr') toggleQR(d.show, d.url, d.position);
       else if(d.type === 'category_transition' && d.timestamp > lastCategoryTime) {
         lastCategoryTime = d.timestamp;
         showCat(d);
@@ -299,8 +303,10 @@
           document.getElementById('track-artist').textContent = d.artist || "";
       }
       
+      if(d.qrPosition || d.scoreAnimationMode) applyA(d);
+      
       var i = document.getElementById('cover'), b = document.getElementById('cover-blurred'), p = document.getElementById('cover-placeholder');
-      if(d.cover) {
+      if(d.cover && !d.cover.includes('no_cover')) {
         var src = (d.cover.startsWith('http') ? d.cover : (serverURL ? serverURL + d.cover : d.cover)) + '&t=' + Date.now();
         b.src = src; 
         b.onload = () => { if(d.shouldBlur && !isRevealed) { b.style.opacity = '1'; p.style.display = 'none'; } };
@@ -311,11 +317,7 @@
             if (d.isVideo) document.body.classList.add('video-revealed');
         } else {
             i.style.opacity = '0';
-            if (d.shouldBlur) {
-                // b.onload handles it
-            } else {
-                b.style.opacity = '0'; p.style.display = 'flex';
-            }
+            if (d.shouldBlur) { /* ... */ } else { b.style.opacity = '0'; p.style.display = 'flex'; }
         }
       } else {
         p.style.display = 'flex'; i.style.opacity = '0'; b.style.opacity = '0';
@@ -341,7 +343,7 @@
     function renderLB(players) {
       if(!players) return;
       var l = document.getElementById('lb-list');
-      var s = players.sort((a,b) => b.score - a.score).slice(0, 5);
+      var s = players.sort((a,b) => b.score - a.score).slice(0, 8);
       l.innerHTML = s.map((p, idx) => `
         <div class="lb-row rank-${idx+1}">
           <span class="lb-rank">${idx+1}</span>
@@ -352,23 +354,32 @@
     }
 
     function applyA(d) {
+      if(!d) return;
       var lb = document.getElementById('leaderboard');
-      if(d.showScores) {
-          lb.style.display = (d.scoreAnimationMode === 'bottom-right' ? 'block' : 'flex');
-          lb.className = (d.scoreAnimationMode === 'full' ? 'mode-full' : 'mode-bottom-right');
+      var scoreMode = d.scoreAnimationMode || d.scoreDisplayMode;
+      var show = (d.showScores === true || d.showScores === "true");
+      
+      if(show) {
+          lb.className = (scoreMode === 'full' ? 'mode-full' : 'mode-bottom-right');
+          lb.style.display = (scoreMode === 'full' ? 'flex' : 'block');
       } else {
           lb.style.display = 'none';
+      }
+      
+      if(d.qrPosition || d.position) {
+          toggleQR(null, null, d.qrPosition || d.position);
       }
     }
 
     function toggleQR(show, url, pos) {
       var q = document.getElementById('qr-overlay');
-      if(show) {
-        document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(url || serverURL || window.location.href);
-        q.className = 'visible';
-        if(pos) q.classList.add('pos-' + pos);
-        else q.classList.add('pos-top-right');
-      } else q.className = '';
+      if(show === true) q.classList.add('visible');
+      if(show === false) q.classList.remove('visible');
+      if(url) document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(url || serverURL || window.location.href);
+      if(pos) {
+        q.classList.remove('pos-top-right', 'pos-top-left', 'pos-bottom-right', 'pos-bottom-left', 'pos-center');
+        q.classList.add('pos-' + pos);
+      }
     }
 
     function showCat(d) {
@@ -394,16 +405,14 @@
     playerManager.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, req => {
       if(req.media && req.media.customData) {
         if(req.media.customData.serverURL) initS(req.media.customData.serverURL);
-        if(req.media.customData.trackID) {
-            updateT(req.media.customData);
-        }
+        if(req.media.customData.trackID) updateT(req.media.customData);
       }
       return req;
     });
 
     context.addCustomMessageListener('urn:x-cast:com.qwizz.control', e => handle(e.data));
     context.start();
-    log("Receiver Started V5.0.6");
+    log("Receiver Started V5.0.7-Master");
   </script>
 </body>
 </html>
