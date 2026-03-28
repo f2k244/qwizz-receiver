@@ -335,7 +335,13 @@ function setMute(m){
 }
 
 function initS(u){
-  serverURL=u;
+  if (!u) return;
+  serverURL = u;
+  log("Server URL set: " + u);
+  
+  // Hide splash immediately when we have the URL
+  document.getElementById('splash').classList.add('hidden');
+  
   ['splash-logo','idle-logo','logo-img','podium-logo'].forEach(id=>{
     var el=document.getElementById(id); if(!el) return;
     el.onload=()=>{
@@ -349,30 +355,17 @@ function initS(u){
     };
     el.src=u+'/tv_logo?'+Date.now();
   });
-  connectWS();
+  
+  // Start high-frequency polling
+  poll();
 }
 
 // START
 castCtx.start(options);
 log("Receiver initialized and started");
 
-function connectWS(){
-  if(!serverURL)return;
-  // Ensure we use the full address with /ws
-  var wsProtocol = serverURL.startsWith('https') ? 'wss://' : 'ws://';
-  var wsAddr = serverURL.replace(/^https?:\/\//, '');
-  socket=new WebSocket(wsProtocol + wsAddr + '/ws');
-  
-  socket.onopen=()=>{
-    document.getElementById('splash').classList.add('hidden');
-    poll();
-    socket.send(JSON.stringify({ type: 'identify', role: 'tv' }));
-  };
-  socket.onmessage=e=>{try{var d=JSON.parse(e.data);handle(d)}catch(x){}};
-  socket.onclose=()=>setTimeout(connectWS,2000);
-}
-
 function handle(d){
+  if (!d) return;
   if(d.type==='appearance')applyA(d.data);
   else if(d.type==='track_update')updateT(d);
   else if(d.type==='leaderboard')renderLB(d.players);
@@ -383,6 +376,9 @@ function handle(d){
   else if(d.type==='category_transition')showCat(d.name, d.hasImage, d.imageURL, d.showName, d.duration);
   else if(d.type==='cheater_alert')showCheater(d.name, d.penalty, d.style);
   
+  if (d.reveal === true) revealCover();
+  if (d.mute !== undefined) setMute(d.mute);
+
   if (d.showCategoryPermanently !== undefined) {
     const cp = document.getElementById('category-persistent');
     if (!d.showCategoryPermanently) cp.classList.remove('visible');
@@ -585,7 +581,18 @@ function showPodium(data) {
   `;
 }
 
-function poll(){if(!serverURL)return;fetch(serverURL+'/tv_state').then(r=>r.json()).then(s=>{if(s.players)renderLB(s.players);if(s.showScores!==undefined){var lb=document.getElementById('leaderboard');if(s.showScores){lb.style.display=(s.scoreAnimationMode==='bottom-right')?'block':'flex';lb.classList.remove('hidden')}else{lb.style.display='none';lb.classList.add('hidden')}}}).catch(()=>{});setTimeout(poll,5000)}
+function poll(){
+  if(!serverURL)return;
+  fetch(serverURL+'/tv_state')
+    .then(r=>r.json())
+    .then(status=>{
+      handle(status);
+    })
+    .catch(err=>console.error("Poll error:", err))
+    .finally(()=>{
+      setTimeout(poll, 800);
+    });
+}
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 </script>
 </body>
