@@ -306,9 +306,33 @@ castCtx.addCustomMessageListener('urn:x-cast:com.qwizz.control', e => {
   }
 });
 
-// START
-castCtx.start(options);
-log("Receiver initialized and started");
+function revealCover(){
+  log("Reveal requested");
+  document.body.classList.add('video-revealed');
+  var i=document.getElementById('cover');
+  if(i && currentTrackData && currentTrackData.cover_clear){
+    var fullClear = currentTrackData.cover_clear.startsWith('http') ? currentTrackData.cover_clear : (serverURL + currentTrackData.cover_clear);
+    i.src = fullClear + (fullClear.includes('?')?'&':'?') + Date.now();
+    i.style.filter = 'none';
+    i.style.transform = 'scale(1.05)';
+    setTimeout(()=>i.style.transform='scale(1)', 300);
+  }
+}
+
+function setMute(m){
+  appState.mute = m;
+  log("SET_MUTE: Request=" + m);
+  castCtx.setSystemVolume({ muted: m, level: m ? 0.0 : 1.0 });
+  
+  const pm = castCtx.getPlayerManager();
+  if (pm) {
+    const el = pm.getMediaElement();
+    if (el) {
+       el.muted = m;
+       el.volume = m ? 0.0 : 1.0;
+    }
+  }
+}
 
 function initS(u){
   serverURL=u;
@@ -327,6 +351,10 @@ function initS(u){
   });
   connectWS();
 }
+
+// START
+castCtx.start(options);
+log("Receiver initialized and started");
 
 function connectWS(){
   if(!serverURL)return;
