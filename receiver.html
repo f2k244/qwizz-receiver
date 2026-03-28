@@ -308,7 +308,8 @@ const playerManager = castCtx.getPlayerManager();
 playerManager.setMessageInterceptor(
   cast.framework.messages.MessageType.LOAD,
   loadRequestData => {
-    log("LOAD intercepted");
+    const url = loadRequestData.media ? loadRequestData.media.contentId : "unknown";
+    log("LOAD intercepted: " + url);
     if (loadRequestData.media && loadRequestData.media.customData) {
       if (loadRequestData.media.customData.mute !== undefined) {
         const m = loadRequestData.media.customData.mute;
