@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>QWIZZ Chromecast Receiver V5.0.7-Master</title>
+  <title>QWIZZ Chromecast Receiver V5.0.8-Ultimate</title>
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
@@ -85,9 +85,9 @@
     #cover-placeholder {
       position: absolute; inset: 0; border-radius: 3vmin;
       display: flex; align-items: center; justify-content: center;
-      z-index: 0; background: rgba(0,0,0,0.2);
+      z-index: 0; background: rgba(0,0,0,0.25);
     }
-    #cover-placeholder img { width: 80%; height: 80%; object-fit: contain; opacity: 0.9; }
+    #cover-placeholder img { width: 85%; height: 85%; object-fit: contain; opacity: 1; }
 
     .logo-area { position: fixed; top: 4vmin; right: 6vmin; z-index: 9999 }
     .logo-area img { width: 25vmin; height: auto; object-fit: contain; filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.6)) }
@@ -109,7 +109,7 @@
     #leaderboard.mode-full {
       inset: 6vmin; display: flex !important; flex-direction: column;
       justify-content: center; align-items: stretch;
-      background: radial-gradient(circle at center, rgba(26, 26, 58, 0.99) 0%, rgba(9, 7, 43, 1) 100%);
+      background: radial-gradient(circle at center, rgba(30, 30, 65, 0.99) 0%, rgba(9, 7, 43, 1) 100%);
     }
 
     #leaderboard.mode-bottom-right {
@@ -128,19 +128,12 @@
     .lb-name { flex: 1; font-weight: 700; font-size: 2.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lb-score { font-weight: 900; color: var(--blue); font-size: 2.8rem; }
 
-    .lb-row.rank-1 { background: linear-gradient(90deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.05)); border-color: rgba(255, 215, 0, 0.4); }
-    .lb-row.rank-1 .lb-rank { color: #FFD700; }
-    .lb-row.rank-2 { background: linear-gradient(90deg, rgba(192, 192, 192, 0.15), rgba(192, 192, 192, 0.03)); border-color: rgba(192, 192, 192, 0.3); }
-    .lb-row.rank-2 .lb-rank { color: #C0C0C0; }
-    .lb-row.rank-3 { background: linear-gradient(90deg, rgba(205, 127, 50, 0.12), rgba(205, 127, 50, 0.02)); border-color: rgba(205, 127, 50, 0.25); }
-    .lb-row.rank-3 .lb-rank { color: #CD7F32; }
-
     #qr-overlay {
       position: fixed; z-index: 10000; display: none;
       background: rgba(15, 12, 45, 0.98); backdrop-filter: blur(30px);
       padding: 4vmin; border-radius: 5vmin; border: 2.5px solid var(--blue);
-      text-align: center; box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
-      transition: all 0.5s ease;
+      text-align: center; box-shadow: 0 40px 100px rgba(0, 0, 0, 0.82);
+      transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
     #qr-overlay.visible { display: block; }
 
@@ -220,6 +213,7 @@
     var lastTrackId = null;
     var isRevealed = false;
     var currentTrackData = null;
+    var currentLBData = null;
     
     function log(m) {
       console.log(m);
@@ -252,21 +246,18 @@
         try { d = JSON.parse(d); } catch(e) { log("Parse Error: " + e.message); return; }
       }
       
-      log("RECV: " + (d.type || d.gameState || d.serverURL || "raw"));
+      log("RECV TYPE: " + (d.type || d.gameState || "raw"));
       
       if(d.serverURL) initS(d.serverURL);
-      if(d.players) renderLB(d.players);
+      if(d.players) { currentLBData = d.players; renderLB(d.players); }
       if(d.track) updateT(d.track);
       
-      if(d.type === 'appearance') applyA(d.data);
-      if(d.type === 'leaderboard') applyA(d);
+      if(d.type === 'appearance') { applyA(d.data); }
+      if(d.type === 'leaderboard' || d.showScores !== undefined) { applyA(d); }
+      if(d.type === 'show_qr' || d.qrPosition || d.position) { toggleQR(d.show, d.url, d.position || d.qrPosition); }
       
       if(d.type === 'reveal' || d.reveal === true || d.gameState === 'revealed') revealInfo();
       if(d.isPaused !== undefined) toggleP(d.isPaused, d.pauseMessage);
-      if(d.showScores !== undefined) applyA(d);
-      
-      if(d.type === 'show_qr') toggleQR(d.show, d.url, d.position);
-      if(d.qrPosition) toggleQR(null, null, d.qrPosition);
       
       if(d.type === 'track_update') updateT(d);
       else if(d.type === 'category_transition' && d.timestamp > lastCategoryTime) {
@@ -303,9 +294,11 @@
           document.getElementById('track-artist').textContent = d.artist || "";
       }
       
-      if(d.qrPosition || d.scoreAnimationMode) applyA(d);
-      
       var i = document.getElementById('cover'), b = document.getElementById('cover-blurred'), p = document.getElementById('cover-placeholder');
+      
+      i.src = ''; b.src = '';
+      i.style.opacity = '0'; b.style.opacity = '0';
+      
       if(d.cover && !d.cover.includes('no_cover')) {
         var src = (d.cover.startsWith('http') ? d.cover : (serverURL ? serverURL + d.cover : d.cover)) + '&t=' + Date.now();
         b.src = src; 
@@ -316,11 +309,10 @@
             i.style.opacity = '1'; b.style.opacity = '0'; p.style.display = 'none';
             if (d.isVideo) document.body.classList.add('video-revealed');
         } else {
-            i.style.opacity = '0';
-            if (d.shouldBlur) { /* ... */ } else { b.style.opacity = '0'; p.style.display = 'flex'; }
+            p.style.display = d.shouldBlur ? 'none' : 'flex';
         }
       } else {
-        p.style.display = 'flex'; i.style.opacity = '0'; b.style.opacity = '0';
+        p.style.display = 'flex';
       }
       
       if(isRevealed) revealInfo();
@@ -334,9 +326,16 @@
       document.getElementById('track-info-container').classList.remove('is-hidden');
       
       var i = document.getElementById('cover'), b = document.getElementById('cover-blurred'), p = document.getElementById('cover-placeholder');
-      if(i) i.style.opacity = '1';
-      if(b) b.style.opacity = '0';
-      if(p) p.style.display = 'none';
+      
+      if(i.src && !i.src.endsWith('index.html') && !i.src.includes('no_cover')) {
+          i.style.opacity = '1';
+          b.style.opacity = '0';
+          p.style.display = 'none';
+      } else {
+          i.style.opacity = '0';
+          p.style.display = 'flex';
+      }
+      
       if (currentTrackData.isVideo) document.body.classList.add('video-revealed');
     }
 
@@ -356,26 +355,25 @@
     function applyA(d) {
       if(!d) return;
       var lb = document.getElementById('leaderboard');
-      var scoreMode = d.scoreAnimationMode || d.scoreDisplayMode;
-      var show = (d.showScores === true || d.showScores === "true");
+      var show = (d.showScores !== undefined) ? d.showScores : (d.data ? d.data.showScores : null);
+      var scoreMode = d.scoreAnimationMode || (d.data ? d.data.scoreAnimationMode : null) || 'bottom-right';
       
-      if(show) {
+      if(show === true || show === "true") {
           lb.className = (scoreMode === 'full' ? 'mode-full' : 'mode-bottom-right');
           lb.style.display = (scoreMode === 'full' ? 'flex' : 'block');
-      } else {
+      } else if(show === false || show === "false") {
           lb.style.display = 'none';
       }
       
-      if(d.qrPosition || d.position) {
-          toggleQR(null, null, d.qrPosition || d.position);
-      }
+      var pos = d.qrPosition || d.position || (d.data ? d.data.qrPosition : null);
+      if(pos) toggleQR(null, null, pos);
     }
 
     function toggleQR(show, url, pos) {
       var q = document.getElementById('qr-overlay');
-      if(show === true) q.classList.add('visible');
-      if(show === false) q.classList.remove('visible');
-      if(url) document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(url || serverURL || window.location.href);
+      if(show === true || show === "true") q.classList.add('visible');
+      if(show === false || show === "false") q.classList.remove('visible');
+      if(url) document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(url);
       if(pos) {
         q.classList.remove('pos-top-right', 'pos-top-left', 'pos-bottom-right', 'pos-bottom-left', 'pos-center');
         q.classList.add('pos-' + pos);
@@ -412,7 +410,7 @@
 
     context.addCustomMessageListener('urn:x-cast:com.qwizz.control', e => handle(e.data));
     context.start();
-    log("Receiver Started V5.0.7-Master");
+    log("Receiver Started V5.0.8-Ultimate");
   </script>
 </body>
 </html>
