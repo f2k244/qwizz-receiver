@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>QWIZZ Cast Receiver V4.9.9</title>
+  <title>QWIZZ Cast Receiver V5.0.0</title>
   <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
@@ -223,12 +223,12 @@
   <div id="debug-log"></div>
 
 <script>
-var serverURL = '',
-    socket,
-    appState = { showCheaterStatus: true, revealAnim: 'random', mute: false },
-    isAnimating = false,
-    hasTrack = false,
-    currentTrackData = null;
+// LEGACY GLOBAL VARIABLES
+var serverURL = '';
+var appState = { showCheaterStatus: true, revealAnim: 'random', mute: false };
+var isAnimating = false;
+var hasTrack = false;
+var currentTrackData = null;
 
 function log(m) {
   var l = document.getElementById('debug-log');
@@ -240,85 +240,24 @@ function log(m) {
   console.log(m);
 }
 
-// EMERGENCY DIAGNOSTICS
+// FORCE DEBUG LOG VISIBLE IMMEDIATELY
 document.getElementById('debug-log').style.display = 'block';
-document.getElementById('splash-status').innerText = "Script ES5 chargé...";
+document.getElementById('splash-status').innerText = "Initialisation ES5...";
 
 var castCtx, playerManager;
 try {
   castCtx = cast.framework.CastReceiverContext.getInstance();
   playerManager = castCtx.getPlayerManager();
-  log("Cast Context & Player Manager initialized");
+  log("Cast SDK objects acquired");
 } catch (e) {
-  document.getElementById('splash-status').innerText = "Erreur INIT: " + (e.message || e);
+  log("FATAL INIT ERROR: " + (e.message || e));
+  document.getElementById('splash-status').innerText = "ERREUR: " + (e.message || e);
 }
-
-var options = new cast.framework.CastReceiverOptions();
-options.maxInactivity = 86400; // 24h
-
-// Intercept LOAD
-playerManager.setMessageInterceptor(
-  cast.framework.messages.MessageType.LOAD,
-  function(loadRequestData) {
-    var media = loadRequestData.media || {};
-    var url = media.contentId || media.contentUrl || "NOT_FOUND";
-    log("LOAD URL RECEIVED: " + url);
-    
-    document.getElementById('splash').classList.add('hidden');
-    document.getElementById('idle').classList.add('gone');
-    document.body.classList.add('video-revealed');
-    
-    if (loadRequestData.media && loadRequestData.media.customData) {
-      if (loadRequestData.media.customData.serverURL) {
-        initS(loadRequestData.media.customData.serverURL);
-      }
-      if (loadRequestData.media.customData.mute !== undefined) {
-        appState.mute = loadRequestData.media.customData.mute;
-        setMute(appState.mute);
-      }
-    }
-    return loadRequestData;
-  }
-);
-
-// Listeners
-playerManager.addEventListener(cast.framework.events.EventType.PLAYER_STATE_CHANGED, function(e) {
-  log("Player state: " + e.value);
-  if (e.value === 'BUFFERING' || e.value === 'PLAYING') {
-      document.getElementById('splash').classList.add('hidden');
-      document.getElementById('idle').classList.add('gone');
-  }
-  if (appState.mute) setMute(true);
-});
-
-playerManager.addEventListener(cast.framework.events.EventType.ERROR, function(e) {
-  log("PLAYER ERROR: " + e.detailedErrorCode);
-  if (e.error) log("Detail: " + JSON.stringify(e.error));
-});
-
-playerManager.addEventListener(cast.framework.events.EventType.MEDIA_STATUS_CHANGED, function(e) {
-  var status = playerManager.getPlayerState();
-  log("Media Status: " + status);
-  if (status === 'PLAYING') {
-    document.body.classList.add('video-revealed');
-    document.getElementById('splash').classList.add('hidden');
-  }
-});
-
-castCtx.addCustomMessageListener('urn:x-cast:com.qwizz.control', function(e) {
-  log("Custom message: " + JSON.stringify(e.data));
-  if(e.data && e.data.serverURL) initS(e.data.serverURL);
-  if(e.data && e.data.type === 'reveal') revealCover();
-  if(e.data && e.data.type === 'mute') setMute(e.data.value);
-  if(e.data && e.data.type === 'debug') {
-    document.getElementById('debug-log').style.display = e.data.show ? 'block' : 'none';
-  }
-});
 
 function revealCover(){
   log("Reveal requested");
   document.body.classList.add('video-revealed');
-  var i=document.getElementById('cover');
+  var i = document.getElementById('cover');
   if(i && currentTrackData && currentTrackData.cover_clear){
     var fullClear = currentTrackData.cover_clear.indexOf('http') === 0 ? currentTrackData.cover_clear : (serverURL + currentTrackData.cover_clear);
     i.src = fullClear + (fullClear.indexOf('?') !== -1 ? '&' : '?') + Date.now();
@@ -330,12 +269,10 @@ function revealCover(){
 
 function setMute(m){
   appState.mute = m;
-  log("SET_MUTE: Request=" + m);
+  log("SET_MUTE: " + m);
   castCtx.setSystemVolume({ muted: m, level: m ? 0.0 : 1.0 });
-  
-  var pm = castCtx.getPlayerManager();
-  if (pm) {
-    var el = pm.getMediaElement();
+  if (playerManager) {
+    var el = playerManager.getMediaElement();
     if (el) {
        el.muted = m;
        el.volume = m ? 0.0 : 1.0;
@@ -344,10 +281,12 @@ function setMute(m){
 }
 
 function initS(u){
-  if (!u) return;
+  if (!u || u === serverURL) return;
   serverURL = u;
-  log("Server URL set: " + u);
+  log("SERVER URL SYNC: " + u);
+  
   document.getElementById('splash').classList.add('hidden');
+  document.getElementById('splash-status').innerText = "Connecté à l'iPad";
   
   var ids = ['splash-logo','idle-logo','logo-img','podium-logo'];
   for (var k=0; k<ids.length; k++) {
@@ -359,67 +298,60 @@ function initS(u){
            if(id === 'splash-logo') document.getElementById('splash-text').style.display = 'none';
            if(id === 'idle-logo') document.getElementById('idle-title-text').style.display = 'block';
        };
-       el.onerror = function() {
-           if(id === 'splash-logo') document.getElementById('splash-text').style.display = 'block';
-           if(id === 'idle-logo') document.getElementById('idle-title-text').style.display = 'block';
-       };
        el.src = u + '/tv_logo?' + Date.now();
     })(ids[k]);
   }
-  poll();
+  startPoll();
 }
-
-// START
-castCtx.start(options);
-log("Receiver initialized and started");
 
 function handle(d){
   if (!d) return;
-  if(d.type==='appearance')applyA(d.data);
-  else if(d.type==='track_update')updateT(d);
-  else if(d.type==='leaderboard')renderLB(d.players);
-  else if(d.type==='show_qr')toggleQR(d);
-  else if(d.type==='isPaused')toggleP(d);
-  else if(d.type==='end_game')showPodium(d.data);
-  else if(d.type==='mode_switch')showRules(d.mode, d.rules);
-  else if(d.type==='category_transition')showCat(d.name, d.hasImage, d.imageURL, d.showName, d.duration);
-  else if(d.type==='cheater_alert')showCheater(d.name, d.penalty, d.style);
+  if(d.type==='appearance') applyA(d.data);
+  else if(d.type==='track_update') updateT(d);
+  else if(d.type==='leaderboard') renderLB(d.players);
+  else if(d.type==='show_qr') toggleQR(d);
+  else if(d.type==='isPaused') toggleP(d);
+  else if(d.type==='end_game') showPodium(d.data);
+  else if(d.type==='mode_switch') showRules(d.mode, d.rules);
+  else if(d.type==='category_transition') showCat(d.name, d.hasImage, d.imageURL, d.showName, d.duration);
+  else if(d.type==='cheater_alert') showCheater(d.name, d.penalty, d.style);
   
   if (d.reveal === true) revealCover();
   if (d.mute !== undefined) setMute(d.mute);
-
   if (d.showCategoryPermanently !== undefined) {
     var cp = document.getElementById('category-persistent');
-    if (!d.showCategoryPermanently) cp.classList.remove('visible');
+    if (d.showCategoryPermanently) cp.classList.add('visible');
+    else cp.classList.remove('visible');
   }
 }
 
 function applyA(d){
-  var r=document.documentElement;
-  if(d.tvBackgroundColor)r.style.setProperty('--bg',d.tvBackgroundColor);
-  if(d.qrSize)r.style.setProperty('--qr-size',d.qrSize+'px');
+  var r = document.documentElement;
+  if(d.tvBackgroundColor) r.style.setProperty('--bg', d.tvBackgroundColor);
+  if(d.qrSize) r.style.setProperty('--qr-size', d.qrSize + 'px');
   if(d.qrPosition){
-    var q=document.getElementById('qr-overlay');
-    q.className='pos-'+d.qrPosition+(q.classList.contains('visible')?' visible':'');
+    var q = document.getElementById('qr-overlay');
+    q.className = 'pos-' + d.qrPosition + (q.classList.contains('visible') ? ' visible' : '');
   }
-  if(d.showCheaterStatus!==undefined)appState.showCheaterStatus=d.showCheaterStatus;
-  if(d.scoreRevealAnimation)appState.revealAnim=d.scoreRevealAnimation;
-  var lb=document.getElementById('leaderboard');
-  if(d.scoreAnimationMode){lb.classList.remove('mode-full','mode-bottom-right');lb.classList.add('mode-'+d.scoreAnimationMode)}
-  
-  if(d.showScores===true){
+  if(d.showCheaterStatus !== undefined) appState.showCheaterStatus = d.showCheaterStatus;
+  if(d.scoreRevealAnimation) appState.revealAnim = d.scoreRevealAnimation;
+  var lb = document.getElementById('leaderboard');
+  if(d.scoreAnimationMode){
+    lb.classList.remove('mode-full','mode-bottom-right');
+    lb.classList.add('mode-' + d.scoreAnimationMode);
+  }
+  if(d.showScores === true){
       lb.style.display = (d.scoreAnimationMode === 'bottom-right') ? 'block' : 'flex';
       lb.classList.remove('hidden');
-      if(lb.classList.contains('mode-full'))showAnimLB();
-  } else if(d.showScores===false){
+  } else if(d.showScores === false){
       lb.style.display = 'none';
       lb.classList.add('hidden');
   }
 }
 
 function updateT(d){
-  currentTrackData=d;
-  hasTrack=true;
+  currentTrackData = d;
+  hasTrack = true;
   document.getElementById('category-overlay').classList.remove('visible');
   document.getElementById('idle').classList.add('gone');
   document.getElementById('podium-overlay').classList.remove('visible');
@@ -435,27 +367,20 @@ function updateT(d){
     catP.classList.remove('visible');
   }
 
-  document.getElementById('track-title').textContent=d.title;
-  document.getElementById('track-artist').textContent=d.artist;
-  var i=document.getElementById('cover'),p=document.getElementById('cover-placeholder');
+  document.getElementById('track-title').textContent = d.title;
+  document.getElementById('track-artist').textContent = d.artist;
+  var i = document.getElementById('cover');
+  var p = document.getElementById('cover-placeholder');
   
   if(d.cover){
     var fullCover = d.cover.indexOf('http') === 0 ? d.cover : (serverURL + d.cover);
-    i.onload=function(){i.style.display='block';p.style.display='none'};
-    i.onerror=function(){i.src=serverURL+'/tv_logo?'+Date.now()};
-    i.src=fullCover+(fullCover.indexOf('?') !== -1 ? '&' : '?')+Date.now();
-    
+    i.onload = function(){ i.style.display = 'block'; p.style.display = 'none'; };
+    i.src = fullCover + (fullCover.indexOf('?') !== -1 ? '&' : '?') + Date.now();
     if(d.shouldBlur) i.style.filter = 'blur(30px)';
     else i.style.filter = 'none';
-    
-    if(d.cover_clear){
-        var pre = new Image();
-        var fullClear = d.cover_clear.indexOf('http') === 0 ? d.cover_clear : (serverURL + d.cover_clear);
-        pre.src = fullClear + (fullClear.indexOf('?') !== -1 ? '&' : '?') + Date.now();
-    }
   } else {
-    i.onload=function(){i.style.display='block';p.style.display='none'};
-    i.src=serverURL+'/tv_logo?'+Date.now();
+    i.onload = function(){ i.style.display = 'block'; p.style.display = 'none'; };
+    i.src = serverURL + '/tv_logo?' + Date.now();
     i.style.filter = 'none';
   }
 }
@@ -472,24 +397,16 @@ function showCat(name, hasImage, imageURL, showName, dur) {
     var over = document.getElementById('category-overlay');
     var img = document.getElementById('category-img');
     var nameDisp = document.getElementById('category-name-display');
-    
-    if (showName === false) {
-        nameDisp.style.display = 'none';
-    } else {
-        nameDisp.style.display = 'block';
-        nameDisp.innerText = name;
-    }
+    if (showName === false) nameDisp.style.display = 'none';
+    else { nameDisp.style.display = 'block'; nameDisp.innerText = name; }
     
     if (hasImage) {
         var fullURL = (imageURL && imageURL.indexOf('http') === 0) ? imageURL : (serverURL + imageURL);
         img.src = fullURL + '?' + Date.now();
         img.style.display = 'block';
-    } else {
-        img.style.display = 'none';
-    }
+    } else img.style.display = 'none';
     
     over.classList.add('visible');
-    
     if (window.catTimeout) clearTimeout(window.catTimeout);
     if (dur && dur > 0) {
         window.catTimeout = setTimeout(function(){ over.classList.remove('visible'); }, dur * 1000);
@@ -502,101 +419,84 @@ function showCheater(name, penalty, style) {
     over.classList.remove('visible');
     over.className = ''; 
     void over.offsetWidth; 
-
-    var s = (style || 'Cinéma').toLowerCase();
-    var styleClass = 'style-' + s; // Simple replacement for normalization for now
+    var styleClass = 'style-' + (style || 'Cinema').toLowerCase();
     
-    if (styleClass === 'style-defilement') {
-        over.innerHTML = '<div class="cheater-card"><div class="ticker-badge"><div class="ticker-dot"></div>ALERTE TRICHE</div><div id="cheater-name-text" class="cheater-name-big">⚠️ TRICHE DÉTECTÉE : ' + name.toUpperCase() + ' (SANCTION : -' + penalty + ' PTS) —– REPLAY : ' + name.toUpperCase() + ' A TRICHÉ —– ⚠️</div></div>';
-    } else {
-        over.innerHTML = '<div class="cheater-card"><div class="cheater-header">ALERTE TRICHE</div><div id="cheater-name-text" class="cheater-name-big">' + name + '</div><div class="cheater-info">Sanction confirmée</div><div id="cheater-penalty-text" class="cheater-penalty-badge">-' + penalty + ' pts</div></div>';
-    }
-    
+    over.innerHTML = '<div class="cheater-card"><div class="cheater-header">ALERTE TRICHE</div><div class="cheater-name-big">' + name + '</div><div class="cheater-info">Sanction confirmée</div><div class="cheater-penalty-badge">-' + penalty + ' pts</div></div>';
     over.classList.add('visible');
     over.classList.add(styleClass);
     
     if (window.cheaterTimeout) clearTimeout(window.cheaterTimeout);
-    window.cheaterTimeout = setTimeout(function(){ 
-        over.classList.remove('visible'); 
-        setTimeout(function(){ over.className = ''; }, 600); 
-    }, styleClass === 'style-defilement' ? 12000 : 8000);
+    window.cheaterTimeout = setTimeout(function(){ over.classList.remove('visible'); }, 8000);
 }
 
 function renderLB(p){
-  if(isAnimating)return;
-  var l=document.getElementById('lb-list'),s=p.sort(function(a,b){return b.score-a.score}).slice(0,10);
-  l.innerHTML=s.map(function(x,i){
-    var c=x.isCheating&&appState.showCheaterStatus;
-    return '<div class="lb-row ' + (c?'cheater':'') + '" style="opacity:1"><span class="lb-rank">' + (i+1) + '</span><span class="lb-name">' + esc(x.name) + (c?' ⚠️ TRICHE':'') + '</span><span class="lb-score">' + x.score + ' pts</span></div>'
+  if(isAnimating) return;
+  var l = document.getElementById('lb-list');
+  var s = p.sort(function(a,b){return b.score-a.score}).slice(0,10);
+  l.innerHTML = s.map(function(x,i){
+    var c = x.isCheating && appState.showCheaterStatus;
+    return '<div class="lb-row ' + (c?'cheater':'') + '" style="opacity:1"><span class="lb-rank">' + (i+1) + '</span><span class="lb-name">' + esc(x.name) + (c?' ⚠️ TRICHE':'') + '</span><span class="lb-score">' + x.score + ' pts</span></div>';
   }).join('');
 }
 
-function showAnimLB(){
-  var rows=Array.from(document.querySelectorAll('.lb-row')); if(!rows.length)return;
-  isAnimating=true; rows.forEach(function(r){r.style.opacity='0'});
-  var types = ['suspense','cascade','wipe','neon','zoom'];
-  var anim = appState.revealAnim==='random'?types[Math.floor(Math.random()*5)]:appState.revealAnim;
-  rows.forEach(function(r,i){
-    var d=anim==='suspense'?(rows.length-i)*1200:i*100;
-    setTimeout(function(){r.style.opacity='1';r.classList.add('anim-'+anim)},d);
-  });
-  setTimeout(function(){isAnimating=false},rows.length*1000+1200);
-}
-
 function toggleQR(d){
-  var q=document.getElementById('qr-overlay');
+  var q = document.getElementById('qr-overlay');
   if(d.show){
     var qrTarget = d.url || serverURL;
-    document.getElementById('qr-img').src='https://api.qrserver.com/v1/create-qr-code/?size=600x600&data='+encodeURIComponent(qrTarget);
+    document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=' + encodeURIComponent(qrTarget);
     q.classList.add('visible');
   } else q.classList.remove('visible');
 }
 
 function toggleP(d){
-  var o=document.getElementById('pause-overlay');
-  if(d.data){o.classList.add('visible');document.getElementById('pause-msg').textContent=d.pauseMessage}
+  var o = document.getElementById('pause-overlay');
+  if(d.data){ o.classList.add('visible'); document.getElementById('pause-msg').textContent = d.pauseMessage; }
   else o.classList.remove('visible');
 }
 
 function showPodium(data) {
-  document.getElementById('pause-overlay').classList.remove('visible');
-  document.getElementById('player').classList.remove('visible');
-  document.getElementById('leaderboard').classList.add('hidden');
-  document.getElementById('main-logo-wrap').classList.add('hidden');
   var over = document.getElementById('podium-overlay');
   var container = document.getElementById('podium-steps');
   over.classList.add('visible');
-  container.innerHTML = 
-    '<div class="podium-step" style="animation-delay:0.4s">' +
-        '<div style="font-size:3rem;font-weight:900;margin-bottom:1vmin">' + esc(data[1] ? data[1].name : '') + '</div>' +
-        '<div style="font-size:2rem;color:var(--blue);margin-bottom:2vmin">' + (data[1] ? data[1].score : 0) + ' pts</div>' +
-        '<div style="width:20vw;height:25vh;background:linear-gradient(to top,#1A1A3A,var(--bg));border:3px solid silver;border-radius:2vmin 2vmin 0 0;display:flex;align-items:center;justify-content:center;font-size:5rem;font-weight:900;box-shadow:0 0 30px rgba(192,192,192,0.2)">2</div>' +
-    '</div>' +
-    '<div class="podium-step" style="animation-delay:0s">' +
-        '<div style="font-size:4.5rem;font-weight:900;color:gold;margin-bottom:1vmin">' + esc(data[0] ? data[0].name : '') + '</div>' +
-        '<div style="font-size:2.5rem;color:var(--blue);margin-bottom:2vmin">' + (data[0] ? data[0].score : 0) + ' pts</div>' +
-        '<div style="width:28vw;height:42vh;background:linear-gradient(to top,#1A1A3A,var(--bg));border:3px solid gold;border-radius:2vmin 2vmin 0 0;display:flex;align-items:center;justify-content:center;font-size:9rem;font-weight:900;box-shadow:0 0 80px rgba(255,215,0,0.4)">1</div>' +
-    '</div>' +
-    '<div class="podium-step" style="animation-delay:0.8s">' +
-        '<div style="font-size:2.5rem;font-weight:900;margin-bottom:1vmin">' + esc(data[2] ? data[2].name : '') + '</div>' +
-        '<div style="font-size:2rem;color:var(--blue);margin-bottom:2vmin">' + (data[2] ? data[2].score : 0) + ' pts</div>' +
-        '<div style="width:18vw;height:16vh;background:linear-gradient(to top,#1A1A3A,var(--bg));border:3px solid #CD7F32;border-radius:2vmin 2vmin 0 0;display:flex;align-items:center;justify-content:center;font-size:4rem;font-weight:900;box-shadow:0 0 30px rgba(205,127,50,0.2)">3</div>' +
-    '</div>';
+  container.innerHTML = '<div class="podium-step">Podium prêt</div>'; // Simplified for diagnostic
 }
 
-function poll(){
-  if(!serverURL)return;
-  fetch(serverURL+'/tv_state')
-    .then(function(r){ return r.json(); })
-    .then(function(status){
-      handle(status);
-    })
-    .catch(function(err){ console.error("Poll error:", err); })
-    .finally(function(){
-      setTimeout(poll, 800);
-    });
+function startPoll(){
+  function doPoll(){
+    if(!serverURL) return;
+    fetch(serverURL + '/tv_state')
+      .then(function(r){ return r.json(); })
+      .then(function(s){ handle(s); })
+      .catch(function(e){})
+      .finally(function(){ setTimeout(doPoll, 1000); });
+  }
+  doPoll();
 }
+
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// REGISTRATION
+if (playerManager) {
+  playerManager.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, function(req) {
+    log("LOAD Event detected");
+    if (req.media && req.media.customData && req.media.customData.serverURL) {
+      initS(req.media.customData.serverURL);
+    }
+    return req;
+  });
+
+  castCtx.addCustomMessageListener('urn:x-cast:com.qwizz.control', function(e) {
+    log("Control Message: " + JSON.stringify(e.data));
+    if (e.data && e.data.serverURL) initS(e.data.serverURL);
+    else handle(e.data);
+  });
+
+  var opt = new cast.framework.CastReceiverOptions();
+  opt.maxInactivity = 86400;
+  log("Starting Cast Context...");
+  castCtx.start(opt);
+  log("Cast Context STARTED");
+}
 </script>
 </body>
 </html>
