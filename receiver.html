@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>QWIZZ Chromecast Receiver V5.0.5-Ultimate</title>
+  <title>QWIZZ Chromecast Receiver V5.0.6-ZeroLatency</title>
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
@@ -98,29 +98,36 @@
     .track-artist { font-size: 3rem; color: #E0E0E0; font-weight: 300; opacity: 0.9; }
 
     #leaderboard {
-      position: fixed; background: rgba(15, 12, 45, 0.92);
-      border: 1px solid rgba(0, 168, 255, 0.25);
+      position: fixed; background: rgba(15, 12, 45, 0.96);
+      border: 1px solid rgba(0, 168, 255, 0.3);
       border-radius: 4vmin; padding: 5vmin;
-      backdrop-filter: blur(40px); z-index: 9000;
-      display: none; box-shadow: 0 50px 150px rgba(0,0,0,0.8);
+      backdrop-filter: blur(50px); z-index: 9000;
+      display: none; box-shadow: 0 50px 150px rgba(0,0,0,0.85);
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     #leaderboard.mode-full {
-      inset: 8vmin; display: flex; flex-direction: column;
-      justify-content: center; align-items: center
+      inset: 6vmin; display: flex; flex-direction: column;
+      justify-content: center; align-items: stretch;
+      background: radial-gradient(circle at center, rgba(26, 26, 58, 0.98) 0%, rgba(9, 7, 43, 0.99) 100%);
     }
 
     #leaderboard.mode-bottom-right {
-      bottom: 5vmin; right: 5vmin; width: 35vw; display: block
+      bottom: 5vmin; right: 5vmin; width: 35vw; display: block;
     }
 
+    #leaderboard.mode-full .lb-row { padding: 3vmin 5vmin; margin-bottom: 2vmin; border-radius: 3vmin; }
+    #leaderboard.mode-full .lb-name { font-size: 4rem; }
+    #leaderboard.mode-full .lb-score { font-size: 4rem; }
+    #leaderboard.mode-full .lb-rank { font-size: 3.5rem; width: 10vmin; }
+    #leaderboard.mode-full .lb-header { font-size: 5rem; margin-bottom: 6vmin; }
+
     .lb-header { font-weight: 900; letter-spacing: 0.5vmin; color: var(--blue); text-transform: uppercase; margin-bottom: 4vmin; font-size: 3.5rem; text-align: center; border-bottom: 1px solid rgba(0,168,255,0.1); padding-bottom: 2vmin; }
-    .lb-row { display: flex; align-items: center; gap: 3vmin; background: rgba(255, 255, 255, 0.03); padding: 2vmin 3vmin; border-radius: 2vmin; margin-bottom: 1.5vmin; opacity: 1; border: 1px solid rgba(255,255,255,0.05); }
+    .lb-row { display: flex; align-items: center; gap: 3vmin; background: rgba(255, 255, 255, 0.04); padding: 2vmin 3vmin; border-radius: 2vmin; margin-bottom: 1.5vmin; opacity: 1; border: 1px solid rgba(255,255,255,0.06); }
     .lb-rank { width: 6vmin; font-weight: 900; font-size: 2.5rem; text-align: center; color: rgba(255,255,255,0.4); }
     .lb-name { flex: 1; font-weight: 700; font-size: 2.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lb-score { font-weight: 900; color: var(--blue); font-size: 2.8rem; }
 
-    /* Rank Colors */
     .lb-row.rank-1 { background: linear-gradient(90deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05)); border-color: rgba(255, 215, 0, 0.3); }
     .lb-row.rank-1 .lb-rank { color: #FFD700; }
     .lb-row.rank-2 { background: linear-gradient(90deg, rgba(192, 192, 192, 0.12), rgba(192, 192, 192, 0.03)); border-color: rgba(192, 192, 192, 0.25); }
@@ -133,9 +140,15 @@
       background: rgba(15, 12, 45, 0.96); backdrop-filter: blur(25px);
       padding: 4vmin; border-radius: 5vmin; border: 2px solid var(--blue);
       text-align: center; box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7);
-      top: 4vmin; right: 4vmin;
     }
     #qr-overlay.visible { display: block; }
+
+    /* Positioning classes */
+    .pos-top-right { top: 4vmin; right: 4vmin; }
+    .pos-top-left { top: 4vmin; left: 4vmin; }
+    .pos-bottom-right { bottom: 4vmin; right: 4vmin; }
+    .pos-bottom-left { bottom: 4vmin; left: 4vmin; }
+    .pos-center { top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
     #qr-img { width: var(--qr-size); height: var(--qr-size); background: #fff; padding: 1.5vmin; border-radius: 2vmin; }
 
@@ -189,7 +202,7 @@
     <div id="lb-list" style="width:100%"></div>
   </div>
 
-  <div id="qr-overlay">
+  <div id="qr-overlay" class="pos-top-right">
     <div style="font-size:2.5rem;color:var(--blue);font-weight:900;margin-bottom:2vmin">REJOINDRE LE JEU</div>
     <img id="qr-img">
   </div>
@@ -247,11 +260,11 @@
       if(d.type === 'reveal' || d.reveal === true || d.gameState === 'revealed') revealInfo();
       if(d.isPaused !== undefined) toggleP(d.isPaused, d.pauseMessage);
       if(d.showScores !== undefined) applyA({showScores: d.showScores, scoreAnimationMode: d.scoreAnimationMode});
-      if(d.showQR !== undefined) toggleQR(d.showQR, d.qrURL);
+      if(d.showQR !== undefined) toggleQR(d.showQR, d.qrURL, d.qrPosition);
       
       if(d.type === 'track_update') updateT(d);
       else if(d.type === 'leaderboard') renderLB(d.players);
-      else if(d.type === 'show_qr') toggleQR(d.show, d.url);
+      else if(d.type === 'show_qr') toggleQR(d.show, d.url, d.position);
       else if(d.type === 'category_transition' && d.timestamp > lastCategoryTime) {
         lastCategoryTime = d.timestamp;
         showCat(d);
@@ -278,7 +291,6 @@
       var infoContainer = document.getElementById('track-info-container');
       infoContainer.classList.toggle('is-hidden', !isRevealed);
       
-      // BLIND TEST CORE: Hide metadata unless revealed
       if (!isRevealed) {
           document.getElementById('track-title').textContent = "QUEL EST LE TITRE ?";
           document.getElementById('track-artist').textContent = "???";
@@ -289,13 +301,10 @@
       
       var i = document.getElementById('cover'), b = document.getElementById('cover-blurred'), p = document.getElementById('cover-placeholder');
       if(d.cover) {
-        var src = (d.cover.startsWith('http') ? d.cover : serverURL + d.cover) + '&t=' + Date.now();
-        
-        // Blurred (Only if requested AND not revealed)
+        var src = (d.cover.startsWith('http') ? d.cover : (serverURL ? serverURL + d.cover : d.cover)) + '&t=' + Date.now();
         b.src = src; 
         b.onload = () => { if(d.shouldBlur && !isRevealed) { b.style.opacity = '1'; p.style.display = 'none'; } };
         
-        // Clear (Only if revealed OR not blurred)
         i.src = src; 
         if (isRevealed) {
             i.style.opacity = '1'; b.style.opacity = '0'; p.style.display = 'none';
@@ -303,7 +312,7 @@
         } else {
             i.style.opacity = '0';
             if (d.shouldBlur) {
-                // b.onload takes care of its own opacity
+                // b.onload takes care
             } else {
                 b.style.opacity = '0'; p.style.display = 'flex';
             }
@@ -318,7 +327,6 @@
     function revealInfo() {
       if(!currentTrackData) return;
       isRevealed = true;
-      log("REVEAL TRIGGERED");
       document.getElementById('track-title').textContent = currentTrackData.title || "";
       document.getElementById('track-artist').textContent = currentTrackData.artist || "";
       document.getElementById('track-info-container').classList.remove('is-hidden');
@@ -331,6 +339,7 @@
     }
 
     function renderLB(players) {
+      if(!players) return;
       var l = document.getElementById('lb-list');
       var s = players.sort((a,b) => b.score - a.score).slice(0, 8);
       l.innerHTML = s.map((p, idx) => `
@@ -340,6 +349,29 @@
           <span class="lb-score">${p.score} pts</span>
         </div>
       `).join('');
+    }
+
+    function applyA(d) {
+      var lb = document.getElementById('leaderboard');
+      if(d.showScores) {
+          lb.style.display = (d.scoreAnimationMode === 'bottom-right' ? 'block' : 'flex');
+          // Update mode class for layout
+          lb.className = (d.scoreAnimationMode === 'full' ? 'mode-full' : 'mode-bottom-right');
+      } else {
+          lb.style.display = 'none';
+      }
+    }
+
+    function toggleQR(show, url, pos) {
+      var q = document.getElementById('qr-overlay');
+      if(show) {
+        document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(url || serverURL || window.location.href);
+        // Clear all pos classes
+        q.className = 'visible';
+        // Add specific pos class from iPad
+        if(pos) q.classList.add('pos-' + pos);
+        else q.classList.add('pos-top-right'); // default
+      } else q.className = '';
     }
 
     function showCat(d) {
@@ -354,25 +386,7 @@
       else o.classList.remove('visible');
     }
 
-    function toggleQR(show, url) {
-      var q = document.getElementById('qr-overlay');
-      if(show) {
-        document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(url || serverURL);
-        q.classList.add('visible');
-      } else q.classList.remove('visible');
-    }
-
-    function applyA(d) {
-      var lb = document.getElementById('leaderboard');
-      if(d.showScores) {
-          lb.style.display = (d.scoreAnimationMode === 'bottom-right' ? 'block' : 'flex');
-      } else {
-          lb.style.display = 'none';
-      }
-    }
-
     function startPoll() {
-      document.getElementById('leaderboard').style.display = 'none'; // Guard against initial flash
       if(window.pollTimer) clearInterval(window.pollTimer);
       window.pollTimer = setInterval(() => {
         if(!serverURL) return;
@@ -381,13 +395,20 @@
     }
 
     playerManager.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, req => {
-      if(req.media && req.media.customData && req.media.customData.serverURL) initS(req.media.customData.serverURL);
+      // Immediate UI Feedback: Extract track info the millisecond we start loading
+      if(req.media && req.media.customData) {
+        if(req.media.customData.serverURL) initS(req.media.customData.serverURL);
+        // Special case: if track info is bundled, show it immediately
+        if(req.media.customData.trackID) {
+            updateT(req.media.customData);
+        }
+      }
       return req;
     });
 
     context.addCustomMessageListener('urn:x-cast:com.qwizz.control', e => handle(e.data));
     context.start();
-    log("Receiver Started V5.0.5-Ultimate");
+    log("Receiver Started V5.0.6");
   </script>
 </body>
 </html>
