@@ -150,8 +150,9 @@
       position: fixed; inset: 0; z-index: 5;
       opacity: 0; transition: opacity 0.8s ease;
       --theme-hue: 200;
+      background: black; /* Ensure it covers anything behind when active */
     }
-    body.video-revealed cast-media-player { opacity: 1; }
+    body.video-revealed cast-media-player { opacity: 1; z-index: 20; }
     
     #category-persistent {
       position: fixed; top: 4vmin; left: 6vmin;
@@ -218,6 +219,9 @@ castCtx.addCustomMessageListener('urn:x-cast:com.qwizz.control',e=>{
     // Explicit reveal from sender
     revealCover();
   }
+  if(e.data&&e.data.type==='mute'){
+    setMute(e.data.value);
+  }
 });
 
 function revealCover(){
@@ -231,9 +235,30 @@ function revealCover(){
     setTimeout(()=>i.style.transform='scale(1)', 300);
   }
 }
+
+function setMute(m){
+  const pm = castCtx.getPlayerManager();
+  if (pm) {
+    if (m) pm.setSystemVolume({muted: true});
+    else pm.setSystemVolume({muted: false});
+  }
+}
+
 const options = new cast.framework.CastReceiverOptions();
-options.maxInactivity = 86400; // 24h (Essentially disables sleep while app is open)
+options.maxInactivity = 86400; // 24h
 castCtx.start(options);
+
+// Intercept LOAD to handle initial mute state
+const playerManager = castCtx.getPlayerManager();
+playerManager.setMessageInterceptor(
+  cast.framework.messages.MessageType.LOAD,
+  loadRequestData => {
+    if (loadRequestData.media && loadRequestData.media.customData && loadRequestData.media.customData.mute) {
+      setTimeout(() => setMute(true), 100);
+    }
+    return loadRequestData;
+  }
+);
 
 function initS(u){
   serverURL=u;
