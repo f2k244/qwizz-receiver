@@ -319,14 +319,21 @@ function initS(u){
   startPoll();
 }
 
+var lastCategoryTime = 0;
+
 function handle(d){
   if (!d) return;
-  log("Handling data: " + (d.type || "state_snapshot"));
   
   // 1. Handle Full State Snapshot (Polling)
   if (d.players) renderLB(d.players);
   if (d.track) updateT(d.track);
   if (d.isPaused !== undefined) toggleP({ data: d.isPaused, pauseMessage: d.pauseMessage });
+  
+  // 1.5 Handle Polled Events (Category)
+  if (d.category_event && d.category_event.timestamp > lastCategoryTime) {
+    lastCategoryTime = d.category_event.timestamp;
+    showCat(d.category_event.name, d.category_event.hasImage, d.category_event.imageURL, d.category_event.showName, d.category_event.duration);
+  }
   
   // 2. Handle Discrete Events (WebSocket / Control Channel)
   if(d.type==='appearance') applyA(d.data);
@@ -336,7 +343,10 @@ function handle(d){
   else if(d.type==='isPaused') toggleP(d);
   else if(d.type==='end_game') showPodium(d.data);
   else if(d.type==='mode_switch') showRules(d.mode, d.rules);
-  else if(d.type==='category_transition') showCat(d.name, d.hasImage, d.imageURL, d.showName, d.duration);
+  else if(d.type==='category_transition' && d.timestamp > lastCategoryTime) {
+    lastCategoryTime = d.timestamp;
+    showCat(d.name, d.hasImage, d.imageURL, d.showName, d.duration);
+  }
   else if(d.type==='cheater_alert') showCheater(d.name, d.penalty, d.style);
   
   // 3. Global properties
@@ -374,6 +384,12 @@ function applyA(d){
 }
 
 function updateT(d){
+  // Clear previous images to avoid 'bopping' or 'ghosting'
+  var i = document.getElementById('cover');
+  var b = document.getElementById('cover-blurred');
+  if(i) i.src = "";
+  if(b) b.src = "";
+  
   if (!d || (d.trackID === "" && !d.title)) {
     // Return to idle if track is empty
     document.getElementById('idle').classList.remove('gone');
