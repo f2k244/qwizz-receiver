@@ -150,9 +150,11 @@
       position: fixed; inset: 0; z-index: 5;
       opacity: 0; transition: opacity 0.8s ease;
       --theme-hue: 200;
-      background: black; /* Ensure it covers anything behind when active */
+      background: var(--bg); /* Ensure it covers anything behind when active */
     }
-    body.video-revealed cast-media-player { opacity: 1; z-index: 20; }
+    body.video-revealed cast-media-player { opacity: 1; z-index: 100 !important; }
+    body.video-revealed #player { display: none !important; }
+    body.video-revealed #ambient { display: none !important; }
     
     #category-persistent {
       position: fixed; top: 4vmin; left: 6vmin;
@@ -239,6 +241,24 @@ function revealCover(){
 function setMute(m){
   console.log("Receiver: Setting mute state to:", m);
   castCtx.setSystemVolume({muted: m});
+  
+  // Manual fallback for media elements
+  const mediaElements = document.querySelectorAll('video, audio');
+  mediaElements.forEach(el => {
+    el.muted = m;
+    if (m) el.volume = 0;
+    else el.volume = 1;
+  });
+
+  // Specifically for cast-media-player built-in elements
+  const playerManager = castCtx.getPlayerManager();
+  if (playerManager) {
+    const mediaElement = playerManager.getMediaElement();
+    if (mediaElement) {
+       mediaElement.muted = m;
+       if (m) mediaElement.volume = 0;
+    }
+  }
 }
 
 const options = new cast.framework.CastReceiverOptions();
