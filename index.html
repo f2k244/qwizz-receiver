@@ -1,657 +1,388 @@
 <!DOCTYPE html>
-<html lang="fr">
-
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>QWIZZ Buzzer</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-deep: #09072B;
-            --accent-blue: #00A8FF;
-            --accent-purple: #8A2BE2;
-            --text-main: #FFFFFF;
-            --glass: rgba(26, 26, 58, 0.8);
-            --buzzer-btn: linear-gradient(135deg, #00A8FF, #8A2BE2);
-            --font-family: 'Outfit', sans-serif;
-        }
+  <meta charset="UTF-8">
+  <title>QWIZZ Chromecast Receiver V5.0.5-Ultimate</title>
+  <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #09072B;
+      --blue: #00A8FF;
+      --purple: #8A2BE2;
+      --font: 'Outfit', sans-serif;
+      --qr-size: 22vmin;
+    }
 
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+    * { margin: 0; padding: 0; box-sizing: border-box }
 
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-deep);
-            color: var(--text-main);
-            font-family: var(--font-family);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            touch-action: manipulation;
-        }
+    body, html {
+      width: 100%; height: 100%;
+      background: var(--bg); color: #fff;
+      font-family: var(--font); overflow: hidden;
+      font-size: 1.5vmin
+    }
 
-        #ambient {
-            position: fixed;
-            inset: 0;
-            z-index: -1;
-            background:
-                radial-gradient(circle at 20% 30%, rgba(0, 168, 255, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(138, 43, 226, 0.1) 0%, transparent 50%);
-        }
+    #ambient {
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 20% 50%, rgba(0, 168, 255, .15) 0%, transparent 70%), 
+                  radial-gradient(ellipse 40% 40% at 80% 20%, rgba(138, 43, 226, .12) 0%, transparent 70%);
+      pointer-events: none; z-index: 0
+    }
 
-        /* SCREEN: USERNAME */
-        #username-screen {
-            position: fixed;
-            inset: 0;
-            z-index: 1000;
-            background: var(--bg-deep);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 30px;
-            text-align: center;
-            transition: opacity 0.5s ease, transform 0.5s ease;
-        }
+    #idle {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 100; transition: opacity .8s ease
+    }
 
-        .logo {
-            width: 280px;
-            margin-bottom: 40px;
-            filter: drop-shadow(0 0 20px rgba(0, 168, 255, 0.4));
-        }
+    #idle.gone { opacity: 0; pointer-events: none }
 
-        .input-group {
-            width: 100%;
-            max-width: 320px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
+    .idle-content {
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+      animation: fadeInUp 1.2s ease-out
+    }
 
-        input {
-            width: 100%;
-            padding: 18px;
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            background: var(--glass);
-            color: white;
-            font-size: 18px;
-            font-family: inherit;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            transition: border-color 0.3s;
-        }
+    .idle-logo {
+      width: 85vmin; height: auto; margin-bottom: 4vmin;
+      filter: drop-shadow(0 0 80px rgba(0, 168, 255, 0.7));
+    }
 
-        input:focus {
-            border-color: var(--accent-blue);
-            outline: none;
-        }
+    #player {
+      position: fixed; inset: 0;
+      display: grid; grid-template-columns: 45vw 1fr;
+      padding: 8vmin; gap: 8vmin; align-items: center;
+      opacity: 0; pointer-events: none; transition: opacity .8s; z-index: 10
+    }
 
-        .btn-primary {
-            width: 100%;
-            padding: 18px;
-            border-radius: 16px;
-            border: none;
-            background: var(--accent-blue);
-            color: white;
-            font-size: 18px;
-            font-weight: 900;
-            letter-spacing: 1px;
-            cursor: pointer;
-            box-shadow: 0 10px 30px rgba(0, 168, 255, 0.4);
-            transition: transform 0.2s, background 0.3s;
-        }
+    #player.visible { opacity: 1 }
 
-        .btn-primary:active {
-            transform: scale(0.96);
-        }
+    .cover-wrapper {
+      position: relative; width: 60vmin; height: 60vmin;
+      border-radius: 4vmin; overflow: hidden;
+      border: 0.4vmin solid rgba(255, 255, 255, .15);
+      box-shadow: 0 40px 120px rgba(0, 0, 0, .8);
+      background: rgba(0, 0, 0, 0.4)
+    }
 
-        /* SCREEN: BUZZER */
-        #buzzer-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 50px;
-            opacity: 0;
-            transition: opacity 0.8s;
-        }
+    #cover, #cover-blurred {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: contain; transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 0;
+    }
 
-        .buzzer-wrapper {
-            position: relative;
-            width: 280px;
-            height: 280px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    #cover { z-index: 2; }
+    #cover-blurred { z-index: 1; filter: blur(35px) brightness(0.7); }
 
-        .buzzer-glow {
-            position: absolute;
-            inset: -20px;
-            background: var(--buzzer-btn);
-            border-radius: 50%;
-            opacity: 0.2;
-            filter: blur(40px);
-            animation: pulse-glow 3s infinite ease-in-out;
-        }
+    cast-media-player {
+      position: fixed; inset: 0; z-index: 1;
+      opacity: 0; transition: opacity 0.8s;
+      --theme-hue: 200; background: var(--bg);
+    }
 
-        @keyframes pulse-glow {
+    body.video-revealed cast-media-player { opacity: 1; z-index: 100 !important; }
 
-            0%,
-            100% {
-                transform: scale(1);
-                opacity: 0.15;
-            }
+    #cover-placeholder {
+      position: absolute; inset: 0; border-radius: 3vmin;
+      border: 2px dashed rgba(0, 168, 255, 0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 25rem; color: rgba(0, 168, 255, .15); z-index: 0
+    }
 
-            50% {
-                transform: scale(1.1);
-                opacity: 0.35;
-            }
-        }
+    .logo-area { position: fixed; top: 4vmin; right: 6vmin; z-index: 9999 }
+    .logo-area img { width: 25vmin; height: auto; object-fit: contain; filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.6)) }
 
-        #buzzer {
-            width: 240px;
-            height: 240px;
-            border-radius: 50%;
-            background: var(--buzzer-btn);
-            border: 8px solid rgba(255, 255, 255, 0.2);
-            box-shadow:
-                0 20px 50px rgba(0, 0, 0, 0.5),
-                inset 0 0 30px rgba(255, 255, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 42px;
-            font-weight: 900;
-            color: white;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            cursor: pointer;
-            transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 2;
-        }
+    .track-info { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); opacity: 1; }
+    .track-info.is-hidden { opacity: 0.85; filter: grayscale(1); }
+    .track-title { font-size: 6rem; font-weight: 900; line-height: 1.1; margin-bottom: 2rem; text-shadow: 0 4px 40px rgba(0, 0, 0, 0.6) }
+    .track-artist { font-size: 3rem; color: #E0E0E0; font-weight: 300; opacity: 0.9; }
 
-        #buzzer:active {
-            transform: scale(0.92);
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.6);
-        }
+    #leaderboard {
+      position: fixed; background: rgba(15, 12, 45, 0.92);
+      border: 1px solid rgba(0, 168, 255, 0.25);
+      border-radius: 4vmin; padding: 5vmin;
+      backdrop-filter: blur(40px); z-index: 9000;
+      display: none; box-shadow: 0 50px 150px rgba(0,0,0,0.8);
+    }
 
-        #buzzer.disabled {
-            background: #1A1A3A;
-            filter: grayscale(0.8);
-            border-color: rgba(255, 255, 255, 0.05);
-            opacity: 0.5;
-            transform: scale(0.98);
-            pointer-events: none;
-        }
+    #leaderboard.mode-full {
+      inset: 8vmin; display: flex; flex-direction: column;
+      justify-content: center; align-items: center
+    }
 
-        #status-area {
-            text-align: center;
-        }
+    #leaderboard.mode-bottom-right {
+      bottom: 5vmin; right: 5vmin; width: 35vw; display: block
+    }
 
-        #status-text {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--accent-blue);
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
+    .lb-header { font-weight: 900; letter-spacing: 0.5vmin; color: var(--blue); text-transform: uppercase; margin-bottom: 4vmin; font-size: 3.5rem; text-align: center; border-bottom: 1px solid rgba(0,168,255,0.1); padding-bottom: 2vmin; }
+    .lb-row { display: flex; align-items: center; gap: 3vmin; background: rgba(255, 255, 255, 0.03); padding: 2vmin 3vmin; border-radius: 2vmin; margin-bottom: 1.5vmin; opacity: 1; border: 1px solid rgba(255,255,255,0.05); }
+    .lb-rank { width: 6vmin; font-weight: 900; font-size: 2.5rem; text-align: center; color: rgba(255,255,255,0.4); }
+    .lb-name { flex: 1; font-weight: 700; font-size: 2.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lb-score { font-weight: 900; color: var(--blue); font-size: 2.8rem; }
 
-        #status-sub {
-            font-size: 14px;
-            opacity: 0.6;
-        }
+    /* Rank Colors */
+    .lb-row.rank-1 { background: linear-gradient(90deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05)); border-color: rgba(255, 215, 0, 0.3); }
+    .lb-row.rank-1 .lb-rank { color: #FFD700; }
+    .lb-row.rank-2 { background: linear-gradient(90deg, rgba(192, 192, 192, 0.12), rgba(192, 192, 192, 0.03)); border-color: rgba(192, 192, 192, 0.25); }
+    .lb-row.rank-2 .lb-rank { color: #C0C0C0; }
+    .lb-row.rank-3 { background: linear-gradient(90deg, rgba(205, 127, 50, 0.1), rgba(205, 127, 50, 0.02)); border-color: rgba(205, 127, 50, 0.2); }
+    .lb-row.rank-3 .lb-rank { color: #CD7F32; }
 
-        /* OVERLAYS */
-        #flash-overlay {
-            position: fixed;
-            inset: 0;
-            background: white;
-            z-index: 2000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.05s;
-        }
+    #qr-overlay {
+      position: fixed; z-index: 10000; display: none;
+      background: rgba(15, 12, 45, 0.96); backdrop-filter: blur(25px);
+      padding: 4vmin; border-radius: 5vmin; border: 2px solid var(--blue);
+      text-align: center; box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7);
+      top: 4vmin; right: 4vmin;
+    }
+    #qr-overlay.visible { display: block; }
 
-        .loader {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(0, 168, 255, 0.1);
-            border-top-color: var(--accent-blue);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
+    #qr-img { width: var(--qr-size); height: var(--qr-size); background: #fff; padding: 1.5vmin; border-radius: 2vmin; }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
+    #pause-overlay, #category-overlay {
+      position: fixed; inset: 0; background: rgba(9, 7, 43, 0.98);
+      backdrop-filter: blur(50px); display: none; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 8000;
+      text-align: center; padding: 5vmin;
+    }
+    #pause-overlay.visible, #category-overlay.visible { display: flex; }
 
-        /* Phase 9 Overlays */
-        .overlay-screen {
-            position: fixed;
-            inset: 0;
-            z-index: 5000;
-            background: var(--bg-deep);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-            text-align: center;
-            backdrop-filter: blur(20px);
-        }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: translateY(0); } }
 
-        .overlay-screen.visible {
-            display: flex;
-            animation: fadeIn 0.5s ease;
-        }
-
-        #pause-screen.visible,
-        #podium-screen.visible,
-        #cheater-screen.visible {
-            display: flex;
-            opacity: 1;
-        }
-
-        #cheater-screen {
-            position: fixed;
-            inset: 0;
-            z-index: 10000;
-            background: rgba(255, 0, 0, 0.9);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-            color: white;
-            text-align: center;
-            backdrop-filter: blur(20px);
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        #pause-screen h1 {
-            color: var(--accent-blue);
-            font-size: 40px;
-            margin-bottom: 20px;
-            font-weight: 900;
-        }
-
-        #pause-screen p {
-            font-size: 20px;
-            opacity: 0.8;
-            line-height: 1.4;
-        }
-
-        #podium-screen h1 {
-            background: linear-gradient(to right, #FFD700, var(--accent-blue));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-size: 32px;
-            font-weight: 900;
-            margin-bottom: 40px;
-        }
-
-        .podium-list {
-            width: 100%;
-            max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .podium-item {
-            background: var(--glass);
-            padding: 20px;
-            border-radius: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .podium-rank {
-            font-size: 24px;
-            font-weight: 900;
-            color: var(--accent-blue);
-            min-width: 30px;
-        }
-
-        .podium-name {
-            font-size: 20px;
-            font-weight: 700;
-            flex: 1;
-            margin-left: 15px;
-            text-align: left;
-        }
-
-        .podium-score {
-            font-size: 18px;
-            font-weight: 900;
-        }
-
-        .podium-item.gold {
-            border-color: #FFD700;
-            background: rgba(255, 215, 0, 0.1);
-        }
-
-        #correct-screen, #cheater-screen {
-            position: fixed; inset: 0; z-index: 10000;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            padding: 40px; color: white; text-align: center; backdrop-filter: blur(25px);
-        }
-        #cheater-screen { background: rgba(255, 0, 0, 0.9); }
-        #correct-screen { background: rgba(39, 174, 96, 0.9); }
-        
-        #correct-screen.visible, #cheater-screen.visible { display: flex; animation: fadeIn 0.4s ease; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .perm-hint {
-            font-size: 13px;
-            color: var(--accent-blue);
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            justify-content: center;
-        }
-    </style>
+    #debug-log {
+      position: fixed; bottom: 2vmin; left: 2vmin; z-index: 100000;
+      background: rgba(0, 0, 0, 0.7); color: #0f0; font-family: monospace;
+      font-size: 1.2vmin; padding: 1vmin; border-radius: 1vmin;
+      max-width: 40vw; max-height: 20vh; overflow-y: auto;
+      pointer-events: none; display: none;
+    }
+  </style>
 </head>
 
 <body>
-    <div id="ambient"></div>
-    <div id="flash-overlay"></div>
+  <div id="ambient"></div>
 
-    <!-- SCREEN: JOIN -->
-    <div id="username-screen">
-        <img src="/client_logo" class="logo"
-            onerror="this.src='https://raw.githubusercontent.com/joprex/QWIZZ/main/Assets.xcassets/QwizzLogo.imageset/QwizzLogo.png'; this.onerror=null;">
-        <h1 style="font-size: 28px; font-weight: 900; margin-bottom: 30px;">PRÊT À QWIZZER ?</h1>
-        <div class="input-group">
-            <input type="text" id="username" placeholder="Ton pseudo" autocomplete="off" />
-            <input type="password" id="password" placeholder="Code (si requis)" autocomplete="off"
-                style="display: none;" />
-            <div class="perm-hint">
-                <input type="checkbox" id="perm-check" checked style="width: 20px; height: 20px; margin: 0;">
-                <span>Activer Vibreur & Flash 📸</span>
-            </div>
-            <button class="btn-primary" onclick="joinGame()">VALIDER</button>
-        </div>
-        <p style="margin-top: 30px; font-size: 12px; opacity: 0.4;">Connecté au serveur QWIZZ local</p>
+  <div id="idle">
+    <div class="idle-content">
+      <img id="idle-logo" class="idle-logo">
+      <div style="font-size:8rem;font-weight:900;letter-spacing:2vmin;color:var(--blue)">PRÊT À QWIZZER ?</div>
+      <div style="font-size:2.5rem;color:rgba(255,255,255,.4);margin-top:3vmin">En attente du début de la partie...</div>
     </div>
+  </div>
 
-    <!-- SCREEN: PAUSE -->
-    <div id="pause-screen" class="overlay-screen">
-        <img src="/client_logo" class="logo" style="width:150px; margin-bottom:30px">
-        <h1>PAUSE</h1>
-        <p id="pause-msg">Un petit moment de répit...</p>
-        <div class="loader" style="margin-top:40px"></div>
+  <div id="player">
+    <div style="display:flex;align-items:center;justify-content:center">
+      <div class="cover-wrapper">
+        <div id="cover-placeholder">?</div>
+        <img id="cover-blurred">
+        <img id="cover">
+      </div>
     </div>
-
-    <!-- SCREEN: PODIUM -->
-    <div id="podium-screen" class="overlay-screen">
-        <h1>🏆 CLASSEMENT FINAL 🏆</h1>
-        <div class="podium-list" id="podium-data">
-            <!-- Winners here -->
-        </div>
-        <button class="btn-primary" onclick="window.location.reload()"
-            style="margin-top:40px; background: rgba(255,255,255,0.05); box-shadow: none; border: 1px solid rgba(255,255,255,0.1);">QUITTER</button>
+    <div class="track-info" id="track-info-container">
+      <div class="track-title" id="track-title"></div>
+      <div class="track-artist" id="track-artist"></div>
     </div>
+  </div>
 
-    <!-- SCREEN: BUZZER -->
-    <div id="buzzer-container">
-        <div
-            style="position: absolute; top: 20px; width: 100%; display: flex; justify-content: center; padding: 0 40px;">
-            <img src="/client_logo" class="logo" style="width: 100%; max-width: 380px; height: auto; margin: 0;"
-                onerror="this.src='https://raw.githubusercontent.com/joprex/QWIZZ/main/Assets.xcassets/QwizzLogo.imageset/QwizzLogo.png'; this.onerror=null;">
-        </div>
-        <div class="buzzer-wrapper">
-            <div class="buzzer-glow"></div>
-            <div id="buzzer" class="disabled" onclick="buzz()">BUZZ</div>
-        </div>
+  <div id="leaderboard" class="mode-bottom-right">
+    <div class="lb-header">🏆 Classement</div>
+    <div id="lb-list" style="width:100%"></div>
+  </div>
 
-        <div id="status-area">
-            <div id="status-text">Synchronisation...</div>
-            <div id="status-sub">Prépare ton doigt !</div>
-        </div>
-    </div>
+  <div id="qr-overlay">
+    <div style="font-size:2.5rem;color:var(--blue);font-weight:900;margin-bottom:2vmin">REJOINDRE LE JEU</div>
+    <img id="qr-img">
+  </div>
 
-    <div id="cheater-screen">
-        <h1 style="font-size: 40px; font-weight: 900; margin-bottom: 20px;">⚠️ ALERTE ⚠️</h1>
-        <p style="font-size: 20px; opacity: 0.9;">L'animateur a signalé un comportement suspect.<br>Tes points ont été
-            déduits.</p>
-    </div>
+  <div id="pause-overlay"><h1>PAUSE</h1><div id="pause-msg" style="font-size:3.5rem;max-width:80vw;line-height:1.4"></div></div>
+  <div id="category-overlay"><div class="category-card"><h1 id="category-name-display" style="font-size:9rem;font-weight:900;text-transform:uppercase;letter-spacing:2vmin">CATEGORY</h1></div></div>
 
-    <div id="correct-screen">
-        <h1 style="font-size: 40px; font-weight: 900; margin-bottom: 20px;">✅ RÉUSSITE ✅</h1>
-        <p style="font-size: 24px; font-weight: 700;">BONNE RÉPONSE !</p>
-        <p style="font-size: 20px; opacity: 0.9; margin-top: 10px;">Félicitations, tu marques des points !</p>
-    </div>
+  <div class="logo-area" id="main-logo-wrap"><img id="logo-img"></div>
+  <cast-media-player></cast-media-player>
+  <div id="debug-log"></div>
 
-    <script>
-        let ws;
-        let username = localStorage.getItem('qwizz_username') || "";
-        let uuid = localStorage.getItem('qwizz_uuid');
-        let isBlocked = true;
-        let flashDuration = 0.5;
-        let flashOnBuzz = true;
-        let videoTrack = null;
+  <script>
+    var serverURL = '';
+    var lastCategoryTime = 0;
+    var lastTrackId = null;
+    var isRevealed = false;
+    var currentTrackData = null;
+    
+    function log(m) {
+      console.log(m);
+      var l = document.getElementById('debug-log');
+      if(l) {
+        var d = document.createElement('div');
+        d.textContent = '[' + new Date().toLocaleTimeString() + '] ' + m;
+        l.appendChild(d);
+        l.scrollTop = l.scrollHeight;
+      }
+    }
 
-        if (!uuid) {
-            uuid = (crypto && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
-            localStorage.setItem('qwizz_uuid', uuid);
-        }
+    const context = cast.framework.CastReceiverContext.getInstance();
+    const playerManager = context.getPlayerManager();
 
-        window.onload = () => {
-            const logos = document.querySelectorAll('.logo');
-            logos.forEach(img => {
-                img.src = '/client_logo';
-                img.onerror = () => { img.style.display = 'none'; };
-            });
+    function initS(u) {
+      if(!u) return;
+      serverURL = (u.endsWith('/') ? u.slice(0,-1) : u);
+      log("SYNC SERVER: " + serverURL);
+      ['logo-img', 'idle-logo'].forEach(id => {
+        var el = document.getElementById(id);
+        if(el) el.src = serverURL + '/tv_logo?t=' + Date.now();
+      });
+      startPoll();
+    }
 
-            if (username.length > 0) {
-                document.getElementById('username-screen').style.opacity = '0';
-                setTimeout(() => { document.getElementById('username-screen').style.display = 'none'; }, 500);
-                connectWebSocket();
-            }
-        };
+    function handle(d) {
+      if(!d) return;
+      if(typeof d === 'string') {
+        try { d = JSON.parse(d); } catch(e) { log("Parse Error: " + e.message); return; }
+      }
+      
+      log("RECV: " + (d.type || d.gameState || d.serverURL || "raw"));
+      
+      if(d.serverURL) initS(d.serverURL);
+      if(d.players) renderLB(d.players);
+      if(d.track) updateT(d.track);
+      if(d.type === 'reveal' || d.reveal === true || d.gameState === 'revealed') revealInfo();
+      if(d.isPaused !== undefined) toggleP(d.isPaused, d.pauseMessage);
+      if(d.showScores !== undefined) applyA({showScores: d.showScores, scoreAnimationMode: d.scoreAnimationMode});
+      if(d.showQR !== undefined) toggleQR(d.showQR, d.qrURL);
+      
+      if(d.type === 'track_update') updateT(d);
+      else if(d.type === 'leaderboard') renderLB(d.players);
+      else if(d.type === 'show_qr') toggleQR(d.show, d.url);
+      else if(d.type === 'category_transition' && d.timestamp > lastCategoryTime) {
+        lastCategoryTime = d.timestamp;
+        showCat(d);
+      }
+    }
 
-        async function joinGame() {
-            const name = document.getElementById('username').value.trim();
-            const pass = document.getElementById('password').value.trim();
-            if (!name) return;
-
-            // Request camera for flash if enabled
-            if (document.getElementById('perm-check').checked) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                    videoTrack = stream.getVideoTracks()[0];
-                    if (navigator.vibrate) navigator.vibrate(50); // Test vibration
-                } catch (e) { console.warn("Cam flash or vibro not available:", e); }
-            }
-
-            username = name;
-            localStorage.setItem('qwizz_username', username);
-            document.getElementById('username-screen').style.opacity = '0';
-            setTimeout(() => { document.getElementById('username-screen').style.display = 'none'; }, 500);
-            connectWebSocket(pass);
-        }
-
-        function connectWebSocket(password = '') {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
-
-            ws.onopen = () => {
-                ws.send(JSON.stringify({ type: 'join', name: username, id: uuid, password: password }));
-                document.getElementById('buzzer-container').style.opacity = '1';
-                updateStatus("Connecté", "En attente de l'animateur...");
-            };
-
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                handleServerMessage(data);
-            };
-
-            ws.onclose = () => {
-                updateStatus("Déconnecté", "Reconnexion en cours...");
-                setTimeout(connectWebSocket, 2000);
-            };
-        }
-
-        function updateStatus(main, sub = "") {
-            document.getElementById('status-text').innerText = main;
-            document.getElementById('status-sub').innerText = sub;
-        }
-
-        function handleServerMessage(data) {
-            const buzzer = document.getElementById('buzzer');
-
-            switch (data.type) {
-                case 'appearance':
-                    if (data.data.buzzerBackgroundColor) document.body.style.backgroundColor = data.data.buzzerBackgroundColor;
-                    if (data.data.buzzerButtonGradient) buzzer.style.background = data.data.buzzerButtonGradient;
-                    flashDuration = data.data.flashDuration || 0.5;
-                    flashOnBuzz = data.data.flashOnBuzz !== false;
-                    break;
-
-                case 'state':
-                    const amIBlocked = data.blocked && data.blocked.includes(uuid);
-                    if (data.state === 'playing') {
-                        if (amIBlocked) {
-                            isBlocked = true;
-                            buzzer.classList.add('disabled');
-                            updateStatus("Bloqué", "Attends la prochaine question");
-                            document.body.style.filter = "sepia(1) hue-rotate(-50deg)";
-                        } else {
-                            isBlocked = false;
-                            buzzer.classList.remove('disabled');
-                            updateStatus("Écoute...", "Buzz dès que tu sais !");
-                            document.body.style.filter = "none";
-                        }
-                    } else {
-                        isBlocked = true;
-                        buzzer.classList.add('disabled');
-                        if (data.state === 'revealed') {
-                            updateStatus("Réponse trouvée", ""); // Explicitly clear sub
-                        }
-                        else if (data.state === 'paused') updateStatus("En pause...");
-                    }
-                    break;
-
-                case 'your_turn':
-                    if (data.targetId === uuid) {
-                        isBlocked = true; // Still can't re-buzz
-                        buzzer.classList.remove('disabled');
-                        updateStatus("C'EST TON TOUR !", "Donne ta réponse à haute voix");
-                        triggerVisualFeedback();
-                    } else {
-                        updateStatus(data.target || "Quelqu'un", "est en train de répondre...");
-                        buzzer.classList.add('disabled');
-                    }
-                    break;
-
-                case 'error':
-                    if (data.message.includes("Mot de passe")) {
-                        document.getElementById('password').style.display = 'block';
-                        document.getElementById('username-screen').style.display = 'flex';
-                        document.getElementById('username-screen').style.opacity = '1';
-                    } else {
-                        alert(data.message);
-                    }
-                    break;
-                case 'isPaused':
-                    const pauseScreen = document.getElementById('pause-screen');
-                    if (data.data) {
-                        document.getElementById('pause-msg').innerText = data.pauseMessage || "Prenez un QWIZZ, on revient d'ici peu !";
-                        pauseScreen.classList.add('visible');
-                    } else {
-                        pauseScreen.classList.remove('visible');
-                    }
-                    break;
-                case 'end_game':
-                    const podiumScreen = document.getElementById('podium-screen');
-                    const podiumList = document.getElementById('podium-data');
-                    podiumList.innerHTML = data.data.map((p, i) => `
-                        <div class="podium-item ${i === 0 ? 'gold' : ''}">
-                            <div class="podium-rank">${i + 1}</div>
-                            <div class="podium-name">${p.name}</div>
-                            <div class="podium-score">${p.score} pts</div>
-                        </div>
-                    `).join('');
-                    podiumScreen.classList.add('visible');
-                    break;
-                case 'leaderboard':
-                    const me = data.players.find(p => p.id === uuid);
-                    const cheaterScreen = document.getElementById('cheater-screen');
-                    if (me && me.isCheating) {
-                        cheaterScreen.classList.add('visible');
-                        setTimeout(() => { cheaterScreen.classList.remove('visible'); }, 5000);
-                    } else {
-                        cheaterScreen.classList.remove('visible');
-                    }
-                    break;
-                case 'correct':
-                    if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
-                    const correctScreen = document.getElementById('correct-screen');
-                    correctScreen.classList.add('visible');
-                    setTimeout(() => {
-                        correctScreen.classList.remove('visible');
-                    }, 5000);
-                    break;
-                case 'wrong':
-                    if (navigator.vibrate) navigator.vibrate([400]);
-                    break;
+    function updateT(d) {
+      if(!d || !d.trackID) {
+        lastTrackId = null;
+        document.getElementById('idle').classList.remove('gone');
+        document.getElementById('player').classList.remove('visible');
+        return;
+      }
+      
+      currentTrackData = d;
+      lastTrackId = d.trackID;
+      isRevealed = (d.gameState === 'revealed' || d.reveal === true);
+      
+      document.getElementById('idle').classList.add('gone');
+      document.getElementById('player').classList.add('visible');
+      document.body.classList.remove('video-revealed');
+      document.getElementById('category-overlay').classList.remove('visible');
+      
+      var infoContainer = document.getElementById('track-info-container');
+      infoContainer.classList.toggle('is-hidden', !isRevealed);
+      
+      if (!isRevealed) {
+          document.getElementById('track-title').textContent = "QUEL EST LE TITRE ?";
+          document.getElementById('track-artist').textContent = "???";
+      } else {
+          document.getElementById('track-title').textContent = d.title || "";
+          document.getElementById('track-artist').textContent = d.artist || "";
+      }
+      
+      var i = document.getElementById('cover'), b = document.getElementById('cover-blurred'), p = document.getElementById('cover-placeholder');
+      if(d.cover) {
+        var src = (d.cover.startsWith('http') ? d.cover : serverURL + d.cover) + '&t=' + Date.now();
+        b.src = src; 
+        b.onload = () => { if(d.shouldBlur && !isRevealed) { b.style.opacity = '1'; p.style.display = 'none'; } };
+        
+        i.src = src; 
+        if (isRevealed) {
+            i.style.opacity = '1'; b.style.opacity = '0'; p.style.display = 'none';
+            if (d.isVideo) document.body.classList.add('video-revealed');
+        } else {
+            i.style.opacity = '0';
+            if (d.shouldBlur) {
+                // b.onload handles it
+            } else {
+                b.style.opacity = '0'; p.style.display = 'flex';
             }
         }
+      } else {
+        p.style.display = 'flex'; i.style.opacity = '0'; b.style.opacity = '0';
+      }
+      
+      if(isRevealed) revealInfo();
+    }
 
-        async function triggerVisualFeedback() {
-            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    function revealInfo() {
+      if(!currentTrackData) return;
+      isRevealed = true;
+      document.getElementById('track-title').textContent = currentTrackData.title || "";
+      document.getElementById('track-artist').textContent = currentTrackData.artist || "";
+      document.getElementById('track-info-container').classList.remove('is-hidden');
+      
+      var i = document.getElementById('cover'), b = document.getElementById('cover-blurred'), p = document.getElementById('cover-placeholder');
+      if(i) i.style.opacity = '1';
+      if(b) b.style.opacity = '0';
+      if(p) p.style.display = 'none';
+      if (currentTrackData.isVideo) document.body.classList.add('video-revealed');
+    }
 
-            // Screen Flash
-            const overlay = document.getElementById('flash-overlay');
-            overlay.style.opacity = '1';
-            setTimeout(() => overlay.style.opacity = '0', 200);
+    function renderLB(players) {
+      var l = document.getElementById('lb-list');
+      var s = players.sort((a,b) => b.score - a.score).slice(0, 8);
+      l.innerHTML = s.map((p, idx) => `
+        <div class="lb-row rank-${idx+1}">
+          <span class="lb-rank">${idx+1}</span>
+          <span class="lb-name">${p.name}</span>
+          <span class="lb-score">${p.score} pts</span>
+        </div>
+      `).join('');
+    }
 
-            // Camera Torch Flash
-            if (flashOnBuzz && videoTrack) {
-                try {
-                    const capabilities = videoTrack.getCapabilities();
-                    if (capabilities.torch) {
-                        await videoTrack.applyConstraints({ advanced: [{ torch: true }] });
-                        setTimeout(async () => {
-                            try { await videoTrack.applyConstraints({ advanced: [{ torch: false }] }); } catch (err) { }
-                        }, (flashDuration || 0.5) * 1000);
-                    }
-                } catch (e) { console.warn("Torch error:", e); }
-            }
-        }
+    function showCat(d) {
+      document.getElementById('category-name-display').textContent = d.name;
+      document.getElementById('category-overlay').classList.add('visible');
+      setTimeout(() => { document.getElementById('category-overlay').classList.remove('visible'); }, d.duration ? (d.duration * 1000) : 4000);
+    }
 
-        function buzz() {
-            if (isBlocked || !ws || ws.readyState !== WebSocket.OPEN) return;
-            ws.send(JSON.stringify({ type: 'buzz', name: username, id: uuid, time: Date.now() }));
-            if (navigator.vibrate) navigator.vibrate(50);
-        }
-    </script>
+    function toggleP(p, m) {
+      var o = document.getElementById('pause-overlay');
+      if(p) { o.classList.add('visible'); document.getElementById('pause-msg').textContent = m || ""; }
+      else o.classList.remove('visible');
+    }
+
+    function toggleQR(show, url) {
+      var q = document.getElementById('qr-overlay');
+      if(show) {
+        document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(url || serverURL);
+        q.classList.add('visible');
+      } else q.classList.remove('visible');
+    }
+
+    function applyA(d) {
+      var lb = document.getElementById('leaderboard');
+      if(d.showScores) {
+          lb.style.display = (d.scoreAnimationMode === 'bottom-right' ? 'block' : 'flex');
+      } else {
+          lb.style.display = 'none';
+      }
+    }
+
+    function startPoll() {
+      document.getElementById('leaderboard').style.display = 'none';
+      if(window.pollTimer) clearInterval(window.pollTimer);
+      window.pollTimer = setInterval(() => {
+        if(!serverURL) return;
+        fetch(serverURL + '/tv_state').then(r => r.json()).then(handle).catch(()=>{});
+      }, 5000);
+    }
+
+    playerManager.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, req => {
+      if(req.media && req.media.customData && req.media.customData.serverURL) initS(req.media.customData.serverURL);
+      return req;
+    });
+
+    context.addCustomMessageListener('urn:x-cast:com.qwizz.control', e => handle(e.data));
+    context.start();
+    log("Receiver Started V5.0.5-Ultimate");
+  </script>
 </body>
-
 </html>
