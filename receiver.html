@@ -322,23 +322,28 @@ playerManager.setMessageInterceptor(
 
 // Reactive muting and video visibility enforcement
 playerManager.addEventListener(cast.framework.events.EventType.PLAYER_STATE_CHANGED, e => {
-  log("Player state changed: " + e.value);
+  log("Player state: " + e.value);
   if (appState.mute) {
      setMute(true);
   }
 });
 
+playerManager.addEventListener(cast.framework.events.EventType.ERROR, e => {
+  log("PLAYER ERROR: " + e.detailedErrorCode);
+  if (e.error) log("Error message: " + e.error.message);
+});
+
 playerManager.addEventListener(cast.framework.events.EventType.MEDIA_STATUS_CHANGED, e => {
-  log("Media status changed");
+  const media = playerManager.getMediaInformation();
+  const status = playerManager.getPlayerState();
+  log("Media Status: " + status);
+  
   if (appState.mute) {
      setMute(true);
   }
   
-  // Force video visibility if it's a video stream
-  const media = playerManager.getMediaInformation();
   if (media && media.contentType && media.contentType.includes('video')) {
-    log("Video content detected, ensuring player UI doesn't block it");
-    // CAF internal styles can be tricky, we mostly rely on our body class
+    log("Video detected (" + media.contentType + ")");
   }
 });
 
