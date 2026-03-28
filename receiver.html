@@ -272,10 +272,13 @@ function revealCover(){
 
 function setMute(m){
   appState.mute = m;
-  log("RESERVED: Requesting mute = " + m);
+  log("SET_MUTE: Request=" + m);
   
-  // Set system volume
-  castCtx.setSystemVolume({muted: m});
+  // Set system volume (Muted status + Volume level)
+  castCtx.setSystemVolume({
+    muted: m,
+    level: m ? 0.0 : 1.0
+  });
   
   // Also force on the element
   const playerManager = castCtx.getPlayerManager();
@@ -283,9 +286,14 @@ function setMute(m){
     const el = playerManager.getMediaElement();
     if (el) {
        el.muted = m;
-       if (m) el.volume = 0;
-       else el.volume = 1;
-       log("Element volume set to: " + el.volume + " (Muted: " + el.muted + ")");
+       el.volume = m ? 0.0 : 1.0;
+       log("Element: Muted=" + el.muted + " | Volume=" + el.volume);
+    }
+    
+    // Check global status
+    const status = castCtx.getDeviceVolume();
+    if (status) {
+       log("Device Global Volume: " + status.level + " | Muted: " + status.muted);
     }
   }
 }
