@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>QWIZZ Chromecast Receiver V5.0.3-Classic</title>
+  <title>QWIZZ Chromecast Receiver V5.0.4</title>
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
@@ -75,7 +75,7 @@
     #cover-blurred { z-index: 1; filter: blur(35px) brightness(0.7); }
 
     cast-media-player {
-      position: fixed; inset: 0; z-index: 5;
+      position: fixed; inset: 0; z-index: 1;
       opacity: 0; transition: opacity 0.8s;
       --theme-hue: 200; background: var(--bg);
     }
@@ -92,8 +92,8 @@
     .logo-area { position: fixed; top: 4vmin; right: 6vmin; z-index: 9999 }
     .logo-area img { width: 25vmin; height: auto; object-fit: contain; filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.6)) }
 
-    .track-info { transition: opacity 0.6s ease; opacity: 1; }
-    .track-info.hidden-metadata { opacity: 0; }
+    .track-info { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); opacity: 1; }
+    .track-info.is-hidden { opacity: 0.8; }
     .track-title { font-size: 6rem; font-weight: 900; line-height: 1.1; margin-bottom: 2rem; text-shadow: 0 4px 40px rgba(0, 0, 0, 0.6) }
     .track-artist { font-size: 3rem; color: #E0E0E0; font-weight: 300; opacity: 0.9; }
 
@@ -143,8 +143,11 @@
       position: fixed; z-index: 10000; display: none;
       background: rgba(15, 12, 45, 0.96); backdrop-filter: blur(25px);
       padding: 4vmin; border-radius: 5vmin; border: 2px solid var(--blue);
-      text-align: center; box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7)
+      text-align: center; box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7);
+      top: 4vmin; right: 4vmin;
     }
+    
+    #qr-overlay.visible { display: block; }
 
     #qr-img { width: var(--qr-size); height: var(--qr-size); background: #fff; padding: 1.5vmin; border-radius: 2vmin; }
 
@@ -200,7 +203,7 @@
     <div id="lb-list" style="width:100%"></div>
   </div>
 
-  <div id="qr-overlay" style="top:4vmin; right:4vmin;">
+  <div id="qr-overlay">
     <div style="font-size:2.5rem;color:var(--blue);font-weight:900;margin-bottom:2vmin">REJOINDRE LE JEU</div>
     <img id="qr-img">
   </div>
@@ -217,6 +220,7 @@
     var lastCategoryTime = 0;
     var lastTrackId = null;
     var isRevealed = false;
+    var currentTrackData = null;
     
     function log(m) {
       console.log(m);
@@ -245,13 +249,11 @@
 
     function handle(d) {
       if(!d) return;
-      
-      // Robust Parsing
       if(typeof d === 'string') {
         try { d = JSON.parse(d); } catch(e) { log("Parse Error: " + e.message); return; }
       }
       
-      log("RECV MESSAGE: " + (d.type || d.gameState || d.serverURL || "raw"));
+      log("RECV: " + (d.type || d.gameState || d.serverURL || "raw"));
       
       if(d.serverURL) initS(d.serverURL);
       if(d.players) renderLB(d.players);
@@ -261,7 +263,6 @@
       if(d.showScores !== undefined) applyA({showScores: d.showScores, scoreAnimationMode: d.scoreAnimationMode});
       if(d.showQR !== undefined) toggleQR(d.showQR, d.qrURL);
       
-      // Event based
       if(d.type === 'track_update') updateT(d);
       else if(d.type === 'leaderboard') renderLB(d.players);
       else if(d.type === 'show_qr') toggleQR(d.show, d.url);
@@ -279,6 +280,7 @@
         return;
       }
       
+      currentTrackData = d;
       lastTrackId = d.trackID;
       isRevealed = (d.gameState === 'revealed');
       
@@ -288,9 +290,16 @@
       document.getElementById('category-overlay').classList.remove('visible');
       
       var hideInfo = d.shouldBlur && !isRevealed;
-      document.getElementById('track-info-container').classList.toggle('hidden-metadata', hideInfo);
-      document.getElementById('track-title').textContent = d.title || "";
-      document.getElementById('track-artist').textContent = d.artist || "";
+      var infoContainer = document.getElementById('track-info-container');
+      infoContainer.classList.toggle('is-hidden', hideInfo);
+      
+      if (hideInfo) {
+          document.getElementById('track-title').textContent = "QUEL EST LE TITRE ?";
+          document.getElementById('track-artist').textContent = "???";
+      } else {
+          document.getElementById('track-title').textContent = d.title || "";
+          document.getElementById('track-artist').textContent = d.artist || "";
+      }
       
       var i = document.getElementById('cover'), b = document.getElementById('cover-blurred'), p = document.getElementById('cover-placeholder');
       if(d.cover) {
@@ -304,7 +313,8 @@
         
         if(!d.shouldBlur || isRevealed) {
             b.style.opacity = '0'; i.style.opacity = '1'; p.style.display = 'none';
-            document.body.classList.add('video-revealed'); 
+            // Only force video visible if it's actually a video track
+            if (d.isVideo) document.body.classList.add('video-revealed'); 
         }
       } else {
         p.style.display = 'flex'; i.style.opacity = '0'; b.style.opacity = '0';
@@ -314,9 +324,14 @@
     }
 
     function revealInfo() {
+      if(!currentTrackData) return;
       isRevealed = true;
-      document.getElementById('track-info-container').classList.remove('hidden-metadata');
-      document.body.classList.add('video-revealed');
+      document.getElementById('track-title').textContent = currentTrackData.title || "";
+      document.getElementById('track-artist').textContent = currentTrackData.artist || "";
+      document.getElementById('track-info-container').classList.remove('is-hidden');
+      
+      if (currentTrackData.isVideo) document.body.classList.add('video-revealed');
+      
       var i = document.getElementById('cover'), b = document.getElementById('cover-blurred'), p = document.getElementById('cover-placeholder');
       if(i) i.style.opacity = '1';
       if(b) b.style.opacity = '0';
@@ -326,7 +341,6 @@
     function renderLB(players) {
       var l = document.getElementById('lb-list');
       var s = players.sort((a,b) => b.score - a.score).slice(0, 8);
-      
       l.innerHTML = s.map((p, idx) => `
         <div class="lb-row rank-${idx+1}">
           <span class="lb-rank">${idx+1}</span>
@@ -339,7 +353,7 @@
     function showCat(d) {
       document.getElementById('category-name-display').textContent = d.name;
       document.getElementById('category-overlay').classList.add('visible');
-      if(d.duration) setTimeout(() => document.getElementById('category-overlay').classList.remove('visible'), d.duration * 1000);
+      setTimeout(() => { document.getElementById('category-overlay').classList.remove('visible'); }, d.duration ? (d.duration * 1000) : 4000);
     }
 
     function toggleP(p, m) {
@@ -358,8 +372,11 @@
 
     function applyA(d) {
       var lb = document.getElementById('leaderboard');
-      if(d.showScores) lb.style.display = (d.scoreAnimationMode === 'bottom-right' ? 'block' : 'flex');
-      else lb.style.display = 'none';
+      if(d.showScores) {
+          lb.style.display = (d.scoreAnimationMode === 'bottom-right' ? 'block' : 'flex');
+      } else {
+          lb.style.display = 'none';
+      }
     }
 
     function startPoll() {
@@ -376,11 +393,8 @@
     });
 
     context.addCustomMessageListener('urn:x-cast:com.qwizz.control', e => handle(e.data));
-    
-    const options = new cast.framework.CastReceiverOptions();
-    options.maxInactivity = 86400;
-    context.start(options);
-    log("Receiver Started V5.0.3-Classic");
+    context.start();
+    log("Receiver Started V5.0.4");
   </script>
 </body>
 </html>
