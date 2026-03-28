@@ -150,21 +150,12 @@
       position: fixed; inset: 0; z-index: 5;
       opacity: 0; transition: opacity 0.8s ease;
       --theme-hue: 200;
-      background: var(--bg); /* Ensure it covers anything behind when active */
-      
-      /* Force hide all built-in UI that would block the video */
-      --splash-image-display: none;
-      --splash-logo-display: none;
-      --metadata-display: none;
-      --play-button-display: none;
-      --progress-bar-display: none;
-      --playback-controls-display: none;
+      background: var(--bg);
     }
     body.video-revealed cast-media-player { opacity: 1; z-index: 100 !important; }
     body.video-revealed #player { display: none !important; }
     body.video-revealed #ambient { display: none !important; }
     
-    /* Ensure the media element itself covers the whole space */
     #media-element {
         width: 100% !important;
         height: 100% !important;
@@ -281,31 +272,22 @@ function revealCover(){
 
 function setMute(m){
   appState.mute = m;
-  log("Setting mute state: " + m);
+  log("RESERVED: Requesting mute = " + m);
+  
+  // Set system volume
   castCtx.setSystemVolume({muted: m});
   
-  const applyInternal = () => {
-    const mediaElements = document.querySelectorAll('video, audio');
-    mediaElements.forEach(el => {
-      el.muted = m;
-      if (m) el.volume = 0;
-      else el.volume = 1;
-    });
-
-    const playerManager = castCtx.getPlayerManager();
-    if (playerManager) {
-      const mediaElement = playerManager.getMediaElement();
-      if (mediaElement) {
-         mediaElement.muted = m;
-         if (m) mediaElement.volume = 0;
-      }
+  // Also force on the element
+  const playerManager = castCtx.getPlayerManager();
+  if (playerManager) {
+    const el = playerManager.getMediaElement();
+    if (el) {
+       el.muted = m;
+       if (m) el.volume = 0;
+       else el.volume = 1;
+       log("Element volume set to: " + el.volume + " (Muted: " + el.muted + ")");
     }
-  };
-
-  applyInternal();
-  // Double-tap to ensure it sticks
-  setTimeout(applyInternal, 200);
-  setTimeout(applyInternal, 1000);
+  }
 }
 
 const options = new cast.framework.CastReceiverOptions();
