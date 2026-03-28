@@ -223,8 +223,7 @@
   <div id="debug-log"></div>
 
 <script>
-var castCtx = cast.framework.CastReceiverContext.getInstance(),
-    serverURL = '',
+let serverURL = '',
     socket,
     appState = { showCheaterStatus: true, revealAnim: 'random', mute: false },
     isAnimating = false,
@@ -241,13 +240,21 @@ function log(m) {
   console.log(m);
 }
 
-// FORCE DEBUG LOG VISIBLE
+// EMERGENCY DIAGNOSTICS
 document.getElementById('debug-log').style.display = 'block';
+document.getElementById('splash-status').innerText = "Script chargé...";
+
+let castCtx, playerManager;
+try {
+  castCtx = cast.framework.CastReceiverContext.getInstance();
+  playerManager = castCtx.getPlayerManager();
+  log("Cast Context & Player Manager initialized");
+} catch (e) {
+  document.getElementById('splash-status').innerText = "Erreur INIT: " + e.message;
+}
 
 const options = new cast.framework.CastReceiverOptions();
 options.maxInactivity = 86400; // 24h
-
-const playerManager = castCtx.getPlayerManager();
 
 // Intercept LOAD - ULTIMATE SIMPLICITY
 playerManager.setMessageInterceptor(
