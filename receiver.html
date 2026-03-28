@@ -1,12 +1,3 @@
-<!DOCTYPE html>
-<html lang="fr">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>QWIZZ Cast Receiver V5.0.2 - RECOVERY</title>
-  <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #09072B;
@@ -16,297 +7,192 @@
       --qr-size: 22vmin;
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box }
 
-    body,
-    html {
-      width: 100%;
-      height: 100%;
-      background: var(--bg);
-      color: #fff;
-      font-family: var(--font);
-      overflow: hidden;
+    body, html {
+      width: 100%; height: 100%;
+      background: var(--bg); color: #fff;
+      font-family: var(--font); overflow: hidden;
       font-size: 1.5vmin
     }
 
     #ambient {
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(ellipse 60% 50% at 20% 50%, rgba(0, 168, 255, .12) 0%, transparent 70%), radial-gradient(ellipse 40% 40% at 80% 20%, rgba(138, 43, 226, .10) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 20% 50%, rgba(0, 168, 255, .15) 0%, transparent 70%), 
+                  radial-gradient(ellipse 40% 40% at 80% 20%, rgba(138, 43, 226, .12) 0%, transparent 70%);
+      pointer-events: none; z-index: 0
     }
 
     #splash {
-      position: fixed;
-      inset: 0;
-      background: var(--bg);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 3vmin;
-      z-index: 10000;
-      transition: opacity 1s ease
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 3vmin; z-index: 10000; transition: opacity 1s ease
     }
 
-    #splash.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
+    #splash.hidden { opacity: 0; pointer-events: none; }
 
     #idle {
-      position: fixed;
-      inset: 0;
-      background: var(--bg);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 100;
-      transition: opacity .8s ease
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 100; transition: opacity .8s ease
     }
 
-    #idle.gone {
-      opacity: 0;
-      pointer-events: none
-    }
+    #idle.gone { opacity: 0; pointer-events: none }
 
     .idle-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
+      display: flex; flex-direction: column; align-items: center; text-align: center;
       animation: fadeInUp 1.2s ease-out
     }
 
     .idle-logo {
-      width: 85vmin;
-      height: auto;
-      margin-bottom: 4vmin;
+      width: 85vmin; height: auto; margin-bottom: 4vmin;
       filter: drop-shadow(0 0 80px rgba(0, 168, 255, 0.7));
     }
 
     #player {
-      position: fixed;
-      inset: 0;
-      display: grid;
-      grid-template-columns: 40vw 1fr;
-      padding: 8vmin;
-      gap: 8vmin;
-      align-items: center;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .8s;
-      z-index: 10
+      position: fixed; inset: 0;
+      display: grid; grid-template-columns: 45vw 1fr;
+      padding: 8vmin; gap: 8vmin; align-items: center;
+      opacity: 0; pointer-events: none; transition: opacity .8s; z-index: 10
     }
 
-    #player.visible {
-      opacity: 1
-    }
+    #player.visible { opacity: 1 }
 
     .cover-wrapper {
-      position: relative;
-      width: 55vmin;
-      height: 55vmin;
-      border-radius: 3vmin;
-      overflow: hidden;
-      border: 0.3vmin solid rgba(255, 255, 255, .2);
-      box-shadow: 0 40px 100px rgba(0, 0, 0, .7);
-      background: rgba(0, 0, 0, 0.3)
+      position: relative; width: 60vmin; height: 60vmin;
+      border-radius: 4vmin; overflow: hidden;
+      border: 0.4vmin solid rgba(255, 255, 255, .15);
+      box-shadow: 0 40px 120px rgba(0, 0, 0, .8);
+      background: rgba(0, 0, 0, 0.4)
     }
 
-    #cover,
-    #cover-blurred {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+    #cover, #cover-blurred {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: contain; transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
       opacity: 0;
     }
 
-    #cover {
-      z-index: 2;
-    }
-
-    #cover-blurred {
-      z-index: 1;
-      filter: blur(25px) brightness(0.8);
-    }
+    #cover { z-index: 2; }
+    #cover-blurred { z-index: 1; filter: blur(35px) brightness(0.7); }
 
     cast-media-player {
-      position: fixed;
-      inset: 0;
-      z-index: 5;
-      opacity: 0;
-      transition: opacity 0.8s;
-      --theme-hue: 200;
-      background: var(--bg);
+      position: fixed; inset: 0; z-index: 5;
+      opacity: 0; transition: opacity 0.8s;
+      --theme-hue: 200; background: var(--bg);
     }
 
-    body.video-revealed cast-media-player {
-      opacity: 1;
-      z-index: 100 !important;
-    }
+    body.video-revealed cast-media-player { opacity: 1; z-index: 100 !important; }
 
     #cover-placeholder {
-      position: absolute;
-      inset: 0;
-      border-radius: 2.5vmin;
-      border: 2px dashed rgba(0, 168, 255, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20rem;
-      color: rgba(0, 168, 255, .2);
-      z-index: 0
+      position: absolute; inset: 0; border-radius: 3vmin;
+      border: 2px dashed rgba(0, 168, 255, 0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 25rem; color: rgba(0, 168, 255, .15); z-index: 0
     }
 
-    .logo-area {
-      position: fixed;
-      top: 4vmin;
-      right: 6vmin;
-      z-index: 9999
-    }
+    .logo-area { position: fixed; top: 4vmin; right: 6vmin; z-index: 9999 }
+    .logo-area img { width: 25vmin; height: auto; object-fit: contain; filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.6)) }
 
-    .logo-area img {
-      width: 25vmin;
-      height: auto;
-      object-fit: contain;
-      filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.5))
-    }
-
-    .track-title {
-      font-size: 5rem;
-      font-weight: 900;
-      line-height: 1.1;
-      margin-bottom: 1.5rem;
-      text-shadow: 0 4px 30px rgba(0, 0, 0, 0.5)
-    }
-
-    .track-artist {
-      font-size: 2.5rem;
-      color: #E0E0E0;
-      font-weight: 300
-    }
+    .track-info { transition: opacity 0.6s ease; opacity: 0; }
+    .track-info.revealed { opacity: 1; }
+    .track-title { font-size: 6rem; font-weight: 900; line-height: 1.1; margin-bottom: 2rem; text-shadow: 0 4px 40px rgba(0, 0, 0, 0.6) }
+    .track-artist { font-size: 3rem; color: #E0E0E0; font-weight: 300; opacity: 0.9; }
 
     #leaderboard {
-      position: fixed;
-      background: rgba(26, 26, 58, .95);
-      border: 1px solid rgba(0, 168, 255, .3);
-      border-radius: 3vmin;
-      padding: 4vmin;
-      backdrop-filter: blur(30px);
-      z-index: 9000;
-      display: none
+      position: fixed; background: rgba(15, 12, 45, 0.92);
+      border: 1px solid rgba(0, 168, 255, 0.25);
+      border-radius: 4vmin; padding: 5vmin;
+      backdrop-filter: blur(40px); z-index: 9000;
+      display: none; box-shadow: 0 50px 150px rgba(0,0,0,0.8);
     }
 
     #leaderboard.mode-full {
-      inset: 8vmin;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center
+      inset: 8vmin; display: flex; flex-direction: column;
+      justify-content: center; align-items: center
     }
 
     #leaderboard.mode-bottom-right {
-      bottom: 4vmin;
-      right: 4vmin;
-      width: 30vw;
-      display: block
+      bottom: 5vmin; right: 5vmin; width: 35vw; display: block
+    }
+
+    .lb-header {
+        font-weight: 900; letter-spacing: 0.5vmin; color: var(--blue);
+        text-transform: uppercase; margin-bottom: 4vmin; font-size: 3.5rem;
+        text-align: center; border-bottom: 1px solid rgba(0,168,255,0.1); padding-bottom: 2vmin;
     }
 
     .lb-row {
-      display: flex;
-      align-items: center;
-      gap: 2vmin;
-      background: rgba(255, 255, 255, .05);
-      padding: 1.5vmin 2vmin;
-      border-radius: 1.5vmin;
-      margin-bottom: 1vmin;
-      opacity: 0;
-      transition: all 0.5s ease;
+      display: flex; align-items: center; gap: 3vmin;
+      background: rgba(255, 255, 255, 0.03); padding: 2vmin 3vmin;
+      border-radius: 2vmin; margin-bottom: 1.5vmin; opacity: 0;
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease;
+      border: 1px solid rgba(255,255,255,0.05);
     }
 
-    .lb-rank { width: 5vmin; font-weight: 900; font-size: 2rem; text-align: center; }
-    .lb-name { flex: 1; font-weight: 700; font-size: 2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .lb-score { font-weight: 900; color: var(--blue); font-size: 2rem; }
-    .lb-row.cheater { background: rgba(255, 0, 0, 0.15); border: 1px solid rgba(255, 0, 0, 0.4); }
+    .lb-row.active { opacity: 1; transform: translateX(0); }
+
+    .lb-rank { width: 6vmin; font-weight: 900; font-size: 2.5rem; text-align: center; color: rgba(255,255,255,0.4); }
+    .lb-name { flex: 1; font-weight: 700; font-size: 2.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lb-score { font-weight: 900; color: var(--blue); font-size: 2.8rem; font-family: 'Outfit', sans-serif; }
+
+    /* Rank Colors */
+    .lb-row.rank-1 { background: linear-gradient(90deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05)); border-color: rgba(255, 215, 0, 0.3); }
+    .lb-row.rank-1 .lb-rank { color: #FFD700; transform: scale(1.2); }
+    .lb-row.rank-1 .lb-score { color: #FFD700; text-shadow: 0 0 15px rgba(255, 215, 0, 0.4); }
+
+    .lb-row.rank-2 { background: linear-gradient(90deg, rgba(192, 192, 192, 0.12), rgba(192, 192, 192, 0.03)); border-color: rgba(192, 192, 192, 0.25); }
+    .lb-row.rank-2 .lb-rank { color: #C0C0C0; }
+
+    .lb-row.rank-3 { background: linear-gradient(90deg, rgba(205, 127, 50, 0.1), rgba(205, 127, 50, 0.02)); border-color: rgba(205, 127, 50, 0.2); }
+    .lb-row.rank-3 .lb-rank { color: #CD7F32; }
+
+    .lb-row.cheater { background: rgba(255, 0, 0, 0.1); border-color: rgba(255, 0, 0, 0.3); }
 
     #qr-overlay {
-      position: fixed;
-      z-index: 10000;
-      display: none;
-      background: rgba(26, 26, 58, 0.98);
-      backdrop-filter: blur(20px);
-      padding: 3vmin;
-      border-radius: 4vmin;
-      border: 1px solid var(--blue);
-      text-align: center;
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6)
+      position: fixed; z-index: 10000; display: none;
+      background: rgba(15, 12, 45, 0.96); backdrop-filter: blur(25px);
+      padding: 4vmin; border-radius: 5vmin; border: 2px solid var(--blue);
+      text-align: center; box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7)
     }
 
     #qr-img { width: var(--qr-size); height: var(--qr-size); background: #fff; padding: 1.5vmin; border-radius: 2vmin; }
 
     #pause-overlay, #rules-overlay, #category-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(9, 7, 43, 0.98);
-      backdrop-filter: blur(40px);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 8000;
-      text-align: center;
-      padding: 5vmin;
+      position: fixed; inset: 0; background: rgba(9, 7, 43, 0.98);
+      backdrop-filter: blur(50px); display: none; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 8000;
+      text-align: center; padding: 5vmin;
     }
 
     #pause-overlay.visible, #rules-overlay.visible, #category-overlay.visible { display: flex; }
 
+    .category-card { animation: zoomIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
     .category-image {
-      width: 45vmin;
-      height: 45vmin;
-      border-radius: 4vmin;
-      object-fit: cover;
-      border: 3px solid var(--blue);
-      box-shadow: 0 0 80px rgba(0, 168, 255, 0.4);
-      margin-bottom: 4vmin;
+      width: 50vmin; height: 50vmin; border-radius: 5vmin;
+      object-fit: cover; border: 4px solid var(--blue);
+      box-shadow: 0 0 100px rgba(0, 168, 255, 0.5); margin-bottom: 5vmin;
     }
 
     #cheater-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(9, 7, 43, 0.85);
-      z-index: 100000;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      backdrop-filter: blur(8px);
+      position: fixed; inset: 0; background: rgba(9, 7, 43, 0.85);
+      z-index: 100000; display: none; align-items: center;
+      justify-content: center; backdrop-filter: blur(10px);
     }
 
     #cheater-overlay.visible { display: flex; }
 
     .cheater-card {
-      background: #1A1A3A;
-      border: 0.8vmin solid #ff4b2b;
-      padding: 8vmin 15vmin;
-      border-radius: 4vmin;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      box-shadow: 0 0 10vmin rgba(255, 75, 43, 0.4);
+      background: #1A1A3A; border: 0.8vmin solid #ff4b2b;
+      padding: 8vmin 15vmin; border-radius: 4vmin;
+      display: flex; flex-direction: column; align-items: center;
+      box-shadow: 0 0 10vmin rgba(255, 75, 43, 0.5);
       animation: popIn .6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
 
+    @keyframes zoomIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
     @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     @keyframes rotate { to { transform: rotate(360deg); } }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: translateY(0); } }
 
     #debug-log {
       position: fixed; bottom: 2vmin; left: 2vmin; z-index: 100000;
@@ -321,16 +207,16 @@
 <body>
   <div id="ambient"></div>
   <div id="splash">
-    <h1 style="font-size:6rem;color:var(--blue);font-weight:900;letter-spacing:1.5vmin">QWIZZ</h1>
-    <div style="width:5vmin;height:5vmin;border:0.5vmin solid rgba(0,168,255,0.2);border-top-color:var(--blue);border-radius:50%;animation:rotate 1s linear infinite;margin-top:2vmin"></div>
-    <p id="splash-status" style="font-size:1.5rem;opacity:0.6;margin-top:2vmin">Connexion...</p>
+    <h1 style="font-size:7rem;color:var(--blue);font-weight:900;letter-spacing:2vmin">QWIZZ</h1>
+    <div style="width:6vmin;height:6vmin;border:0.6vmin solid rgba(0,168,255,0.2);border-top-color:var(--blue);border-radius:50%;animation:rotate 1.2s linear infinite;margin-top:3vmin"></div>
+    <p id="splash-status" style="font-size:1.8rem;opacity:0.6;margin-top:3vmin">Initialisation...</p>
   </div>
 
   <div id="idle">
     <div class="idle-content">
       <img id="idle-logo" class="idle-logo">
-      <div style="font-size:7rem;font-weight:900;letter-spacing:1.5vmin;color:var(--blue)">PRÊT À QWIZZER ?</div>
-      <div style="font-size:2rem;color:rgba(255,255,255,.4);margin-top:2rem">En attente du début de la partie...</div>
+      <div style="font-size:8rem;font-weight:900;letter-spacing:2vmin;color:var(--blue)">PRÊT À QWIZZER ?</div>
+      <div style="font-size:2.5rem;color:rgba(255,255,255,.4);margin-top:3vmin">En attente du début de la partie...</div>
     </div>
   </div>
 
@@ -342,32 +228,32 @@
         <img id="cover">
       </div>
     </div>
-    <div style="display:flex;flex-direction:column;justify-content:center">
+    <div class="track-info" id="track-info-container">
       <div class="track-title" id="track-title"></div>
       <div class="track-artist" id="track-artist"></div>
     </div>
   </div>
 
   <div id="leaderboard" class="mode-bottom-right">
-    <div style="font-weight:900;letter-spacing:2px;color:var(--blue);text-transform:uppercase;margin-bottom:3vmin;font-size:2.5rem">🏆 Classement</div>
+    <div class="lb-header">🏆 Classement</div>
     <div id="lb-list" style="width:100%"></div>
   </div>
 
   <div id="qr-overlay" style="top:4vmin; right:4vmin;">
-    <div style="font-size:2rem;color:var(--blue);font-weight:900;margin-bottom:1.5vmin">Scanner pour Rejoindre</div>
+    <div style="font-size:2.5rem;color:var(--blue);font-weight:900;margin-bottom:2vmin">REJOINDRE LE JEU</div>
     <img id="qr-img">
   </div>
 
-  <div id="pause-overlay"><h1>PAUSE</h1><div id="pause-msg" style="font-size:3rem;max-width:80vw;line-height:1.4"></div></div>
-  <div id="rules-overlay"><div class="rules-card"><h1 id="rules-mode" style="font-size:5rem;font-weight:900;color:var(--blue);text-transform:uppercase;margin-bottom:2vmin;">MODE</h1><p id="rules-text" style="font-size:2.5rem;line-height:1.4;"></p></div></div>
-  <div id="category-overlay"><div class="category-card"><img id="category-img" class="category-image" style="display:none"><h1 id="category-name-display" style="font-size:8rem;font-weight:900;text-transform:uppercase;letter-spacing:1.5vmin">CATEGORY</h1></div></div>
+  <div id="pause-overlay"><h1>PAUSE</h1><div id="pause-msg" style="font-size:3.5rem;max-width:80vw;line-height:1.4"></div></div>
+  <div id="rules-overlay"><div class="rules-card"><h1 id="rules-mode" style="font-size:6rem;font-weight:900;color:var(--blue);text-transform:uppercase;margin-bottom:2vmin;">MODE</h1><p id="rules-text" style="font-size:3rem;line-height:1.4;"></p></div></div>
+  <div id="category-overlay"><div class="category-card"><img id="category-img" class="category-image" style="display:none"><h1 id="category-name-display" style="font-size:9rem;font-weight:900;text-transform:uppercase;letter-spacing:2vmin">CATEGORY</h1></div></div>
 
   <div id="cheater-overlay">
     <div class="cheater-card">
-      <div style="color:#ff4b2b;font-size:3.5rem;font-weight:900;letter-spacing:2vmin;margin-bottom:4vmin">ALERTE TRICHE</div>
-      <div id="cheater-name-text" style="font-size:9rem;font-weight:900;color:white;margin-bottom:2vmin">PLAYER</div>
+      <div style="color:#ff4b2b;font-size:4rem;font-weight:900;letter-spacing:2vmin;margin-bottom:4vmin">ALERTE TRICHE</div>
+      <div id="cheater-name-text" style="font-size:10rem;font-weight:900;color:white;margin-bottom:2vmin">PLAYER</div>
       <div style="font-size:3rem;color:rgba(255,255,255,0.6);text-transform:uppercase">Sanction confirmée</div>
-      <div id="cheater-penalty-text" style="background:#ff4b2b;color:white;font-size:5rem;font-weight:900;padding:2vmin 6vmin;border-radius:2vmin;margin-top:6vmin">-50 PTS</div>
+      <div id="cheater-penalty-text" style="background:#ff4b2b;color:white;font-size:6rem;font-weight:900;padding:2vmin 6vmin;border-radius:2vmin;margin-top:6vmin">-50 PTS</div>
     </div>
   </div>
 
@@ -379,6 +265,7 @@
     var serverURL = '';
     var lastCategoryTime = 0;
     var lastTrackId = null;
+    var isRevealed = false;
     
     function log(m) {
       console.log(m);
@@ -396,21 +283,23 @@
 
     function initS(u) {
       if(!u || u === serverURL) return;
-      serverURL = u;
-      log("SYNC SERVER: " + u);
+      serverURL = (u.endsWith('/') ? u.slice(0,-1) : u);
+      log("SYNC SERVER: " + serverURL);
       document.getElementById('splash').classList.add('hidden');
       ['logo-img', 'idle-logo'].forEach(id => {
         var el = document.getElementById(id);
-        if(el) el.src = u + '/tv_logo?t=' + Date.now();
+        if(el) el.src = serverURL + '/tv_logo?t=' + Date.now();
       });
       startPoll();
     }
 
     function handle(d) {
       if(!d) return;
+      log("RECV MESSAGE: " + (d.type || d.gameState || "raw"));
+      
       if(d.players) renderLB(d.players);
       if(d.track) updateT(d.track);
-      if(d.reveal === true) revealCover();
+      if(d.type === 'reveal' || d.reveal === true || d.gameState === 'revealed') revealInfo();
       if(d.isPaused !== undefined) toggleP(d.isPaused, d.pauseMessage);
       if(d.showScores !== undefined) applyA({showScores: d.showScores, scoreAnimationMode: d.scoreAnimationMode});
       if(d.showQR !== undefined) toggleQR(d.showQR, d.qrURL);
@@ -433,48 +322,67 @@
         document.getElementById('player').classList.remove('visible');
         return;
       }
-      if(d.trackID === lastTrackId && d.shouldBlur === (window.lastBlur)) return;
+      
+      // If same track, just check if we need to reveal it now
+      if(d.trackID === lastTrackId) {
+          if (d.gameState === 'revealed') revealInfo();
+          return;
+      }
       
       lastTrackId = d.trackID;
-      window.lastBlur = d.shouldBlur;
+      isRevealed = false;
+      document.getElementById('track-info-container').classList.remove('revealed');
       
       document.getElementById('idle').classList.add('gone');
       document.getElementById('player').classList.add('visible');
       document.body.classList.remove('video-revealed');
       document.getElementById('category-overlay').classList.remove('visible');
       
+      // Metadata always hidden initially
       document.getElementById('track-title').textContent = d.title || "";
       document.getElementById('track-artist').textContent = d.artist || "";
       
       var i = document.getElementById('cover'), b = document.getElementById('cover-blurred'), p = document.getElementById('cover-placeholder');
       if(d.cover) {
         var src = (d.cover.startsWith('http') ? d.cover : serverURL + d.cover) + '&t=' + Date.now();
-        if(d.shouldBlur) {
-          b.src = src; b.onload = () => { b.style.opacity = '1'; p.style.display = 'none'; };
-          i.style.opacity = '0';
-        } else {
-          i.src = src; i.onload = () => { i.style.opacity = '1'; p.style.display = 'none'; };
-          b.style.opacity = '0';
+        
+        // Blurred is shown immediately if requested
+        b.src = src; b.onload = () => { if(!isRevealed) b.style.opacity = '1'; p.style.display = 'none'; };
+        
+        // Clear cover is loaded but hidden initially
+        i.src = src; i.style.opacity = '0';
+        
+        // If not blurring, but also not revealed, show NOTHING (placeholder) until reveal
+        if(!d.shouldBlur && d.gameState !== 'revealed') {
+            b.style.opacity = '0';
+            p.style.display = 'flex';
         }
       } else {
         p.style.display = 'flex'; i.style.opacity = '0'; b.style.opacity = '0';
       }
+      
+      if(d.gameState === 'revealed') revealInfo();
     }
 
-    function revealCover() {
+    function revealInfo() {
+      if(isRevealed) return;
+      isRevealed = true;
+      log("REVEALING TRACK INFO");
+      document.getElementById('track-info-container').classList.add('revealed');
       document.body.classList.add('video-revealed');
-      var i = document.getElementById('cover'), b = document.getElementById('cover-blurred');
-      if(i && window.lastTrackData && window.lastTrackData.cover_clear) {
-         var src = (window.lastTrackData.cover_clear.startsWith('http') ? window.lastTrackData.cover_clear : serverURL + window.lastTrackData.cover_clear) + '&t=' + Date.now();
-         i.src = src; i.style.opacity = '1'; b.style.opacity = '0';
-      }
+      
+      var i = document.getElementById('cover'), b = document.getElementById('cover-blurred'), p = document.getElementById('cover-placeholder');
+      if(i) i.style.opacity = '1';
+      if(b) b.style.opacity = '0';
+      if(p) p.style.display = 'none';
     }
 
     function renderLB(players) {
       var l = document.getElementById('lb-list');
-      var s = players.sort((a,b) => b.score - a.score).slice(0, 10);
+      var s = players.sort((a,b) => b.score - a.score).slice(0, 8);
+      
       l.innerHTML = s.map((p, idx) => `
-        <div class="lb-row ${p.isCheating ? 'cheater' : ''}" style="opacity:1">
+        <div class="lb-row active rank-${idx+1} ${p.isCheating ? 'cheater' : ''}" style="transition-delay: ${idx * 0.05}s">
           <span class="lb-rank">${idx+1}</span>
           <span class="lb-name">${p.name}</span>
           <span class="lb-score">${p.score} pts</span>
@@ -522,7 +430,8 @@
     }
 
     function startPoll() {
-      setInterval(() => {
+      if(window.pollTimer) clearInterval(window.pollTimer);
+      window.pollTimer = setInterval(() => {
         if(!serverURL) return;
         fetch(serverURL + '/tv_state').then(r => r.json()).then(handle).catch(()=>{});
       }, 5000);
@@ -539,7 +448,8 @@
     const options = new cast.framework.CastReceiverOptions();
     options.maxInactivity = 86400;
     context.start(options);
-    log("Receiver Started V5.0.2-Recovery");
+    log("Receiver Started V5.0.2-Recovery-Premium");
   </script>
 </body>
+</html>
 </html>
