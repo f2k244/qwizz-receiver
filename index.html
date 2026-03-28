@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>QWIZZ Chromecast V5.1.0-Expert</title>
+  <title>QWIZZ Expert V5.2.0-Ultimate</title>
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
@@ -11,390 +11,288 @@
       --blue: #00A8FF;
       --purple: #8A2BE2;
       --font: 'Outfit', sans-serif;
-      --qr-size: 22vmin;
+      --qr-size: 24vmin;
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box }
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing: antialiased; }
+    body, html { width:100%; height:100%; background:var(--bg); color:#fff; font-family:var(--font); overflow:hidden; font-size:16px; }
 
-    body, html {
-      width: 100%; height: 100%;
-      background: var(--bg); color: #fff;
-      font-family: var(--font); overflow: hidden;
-      font-size: 1.5vmin
+    #ambient { position:fixed; inset:0; background: radial-gradient(circle at 20% 40%, rgba(0,168,255,0.1), transparent 50%), radial-gradient(circle at 80% 20%, rgba(138,43,226,0.08), transparent 50%); z-index:0; }
+
+    /* Splash / Idle */
+    #idle { position:fixed; inset:0; background:var(--bg); display:flex; justify-content:center; align-items:center; z-index:200; transition:opacity .8s; }
+    #idle.gone { opacity:0; pointer-events:none; }
+    .idle-logo { width:80vmin; filter: drop-shadow(0 0 50px var(--blue)); }
+
+    /* Main Flex Layout */
+    #game-scene { position:fixed; inset:0; display:flex; align-items:center; justify-content:space-around; padding:8vmin; opacity:0; transition:opacity .6s; z-index:10; }
+    #game-scene.visible { opacity:1; }
+
+    .player-left { flex:1; display:flex; justify-content:center; align-items:center; }
+    .player-right { flex:1; display:flex; flex-direction:column; justify-content:center; padding-left:5vmin; }
+
+    .cover-frame {
+      position:relative; width:65vmin; height:65vmin; border-radius:4vmin; overflow:hidden;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.9); border: 2px solid rgba(255,255,255,0.1);
+      background: linear-gradient(135deg, #1A1A3A 0%, #09072B 100%);
     }
 
-    #ambient {
-      position: fixed; inset: 0;
-      background: radial-gradient(ellipse 60% 50% at 20% 50%, rgba(0, 168, 255, .15) 0%, transparent 70%), 
-                  radial-gradient(ellipse 40% 40% at 80% 20%, rgba(138, 43, 226, .12) 0%, transparent 70%);
-      pointer-events: none; z-index: 0
-    }
+    #cover-img, #cover-blurred { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; opacity:0; transition:opacity .6s; }
+    #cover-img { z-index:2; }
+    #cover-blurred { z-index:1; filter:blur(40px) brightness(0.7); }
 
-    /* Idle / Splash */
-    #idle {
-      position: fixed; inset: 0; background: var(--bg);
-      display: flex; justify-content: center; align-items: center;
-      z-index: 100; transition: opacity .8s ease
-    }
-    #idle.gone { opacity: 0; pointer-events: none }
-    .idle-content { display: flex; flex-direction: column; align-items: center; text-align: center; animation: fadeInUp 1.2s ease-out }
-    .idle-logo { width: 85vmin; height: auto; margin-bottom: 4vmin; filter: drop-shadow(0 0 80px rgba(0, 168, 255, 0.7)); }
+    /* NoCover CSS Fallback */
+    #nocover-fallback { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:0; }
+    #nocover-fallback img { width:80%; opacity:0.9; }
 
-    /* Main Player Interface */
-    #player {
-      position: fixed; inset: 0;
-      display: grid; grid-template-columns: 45vw 1fr;
-      padding: 8vmin; gap: 8vmin; align-items: center;
-      opacity: 0; pointer-events: none; transition: opacity .6s; z-index: 10
-    }
-    #player.visible { opacity: 1 }
+    .track-title { font-size: 7rem; font-weight: 900; line-height: 1.1; margin-bottom: 2vmin; color:#fff; word-wrap:break-word; }
+    .track-artist { font-size: 3.5rem; font-weight: 300; color: rgba(255,255,255,0.7); }
 
-    .cover-wrapper {
-      position: relative; width: 62vmin; height: 62vmin;
-      border-radius: 4vmin; overflow: hidden;
-      border: 0.4vmin solid rgba(255, 255, 255, .15);
-      box-shadow: 0 40px 120px rgba(0, 0, 0, .85);
-      background: rgba(0, 0, 0, 0.5)
-    }
-
-    #cover, #cover-blurred {
-      position: absolute; inset: 0; width: 100%; height: 100%;
-      object-fit: contain; transition: opacity 0.6s ease;
-      opacity: 0;
-    }
-    #cover { z-index: 2; }
-    #cover-blurred { z-index: 1; filter: blur(40px) brightness(0.7); }
-
-    /* Default UI Fallback (NoCover) */
-    #cover-placeholder {
-      position: absolute; inset: 0; border-radius: 3vmin;
-      display: flex; align-items: center; justify-content: center;
-      z-index: 0; background: #000;
-    }
-    #cover-placeholder img { width: 100%; height: 100%; object-fit: contain; }
-
-    cast-media-player {
-      position: fixed; inset: 0; z-index: 1;
-      opacity: 0; transition: opacity 0.6s;
-      --theme-hue: 200; background: var(--bg);
-    }
-    body.video-revealed cast-media-player { opacity: 1; z-index: 100 !important; }
-
-    .track-info { transition: all 0.5s ease; opacity: 1; }
-    .track-info.is-hidden { opacity: 0.8; filter: grayscale(1); }
-    .track-title { font-size: 6.5rem; font-weight: 900; line-height: 1.1; margin-bottom: 2rem; text-shadow: 0 4px 40px rgba(0, 0, 0, 0.6); color: #fff; }
-    .track-artist { font-size: 3.2rem; color: #E0E0E0; font-weight: 300; opacity: 0.95; }
-
-    /* Overlays */
+    /* Components */
     #leaderboard {
-      position: fixed; background: rgba(15, 12, 45, 0.98);
-      border: 1px solid rgba(0, 168, 255, 0.3);
-      border-radius: 4vmin; padding: 4vmin;
-      backdrop-filter: blur(50px);
-      display: none; box-shadow: 0 40px 120px rgba(0,0,0,0.9);
-      transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position:fixed; background:rgba(15,12,45,0.98); backdrop-filter:blur(50px);
+      border:1px solid rgba(0,168,255,0.3); border-radius:4vmin; padding:4vmin;
+      display:none; z-index:500; box-shadow:0 30px 100px rgba(0,0,0,0.8);
     }
-    #leaderboard.mode-full {
-      inset: 8vmin; display: flex !important; flex-direction: column; justify-content: center;
-      background: radial-gradient(circle at center, rgba(26, 26, 58, 1) 0%, rgba(9, 7, 43, 1) 100%);
-    }
-    #leaderboard.mode-bottom-right { bottom: 5vmin; right: 5vmin; width: 35vw; display: block !important; }
-    
-    .lb-header { font-weight: 900; letter-spacing: 0.4vmin; color: var(--blue); text-transform: uppercase; margin-bottom: 3vmin; font-size: 3.5rem; text-align: center; border-bottom: 1px solid rgba(0,168,255,0.1); padding-bottom: 2vmin; }
-    .lb-row { display: flex; align-items: center; gap: 3vmin; background: rgba(255, 255, 255, 0.05); padding: 1.8vmin 3vmin; border-radius: 2vmin; margin-bottom: 1.2vmin; border: 1px solid rgba(255,255,255,0.06); }
-    .lb-rank { width: 6vmin; font-weight: 900; font-size: 2.5rem; text-align: center; color: rgba(255,255,255,0.3); }
-    .lb-name { flex: 1; font-weight: 700; font-size: 2.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .lb-score { font-weight: 900; color: var(--blue); font-size: 2.8rem; }
+    #leaderboard.mode-full { inset:5vmin; display:flex!important; flex-direction:column; justify-content:center; }
+    #leaderboard.mode-br { bottom:5vmin; right:5vmin; width:36vw; display:block!important; animation: slideIn .6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
-    #leaderboard.mode-full .lb-row { padding: 3vmin 5vmin; border-radius: 3vmin; margin-bottom: 2vmin; }
-    #leaderboard.mode-full .lb-name, #leaderboard.mode-full .lb-score { font-size: 4rem; }
-    #leaderboard.mode-full .lb-header { font-size: 5rem; margin-bottom: 6vmin; }
+    .lb-row { display:flex; align-items:center; padding:1.8vmin 3vmin; background:rgba(255,255,255,0.05); border-radius:2vmin; margin-bottom:1.2vmin; border:1px solid rgba(255,255,255,0.05); }
+    .lb-name { flex:1; font-weight:700; font-size:3rem; padding:0 3vmin; }
+    .lb-score { font-weight:900; font-size:3rem; color:var(--blue); }
+    .lb-rank { font-size:2.8rem; font-weight:900; color:rgba(255,255,255,0.3); width:6vmin; text-align:center; }
 
-    /* QR Overlay */
-    #qr-overlay {
-      position: fixed; z-index: 10000; display: none;
-      background: rgba(15, 12, 45, 0.98); backdrop-filter: blur(40px);
-      padding: 4vmin; border-radius: 5vmin; border: 0.3vmin solid var(--blue);
-      text-align: center; box-shadow: 0 40px 100px rgba(0, 0, 0, 0.85);
-      transition: all 0.5s ease;
-    }
-    #qr-overlay.visible { display: block; }
-    .pos-top-right { top: 4vmin; right: 4vmin; }
-    .pos-top-left { top: 4vmin; left: 4vmin; }
-    .pos-bottom-right { bottom: 4vmin; right: 4vmin; }
-    .pos-bottom-left { bottom: 4vmin; left: 4vmin; }
-    .pos-center { top: 50%; left: 50%; transform: translate(-50%, -50%); }
-    #qr-img { width: var(--qr-size); height: var(--qr-size); background: #fff; padding: 1.5vmin; border-radius: 2vmin; }
+    /* QR Code */
+    #qr-box { position:fixed; z-index:800; display:none; background:rgba(15,12,45,0.95); padding:3vmin; border-radius:4vmin; border:2px solid var(--blue); backdrop-filter:blur(30px); }
+    #qr-box.visible { display:flex; flex-direction:column; align-items:center; }
+    .pos-top-right { top:4vmin; right:4vmin; }
+    .pos-top-left { top:4vmin; left:4vmin; }
+    .pos-bottom-right { bottom:4vmin; right:4vmin; }
+    .pos-bottom-left { bottom:4vmin; left:4vmin; }
+    .pos-center { top:50%; left:50%; transform:translate(-50%,-50%); }
 
-    /* Category & Podium (Highest Priority) */
-    #category-overlay, #podium-overlay {
-      position: fixed; inset: 0; background: rgba(9, 7, 43, 1);
-      z-index: 20000; display: none; flex-direction: column;
-      align-items: center; justify-content: center; text-align: center;
-    }
-    #category-overlay.show, #podium-overlay.show { display: flex; animation: fadeIn .5s ease; }
-    
-    .podium-container { display: flex; align-items: flex-end; gap: 4vmin; height: 60vh; width: 90vw; margin-top: 5vh; }
-    .podium-item { flex: 1; display: flex; flex-direction: column; align-items: center; border-radius: 3vmin 3vmin 0 0; background: rgba(255,255,255,0.05); padding: 3vmin; transition: transform 0.8s ease; }
-    .podium-rank-1 { height: 100%; background: linear-gradient(180deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.05)); border: 2px solid #FFD700; order: 2; }
-    .podium-rank-2 { height: 80%; background: linear-gradient(180deg, rgba(192, 192, 192, 0.15), rgba(192, 192, 192, 0.03)); border: 2px solid #C0C0C0; order: 1; }
-    .podium-rank-3 { height: 70%; background: linear-gradient(180deg, rgba(205, 127, 50, 0.1), rgba(205, 127, 50, 0.02)); border: 2px solid #CD7F32; order: 3; }
-    
-    .podium-name { font-size: 4rem; font-weight: 900; margin-top: auto; margin-bottom: 1vmin; }
-    .podium-score { font-size: 3.5rem; color: var(--blue); font-weight: 700; }
-    .podium-medal { font-size: 8rem; margin-bottom: 2vmin; }
+    /* Top Layers */
+    #overlay-layer { position:fixed; inset:0; z-index:20000; display:none; background:var(--bg); flex-direction:column; align-items:center; justify-content:center; }
+    #overlay-layer.active { display:flex; }
 
-    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: translateY(0); } }
+    #podium-box { display:flex; align-items:flex-end; gap:5vmin; height:60vh; width:90vw; margin-top:5vh; }
+    .podium-seat { flex:1; display:flex; flex-direction:column; align-items:center; padding:3vmin; border-radius:3vmin 3vmin 0 0; background:rgba(255,255,255,0.05); transition: height 1s; }
+    .rank-1 { height:100%; border:3px solid #FFD700; order:2; background:linear-gradient(180deg, rgba(255,215,0,0.1) 0%, transparent 100%); }
+    .rank-2 { height:80%; border:3px solid #C0C0C0; order:1; }
+    .rank-3 { height:65%; border:3px solid #CD7F32; order:3; }
 
-    #debug-log { position: fixed; bottom: 1vmin; left: 1vmin; z-index: 999999; background: rgba(0,0,0,0.8); color: #0f0; padding: 1vmin; font-size: 1vmin; max-height: 20vh; overflow-y: auto; pointer-events: none; display: none; }
+    cast-media-player { position:fixed; inset:0; z-index:1; opacity:0; transition:opacity .6s; }
+    body.video-revealed cast-media-player { opacity:1; z-index:100!important; }
+
+    @keyframes slideIn { from{transform:translateY(50px); opacity:0;} to{transform:translateY(0); opacity:1;} }
+    @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
   </style>
 </head>
 
 <body>
   <div id="ambient"></div>
 
-  <!-- Idle Splash -->
   <div id="idle">
-    <div class="idle-content">
-      <img id="idle-logo" class="idle-logo">
-      <div style="font-size:8vmin;font-weight:900;letter-spacing:2vmin;color:var(--blue)">PRÊT À QWIZZER ?</div>
-      <div style="font-size:3vmin;color:rgba(255,255,255,.4);margin-top:3vmin">En attente de l'animateur...</div>
-    </div>
+    <img id="idle-logo" class="idle-logo">
   </div>
 
-  <!-- Game Player -->
-  <div id="player">
-    <div style="display:flex;justify-content:center">
-      <div class="cover-wrapper">
-        <div id="cover-placeholder"><img src="nocover.png"></div>
+  <div id="game-scene">
+    <div class="player-left">
+      <div class="cover-frame">
+        <div id="nocover-fallback"><img src="nocover.png"></div>
         <img id="cover-blurred">
-        <img id="cover">
+        <img id="cover-img">
       </div>
     </div>
-    <div class="track-info" id="track-info">
-      <div class="track-title" id="track-title"></div>
-      <div class="track-artist" id="track-artist"></div>
+    <div class="player-right">
+      <div id="track-meta">
+        <div class="track-title" id="t-title"></div>
+        <div class="track-artist" id="t-artist"></div>
+      </div>
     </div>
   </div>
 
-  <!-- Common Overlays -->
-  <div id="leaderboard" class="mode-bottom-right">
-    <div class="lb-header" id="lb-title">🏆 Classement</div>
-    <div id="lb-list"></div>
+  <div id="leaderboard" class="mode-br">
+    <div class="lb-header" style="font-size:3.5rem; letter-spacing:1vmin; margin-bottom:3vmin">🏆 CLASSEMENT</div>
+    <div id="lb-items"></div>
   </div>
 
-  <div id="qr-overlay" class="pos-top-right">
-    <div style="font-size:2.8rem;color:var(--blue);font-weight:900;margin-bottom:2vmin">REJOINDRE LE JEU</div>
-    <img id="qr-img">
+  <div id="qr-box" class="pos-top-right">
+    <div style="font-size:2.5rem; font-weight:900; margin-bottom:2vmin; color:var(--blue)">REJOINDRE</div>
+    <img id="qr-code" style="width:var(--qr-size); background:#fff; padding:1.5vmin; border-radius:2vmin;">
   </div>
 
-  <div id="category-overlay">
-    <h1 id="cat-name" style="font-size:10rem;font-weight:900;text-transform:uppercase;letter-spacing:3vmin">CATEGORY</h1>
+  <div id="overlay-layer">
+    <div id="cat-display" style="display:none; flex-direction:column; align-items:center;">
+       <h1 id="cat-name" style="font-size:10rem; font-weight:900; letter-spacing:4vmin; text-transform:uppercase;">CATÉGORIE</h1>
+    </div>
+    <div id="podium-display" style="display:none; flex-direction:column; align-items:center;">
+       <h1 style="font-size:6rem; font-weight:900; margin-bottom:4vmin; color:var(--blue)">BRAVO !</h1>
+       <div id="podium-box"></div>
+    </div>
   </div>
 
-  <div id="podium-overlay">
-    <h1 id="podium-title" style="font-size:6rem;font-weight:900;margin-bottom:4vmin;color:var(--blue)">🏆 CLASSEMENT FINAL</h1>
-    <div class="podium-container" id="podium-list"></div>
-  </div>
-
-  <div class="logo-area"><img id="logo-img"></div>
+  <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="sub-logo" style="width:25vmin"></div>
   <cast-media-player></cast-media-player>
-  <div id="debug-log"></div>
 
   <script>
     var serverURL = '';
-    var lastCategoryTime = 0;
     var isRevealed = false;
     var currentTrack = null;
-    
-    function log(m) {
-      console.log(m);
-      var l = document.getElementById('debug-log');
-      if(l && l.style.display !== 'none') {
-        var d = document.createElement('div');
-        d.textContent = '['+new Date().toLocaleTimeString()+'] '+m;
-        l.appendChild(d); l.scrollTop = l.scrollHeight;
-      }
-    }
+    var catTimer = null;
 
-    const context = cast.framework.CastReceiverContext.getInstance();
-    const playerManager = context.getPlayerManager();
+    const ctx = cast.framework.CastReceiverContext.getInstance();
+    const pm = ctx.getPlayerManager();
 
-    function initS(u) {
+    function initServer(u) {
       if(!u) return;
       serverURL = u.endsWith('/') ? u.slice(0,-1) : u;
-      log("Expert Sync: " + serverURL);
-      ['logo-img', 'idle-logo'].forEach(id => {
-        var el = document.getElementById(id);
-        if(el) el.src = serverURL + '/tv_logo?t=' + Date.now();
+      ['idle-logo', 'sub-logo'].forEach(id => {
+        document.getElementById(id).src = serverURL + '/tv_logo?t=' + Date.now();
       });
-      startPoll();
+      startPolling();
     }
 
-    function handle(d) {
+    function sync(d) {
       if(!d) return;
-      if(typeof d === 'string') { try { d = JSON.parse(d); } catch(e) { return; } }
+      if(typeof d === 'string') { try{d=JSON.parse(d);}catch(e){return;} }
       
-      log("Msg Recv: " + (d.type || d.gameState || "raw"));
+      if(d.type === 'reload') { window.location.reload(true); return; }
+      if(d.serverURL) initServer(d.serverURL);
+      if(d.type === 'track_update' || d.trackID) renderTrack(d.track || d);
+      if(d.type === 'reveal' || d.reveal === true || d.gameState === 'revealed') reveal();
       
-      if(d.serverURL) initS(d.serverURL);
-      
-      if(d.type === 'track_update' || d.trackID) updateT(d.track || d);
-      if(d.type === 'reveal' || d.gameState === 'revealed') reveal();
-      
-      if(d.type === 'appearance') applyApp(d.data);
-      if(d.type === 'leaderboard' || d.showScores !== undefined) applyApp(d);
+      if(d.type === 'appearance' || d.showScores !== undefined || d.data) applyLayout(d.data || d);
       if(d.type === 'show_qr') toggleQR(d.show, d.url, d.position);
       
-      if(d.type === 'category_transition' && d.timestamp > lastCategoryTime) {
-        lastCategoryTime = d.timestamp;
-        showCat(d);
-      }
-      if(d.type === 'end_game') showPodium(d.data);
-      if(d.type === 'debug') document.getElementById('debug-log').style.display = d.show ? 'block' : 'none';
+      if(d.type === 'category_transition') showCategory(d);
+      if(d.type === 'end_game') renderPodium(d.data);
     }
 
-    function updateT(d) {
-      if(!d || !d.trackID) return;
-      currentTrack = d;
-      isRevealed = (d.gameState === 'revealed' || d.reveal === true);
-      
+    function renderTrack(track) {
+      if(!track || !track.trackID) return;
+      currentTrack = track;
+      isRevealed = (track.gameState === 'revealed' || track.reveal === true);
+
       document.getElementById('idle').classList.add('gone');
-      document.getElementById('player').classList.add('visible');
-      document.getElementById('podium-overlay').classList.remove('show');
+      document.getElementById('game-scene').classList.add('visible');
+      document.getElementById('overlay-layer').classList.remove('active');
       document.body.classList.remove('video-revealed');
-      
-      var i = document.getElementById('cover'), b = document.getElementById('cover-blurred'), p = document.getElementById('cover-placeholder');
-      i.style.opacity = '0'; b.style.opacity = '0'; p.style.display = 'flex';
-      i.src = ''; b.src = '';
 
-      var info = document.getElementById('track-info');
-      info.classList.toggle('is-hidden', !isRevealed);
-      
+      var i = document.getElementById('cover-img'), b = document.getElementById('cover-blurred');
+      i.src = ''; b.src = ''; i.style.opacity = '0'; b.style.opacity = '0';
+
       if(!isRevealed) {
-        document.getElementById('track-title').textContent = "QUEL EST LE TITRE ?";
-        document.getElementById('track-artist').textContent = "???";
+        document.getElementById('t-title').textContent = "QUEL EST LE TITRE ?";
+        document.getElementById('t-artist').textContent = "???";
       } else {
-        document.getElementById('track-title').textContent = d.title || "";
-        document.getElementById('track-artist').textContent = d.artist || "";
+        document.getElementById('t-title').textContent = track.title || "";
+        document.getElementById('t-artist').textContent = track.artist || "";
       }
 
-      if(d.cover && !d.cover.includes('no_cover')) {
-        var src = (d.cover.startsWith('http') ? d.cover : (serverURL + d.cover)) + '&t=' + Date.now();
+      if(track.cover && !track.cover.includes('no_cover')) {
+        var src = (track.cover.startsWith('http') ? track.cover : (serverURL + track.cover)) + '&t=' + Date.now();
         b.src = src;
-        b.onload = () => { if(d.shouldBlur && !isRevealed) { b.style.opacity = '1'; p.style.display = 'none'; } };
+        b.onload = () => { if(track.shouldBlur && !isRevealed) b.style.opacity = '1'; };
         i.src = src;
-        if(isRevealed) {
-          i.style.opacity = '1'; b.style.opacity = '0'; p.style.display = 'none';
-        }
+        if(isRevealed) { i.style.opacity = '1'; b.style.opacity = '0'; }
       }
-      
+
       if(isRevealed) reveal();
     }
 
     function reveal() {
       if(!currentTrack) return;
       isRevealed = true;
-      document.getElementById('track-title').textContent = currentTrack.title || "";
-      document.getElementById('track-artist').textContent = currentTrack.artist || "";
-      document.getElementById('track-info').classList.remove('is-hidden');
+      document.getElementById('t-title').textContent = currentTrack.title || "";
+      document.getElementById('t-artist').textContent = currentTrack.artist || "";
       
-      var i = document.getElementById('cover'), b = document.getElementById('cover-blurred'), p = document.getElementById('cover-placeholder');
-      if(i.src && !i.src.includes('nocover') && i.src.length > 5) {
-        i.style.opacity = '1'; b.style.opacity = '0'; p.style.display = 'none';
-      } else {
-        p.style.display = 'flex';
+      var i = document.getElementById('cover-img'), b = document.getElementById('cover-blurred');
+      if(i.src && i.src.length > 5 && !i.src.includes('nocover')) {
+         i.style.opacity = '1'; b.style.opacity = '0';
       }
-      
       if(currentTrack.isVideo) document.body.classList.add('video-revealed');
     }
 
-    function renderLB(players) {
-      if(!players) return;
-      var s = players.sort((a,b) => b.score - a.score).slice(0, 8);
-      document.getElementById('lb-list').innerHTML = s.map((p, idx) => `
-        <div class="lb-row rank-${idx+1}">
-          <span class="lb-rank">${idx+1}</span>
-          <span class="lb-name">${p.name}</span>
-          <span class="lb-score">${p.score} pts</span>
-        </div>
-      `).join('');
-    }
-
-    function applyApp(d) {
+    function applyLayout(d) {
       if(!d) return;
       var lb = document.getElementById('leaderboard');
-      var show = (d.showScores !== undefined) ? d.showScores : (d.data ? d.data.showScores : null);
-      var mode = d.scoreAnimationMode || (d.data ? d.data.scoreAnimationMode : 'bottom-right');
+      var show = (d.showScores === true || d.showScores === "true");
+      var mode = d.scoreAnimationMode || 'mode-br';
       
-      if(show === true || show === "true") {
-        lb.className = (mode === 'full' ? 'mode-full' : 'mode-bottom-right');
-        lb.style.display = (mode === 'full' ? 'flex' : 'block');
-      } else if(show === false || show === "false") {
-        lb.style.display = 'none';
-      }
+      if(show) {
+         lb.className = (mode === 'full' ? 'mode-full' : 'mode-br');
+         lb.style.display = 'block';
+         if(d.players) {
+            var s = d.players.sort((a,b) => b.score - a.score).slice(0, 8);
+            document.getElementById('lb-items').innerHTML = s.map((p, idx) => `
+              <div class="lb-row">
+                <span class="lb-rank">${idx+1}</span>
+                <span class="lb-name">${p.name}</span>
+                <span class="lb-score">${p.score} pts</span>
+              </div>
+            `).join('');
+         }
+      } else { lb.style.display = 'none'; }
       
-      if(d.players) renderLB(d.players);
-      
-      var pos = d.qrPosition || d.position || (d.data ? d.data.qrPosition : null);
-      if(pos) toggleQR(null, null, pos);
+      if(d.qrPosition || d.position) toggleQR(null, null, d.qrPosition || d.position);
     }
 
     function toggleQR(show, url, pos) {
-      var q = document.getElementById('qr-overlay');
-      if(show === true || show === "true") q.classList.add('visible');
-      if(show === false || show === "false") q.classList.remove('visible');
-      if(url) document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(url);
-      if(pos) {
-        q.className = 'visible pos-' + pos;
-      }
+      var box = document.getElementById('qr-box');
+      if(show === true) box.classList.add('visible');
+      if(show === false) box.classList.remove('visible');
+      if(url) document.getElementById('qr-code').src = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(url);
+      if(pos) { box.className = 'visible pos-' + pos; }
     }
 
-    function showCat(d) {
+    function showCategory(d) {
       document.getElementById('cat-name').textContent = d.name;
-      var o = document.getElementById('category-overlay');
-      o.classList.add('show');
-      setTimeout(() => o.classList.remove('show'), (d.duration || 4) * 1000);
+      document.getElementById('overlay-layer').classList.add('active');
+      document.getElementById('cat-display').style.display = 'flex';
+      document.getElementById('podium-display').style.display = 'none';
+      if(catTimer) clearTimeout(catTimer);
+      catTimer = setTimeout(() => {
+        document.getElementById('overlay-layer').classList.remove('active');
+        document.getElementById('cat-display').style.display = 'none';
+      }, (d.duration || 4) * 1000);
     }
 
-    function showPodium(data) {
+    function renderPodium(data) {
       if(!data) return;
-      var list = document.getElementById('podium-list');
-      var sorted = data.sort((a,b) => b.score - a.score);
-      var top3 = sorted.slice(0, 3);
-      var medals = ["🥇", "🥈", "🥉"];
-      
-      list.innerHTML = top3.map((p, idx) => `
-        <div class="podium-item podium-rank-${idx+1}">
-          <div class="podium-medal">${medals[idx]}</div>
-          <div class="podium-name">${p.name}</div>
-          <div class="podium-score">${p.score} pts</div>
+      var top3 = data.sort((a,b) => b.score - a.score).slice(0, 3);
+      var medals = ["🥈", "🥇", "🥉"];
+      document.getElementById('podium-box').innerHTML = top3.map((p, idx) => `
+        <div class="podium-seat rank-${idx+1}">
+          <div style="font-size:8rem; margin-bottom:2vmin">${medals[idx]}</div>
+          <div style="font-size:3.5rem; font-weight:900">${p.name}</div>
+          <div style="font-size:3rem; color:var(--blue)">${p.score} pts</div>
         </div>
       `).join('');
-      
-      document.getElementById('podium-overlay').classList.add('show');
+      document.getElementById('overlay-layer').classList.add('active');
+      document.getElementById('podium-display').style.display = 'flex';
+      document.getElementById('cat-display').style.display = 'none';
     }
 
-    function startPoll() {
-      if(window.pollTimer) clearInterval(window.pollTimer);
-      window.pollTimer = setInterval(() => {
+    function startPolling() {
+      if(window.poll) clearInterval(window.poll);
+      window.poll = setInterval(() => {
         if(!serverURL) return;
-        fetch(serverURL + '/tv_state').then(r => r.json()).then(handle).catch(()=>{});
+        fetch(serverURL + '/tv_state').then(r=>r.json()).then(sync).catch(()=>{});
       }, 5000);
     }
 
-    playerManager.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, req => {
+    pm.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, req => {
       if(req.media && req.media.customData) {
-        if(req.media.customData.serverURL) initS(req.media.customData.serverURL);
-        if(req.media.customData.trackID) updateT(req.media.customData);
+        if(req.media.customData.serverURL) initServer(req.media.customData.serverURL);
+        if(req.media.customData.trackID) renderTrack(req.media.customData);
       }
       return req;
     });
 
-    context.addCustomMessageListener('urn:x-cast:com.qwizz.control', e => handle(e.data));
-    context.start();
-    log("Expert V5.1.0 Ready");
+    ctx.addCustomMessageListener('urn:x-cast:com.qwizz.control', e => sync(e.data));
+    ctx.start();
+    console.log("QWIZZ V5.2.0-Ultimate Started");
   </script>
 </body>
 </html>
