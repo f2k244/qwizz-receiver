@@ -26,7 +26,12 @@
 
     #player{position:fixed;inset:0;display:grid;grid-template-columns:40vw 1fr;padding:8vmin;gap:8vmin;align-items:center;opacity:0;pointer-events:none;transition:opacity .8s;z-index:10}
     #player.visible{opacity:1}
-    #cover{width:55vmin;height:55vmin;border-radius:3vmin;border:0.3vmin solid rgba(255,255,255,.2);object-fit:contain;box-shadow:0 40px 100px rgba(0,0,0,.7);display:none;transition:transform 0.8s cubic-bezier(0.2,0.8,0.2,1), filter 0.6s ease, opacity 0.5s}
+    .cover-wrapper{position:relative;width:55vmin;height:55vmin;border-radius:3vmin;overflow:hidden;border:0.3vmin solid rgba(255,255,255,.2);box-shadow:0 40px 100px rgba(0,0,0,.7)}
+    #cover, #cover-blurred {
+        position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    #cover { opacity:0; z-index:2; }
+    #cover-blurred { opacity:0; z-index:1; filter:blur(20px) brightness(0.8); }
     #cover-placeholder{width:50vmin;height:50vmin;border-radius:2.5vmin;border:2px dashed rgba(0,168,255,0.2);display:flex;align-items:center;justify-content:center;font-size:20rem;color:rgba(0,168,255,.2)}
     
     .logo-area{position:fixed;top:4vmin;right:6vmin;z-index:9999}
@@ -190,7 +195,13 @@
     </div>
   </div>
   <div id="player">
-    <div style="display:flex;align-items:center;justify-content:center"><img id="cover"><div id="cover-placeholder">?</div></div>
+    <div style="display:flex;align-items:center;justify-content:center">
+      <div class="cover-wrapper">
+        <img id="cover-blurred">
+        <img id="cover">
+      </div>
+      <div id="cover-placeholder">?</div>
+    </div>
     <div style="display:flex;flex-direction:column;justify-content:center"><div class="track-title" id="track-title"></div><div class="track-artist" id="track-artist"></div></div>
   </div>
   <div id="leaderboard" class="mode-full hidden"><div class="lb-title">🏆 Classement</div><div id="lb-list" style="width:100%"></div></div>
@@ -256,14 +267,18 @@ try {
 
 function revealCover(){
   log("Reveal requested");
-  document.body.classList.add('video-revealed');
   var i = document.getElementById('cover');
+  var b = document.getElementById('cover-blurred');
   if(i && currentTrackData && currentTrackData.cover_clear){
     var fullClear = currentTrackData.cover_clear.indexOf('http') === 0 ? currentTrackData.cover_clear : (serverURL + currentTrackData.cover_clear);
     i.src = fullClear + (fullClear.indexOf('?') !== -1 ? '&' : '?') + Date.now();
-    i.style.filter = 'none';
+    i.style.opacity = '1';
+    if(b) b.style.opacity = '0';
     i.style.transform = 'scale(1.05)';
     setTimeout(function(){ i.style.transform='scale(1)'; }, 300);
+  } else {
+    log("REVEAL: video only");
+    document.body.classList.add('video-revealed');
   }
 }
 
@@ -359,6 +374,13 @@ function applyA(d){
 }
 
 function updateT(d){
+  if (!d || (d.trackID === "" && !d.title)) {
+    // Return to idle if track is empty
+    document.getElementById('idle').classList.remove('gone');
+    document.getElementById('player').classList.remove('visible');
+    return;
+  }
+  
   currentTrackData = d;
   hasTrack = true;
   document.getElementById('category-overlay').classList.remove('visible');
@@ -372,25 +394,36 @@ function updateT(d){
   if (d.showCategoryPermanently && d.category) {
     catP.textContent = d.category;
     catP.classList.add('visible');
-  } else if (d.showCategoryPermanently === false) {
+  } else {
     catP.classList.remove('visible');
   }
 
   document.getElementById('track-title').textContent = d.title;
   document.getElementById('track-artist').textContent = d.artist;
+  
   var i = document.getElementById('cover');
+  var b = document.getElementById('cover-blurred');
   var p = document.getElementById('cover-placeholder');
   
   if(d.cover){
-    var fullCover = d.cover.indexOf('http') === 0 ? d.cover : (serverURL + d.cover);
-    i.onload = function(){ i.style.display = 'block'; p.style.display = 'none'; };
-    i.src = fullCover + (fullCover.indexOf('?') !== -1 ? '&' : '?') + Date.now();
-    if(d.shouldBlur) i.style.filter = 'blur(30px)';
-    else i.style.filter = 'none';
+    var fullSrc = d.cover.indexOf('http') === 0 ? d.cover : (serverURL + d.cover);
+    var timestamped = fullSrc + (fullSrc.indexOf('?') !== -1 ? '&' : '?') + Date.now();
+    
+    // If it's blurred, show blurred layer and hide net layer
+    if(d.shouldBlur){
+      if(b){ b.src = timestamped; b.style.opacity = '1'; }
+      if(i) i.style.opacity = '0';
+    } else {
+      // Direct net display
+      if(i){ i.src = timestamped; i.style.opacity = '1'; }
+      if(b) b.style.opacity = '0';
+    }
+    
+    if(i) i.onload = function(){ p.style.display = 'none'; };
   } else {
-    i.onload = function(){ i.style.display = 'block'; p.style.display = 'none'; };
-    i.src = serverURL + '/tv_logo?' + Date.now();
-    i.style.filter = 'none';
+    p.style.display = 'flex';
+    if(i) i.style.opacity = '0';
+    if(b) b.style.opacity = '0';
   }
 }
 
