@@ -1138,10 +1138,13 @@
           el.src = u + '/tv_logo?' + Date.now();
         })(ids[k]);
       }
+      
+      // Prevent ghosting of previous categories by initializing time to NOW
+      lastCategoryTime = Date.now();
       startPoll();
     }
 
-    var lastCategoryTime = 0;
+    var lastCategoryTime = 1;
 
     function handle(d) {
       if (!d) return;
@@ -1155,6 +1158,9 @@
       if (d.category_event && d.category_event.timestamp > lastCategoryTime) {
         lastCategoryTime = d.category_event.timestamp;
         showCat(d.category_event.name, d.category_event.hasImage, d.category_event.imageURL, d.category_event.showName, d.category_event.duration);
+      } else if (d.category_event && d.category_event.timestamp && lastCategoryTime === 1) {
+          // First poll SYNC
+          lastCategoryTime = d.category_event.timestamp;
       }
 
       // 2. Handle Discrete Events (WebSocket / Control Channel)
@@ -1237,8 +1243,8 @@
         catP.classList.remove('visible');
       }
 
-      document.getElementById('track-title').textContent = d.title;
-      document.getElementById('track-artist').textContent = d.artist;
+      document.getElementById('track-title').textContent = d.title || "";
+      document.getElementById('track-artist').textContent = d.artist || "";
 
       var i = document.getElementById('cover');
       var b = document.getElementById('cover-blurred');
