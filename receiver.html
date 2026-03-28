@@ -1,3 +1,10 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>QWIZZ Chromecast Receiver V5.0.3-Classic</title>
+  <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #09072B;
@@ -22,14 +29,6 @@
                   radial-gradient(ellipse 40% 40% at 80% 20%, rgba(138, 43, 226, .12) 0%, transparent 70%);
       pointer-events: none; z-index: 0
     }
-
-    #splash {
-      position: fixed; inset: 0; background: var(--bg);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 3vmin; z-index: 10000; transition: opacity 1s ease
-    }
-
-    #splash.hidden { opacity: 0; pointer-events: none; }
 
     #idle {
       position: fixed; inset: 0; background: var(--bg);
@@ -93,8 +92,8 @@
     .logo-area { position: fixed; top: 4vmin; right: 6vmin; z-index: 9999 }
     .logo-area img { width: 25vmin; height: auto; object-fit: contain; filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.6)) }
 
-    .track-info { transition: opacity 0.6s ease; opacity: 0; }
-    .track-info.revealed { opacity: 1; }
+    .track-info { transition: opacity 0.6s ease; opacity: 1; }
+    .track-info.hidden-metadata { opacity: 0; }
     .track-title { font-size: 6rem; font-weight: 900; line-height: 1.1; margin-bottom: 2rem; text-shadow: 0 4px 40px rgba(0, 0, 0, 0.6) }
     .track-artist { font-size: 3rem; color: #E0E0E0; font-weight: 300; opacity: 0.9; }
 
@@ -124,29 +123,21 @@
     .lb-row {
       display: flex; align-items: center; gap: 3vmin;
       background: rgba(255, 255, 255, 0.03); padding: 2vmin 3vmin;
-      border-radius: 2vmin; margin-bottom: 1.5vmin; opacity: 0;
-      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease;
+      border-radius: 2vmin; margin-bottom: 1.5vmin; opacity: 1;
       border: 1px solid rgba(255,255,255,0.05);
     }
 
-    .lb-row.active { opacity: 1; transform: translateX(0); }
-
     .lb-rank { width: 6vmin; font-weight: 900; font-size: 2.5rem; text-align: center; color: rgba(255,255,255,0.4); }
     .lb-name { flex: 1; font-weight: 700; font-size: 2.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .lb-score { font-weight: 900; color: var(--blue); font-size: 2.8rem; font-family: 'Outfit', sans-serif; }
+    .lb-score { font-weight: 900; color: var(--blue); font-size: 2.8rem; }
 
     /* Rank Colors */
     .lb-row.rank-1 { background: linear-gradient(90deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05)); border-color: rgba(255, 215, 0, 0.3); }
-    .lb-row.rank-1 .lb-rank { color: #FFD700; transform: scale(1.2); }
-    .lb-row.rank-1 .lb-score { color: #FFD700; text-shadow: 0 0 15px rgba(255, 215, 0, 0.4); }
-
+    .lb-row.rank-1 .lb-rank { color: #FFD700; }
     .lb-row.rank-2 { background: linear-gradient(90deg, rgba(192, 192, 192, 0.12), rgba(192, 192, 192, 0.03)); border-color: rgba(192, 192, 192, 0.25); }
     .lb-row.rank-2 .lb-rank { color: #C0C0C0; }
-
     .lb-row.rank-3 { background: linear-gradient(90deg, rgba(205, 127, 50, 0.1), rgba(205, 127, 50, 0.02)); border-color: rgba(205, 127, 50, 0.2); }
     .lb-row.rank-3 .lb-rank { color: #CD7F32; }
-
-    .lb-row.cheater { background: rgba(255, 0, 0, 0.1); border-color: rgba(255, 0, 0, 0.3); }
 
     #qr-overlay {
       position: fixed; z-index: 10000; display: none;
@@ -157,40 +148,15 @@
 
     #qr-img { width: var(--qr-size); height: var(--qr-size); background: #fff; padding: 1.5vmin; border-radius: 2vmin; }
 
-    #pause-overlay, #rules-overlay, #category-overlay {
+    #pause-overlay, #category-overlay {
       position: fixed; inset: 0; background: rgba(9, 7, 43, 0.98);
       backdrop-filter: blur(50px); display: none; flex-direction: column;
       align-items: center; justify-content: center; z-index: 8000;
       text-align: center; padding: 5vmin;
     }
 
-    #pause-overlay.visible, #rules-overlay.visible, #category-overlay.visible { display: flex; }
+    #pause-overlay.visible, #category-overlay.visible { display: flex; }
 
-    .category-card { animation: zoomIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-    .category-image {
-      width: 50vmin; height: 50vmin; border-radius: 5vmin;
-      object-fit: cover; border: 4px solid var(--blue);
-      box-shadow: 0 0 100px rgba(0, 168, 255, 0.5); margin-bottom: 5vmin;
-    }
-
-    #cheater-overlay {
-      position: fixed; inset: 0; background: rgba(9, 7, 43, 0.85);
-      z-index: 100000; display: none; align-items: center;
-      justify-content: center; backdrop-filter: blur(10px);
-    }
-
-    #cheater-overlay.visible { display: flex; }
-
-    .cheater-card {
-      background: #1A1A3A; border: 0.8vmin solid #ff4b2b;
-      padding: 8vmin 15vmin; border-radius: 4vmin;
-      display: flex; flex-direction: column; align-items: center;
-      box-shadow: 0 0 10vmin rgba(255, 75, 43, 0.5);
-      animation: popIn .6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    }
-
-    @keyframes zoomIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
-    @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     @keyframes rotate { to { transform: rotate(360deg); } }
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -206,11 +172,6 @@
 
 <body>
   <div id="ambient"></div>
-  <div id="splash">
-    <h1 style="font-size:7rem;color:var(--blue);font-weight:900;letter-spacing:2vmin">QWIZZ</h1>
-    <div style="width:6vmin;height:6vmin;border:0.6vmin solid rgba(0,168,255,0.2);border-top-color:var(--blue);border-radius:50%;animation:rotate 1.2s linear infinite;margin-top:3vmin"></div>
-    <p id="splash-status" style="font-size:1.8rem;opacity:0.6;margin-top:3vmin">Initialisation...</p>
-  </div>
 
   <div id="idle">
     <div class="idle-content">
@@ -245,17 +206,7 @@
   </div>
 
   <div id="pause-overlay"><h1>PAUSE</h1><div id="pause-msg" style="font-size:3.5rem;max-width:80vw;line-height:1.4"></div></div>
-  <div id="rules-overlay"><div class="rules-card"><h1 id="rules-mode" style="font-size:6rem;font-weight:900;color:var(--blue);text-transform:uppercase;margin-bottom:2vmin;">MODE</h1><p id="rules-text" style="font-size:3rem;line-height:1.4;"></p></div></div>
-  <div id="category-overlay"><div class="category-card"><img id="category-img" class="category-image" style="display:none"><h1 id="category-name-display" style="font-size:9rem;font-weight:900;text-transform:uppercase;letter-spacing:2vmin">CATEGORY</h1></div></div>
-
-  <div id="cheater-overlay">
-    <div class="cheater-card">
-      <div style="color:#ff4b2b;font-size:4rem;font-weight:900;letter-spacing:2vmin;margin-bottom:4vmin">ALERTE TRICHE</div>
-      <div id="cheater-name-text" style="font-size:10rem;font-weight:900;color:white;margin-bottom:2vmin">PLAYER</div>
-      <div style="font-size:3rem;color:rgba(255,255,255,0.6);text-transform:uppercase">Sanction confirmée</div>
-      <div id="cheater-penalty-text" style="background:#ff4b2b;color:white;font-size:6rem;font-weight:900;padding:2vmin 6vmin;border-radius:2vmin;margin-top:6vmin">-50 PTS</div>
-    </div>
-  </div>
+  <div id="category-overlay"><div class="category-card"><h1 id="category-name-display" style="font-size:9rem;font-weight:900;text-transform:uppercase;letter-spacing:2vmin">CATEGORY</h1></div></div>
 
   <div class="logo-area" id="main-logo-wrap"><img id="logo-img"></div>
   <cast-media-player></cast-media-player>
@@ -285,7 +236,6 @@
       if(!u) return;
       serverURL = (u.endsWith('/') ? u.slice(0,-1) : u);
       log("SYNC SERVER: " + serverURL);
-      document.getElementById('splash').classList.add('hidden');
       ['logo-img', 'idle-logo'].forEach(id => {
         var el = document.getElementById(id);
         if(el) el.src = serverURL + '/tv_logo?t=' + Date.now();
@@ -295,7 +245,13 @@
 
     function handle(d) {
       if(!d) return;
-      log("RECV MESSAGE: " + (d.type || d.gameState || "raw"));
+      
+      // Robust Parsing
+      if(typeof d === 'string') {
+        try { d = JSON.parse(d); } catch(e) { log("Parse Error: " + e.message); return; }
+      }
+      
+      log("RECV MESSAGE: " + (d.type || d.gameState || d.serverURL || "raw"));
       
       if(d.serverURL) initS(d.serverURL);
       if(d.players) renderLB(d.players);
@@ -313,7 +269,6 @@
         lastCategoryTime = d.timestamp;
         showCat(d);
       }
-      else if(d.type === 'cheater_alert') showCheater(d);
     }
 
     function updateT(d) {
@@ -332,38 +287,24 @@
       document.body.classList.remove('video-revealed');
       document.getElementById('category-overlay').classList.remove('visible');
       
-      // Metadata visibility: hidden only if blurred AND not revealed
       var hideInfo = d.shouldBlur && !isRevealed;
-      document.getElementById('track-info-container').classList.toggle('revealed', !hideInfo);
+      document.getElementById('track-info-container').classList.toggle('hidden-metadata', hideInfo);
       document.getElementById('track-title').textContent = d.title || "";
       document.getElementById('track-artist').textContent = d.artist || "";
       
       var i = document.getElementById('cover'), b = document.getElementById('cover-blurred'), p = document.getElementById('cover-placeholder');
       if(d.cover) {
         var src = (d.cover.startsWith('http') ? d.cover : serverURL + d.cover) + '&t=' + Date.now();
-        
-        // Blurred is shown immediately if requested and NOT revealed
         b.src = src; 
-        b.onload = () => { 
-          if(d.shouldBlur && !isRevealed) {
-            b.style.opacity = '1'; 
-            p.style.display = 'none'; 
-          }
-        };
+        b.onload = () => { if(d.shouldBlur && !isRevealed) { b.style.opacity = '1'; p.style.display = 'none'; } };
         
-        // Clear cover 
         i.src = src; 
         i.style.opacity = hideInfo ? '0' : '1';
-        
-        // Placeholder handling
         p.style.display = hideInfo ? 'flex' : 'none';
         
-        // If not blurring, show immediately
         if(!d.shouldBlur || isRevealed) {
-            b.style.opacity = '0';
-            i.style.opacity = '1';
-            p.style.display = 'none';
-            document.body.classList.add('video-revealed'); // Show video if immediate visibility
+            b.style.opacity = '0'; i.style.opacity = '1'; p.style.display = 'none';
+            document.body.classList.add('video-revealed'); 
         }
       } else {
         p.style.display = 'flex'; i.style.opacity = '0'; b.style.opacity = '0';
@@ -374,10 +315,8 @@
 
     function revealInfo() {
       isRevealed = true;
-      log("REVEALING TRACK INFO");
-      document.getElementById('track-info-container').classList.add('revealed');
+      document.getElementById('track-info-container').classList.remove('hidden-metadata');
       document.body.classList.add('video-revealed');
-      
       var i = document.getElementById('cover'), b = document.getElementById('cover-blurred'), p = document.getElementById('cover-placeholder');
       if(i) i.style.opacity = '1';
       if(b) b.style.opacity = '0';
@@ -389,7 +328,7 @@
       var s = players.sort((a,b) => b.score - a.score).slice(0, 8);
       
       l.innerHTML = s.map((p, idx) => `
-        <div class="lb-row active rank-${idx+1} ${p.isCheating ? 'cheater' : ''}" style="transition-delay: ${idx * 0.05}s">
+        <div class="lb-row rank-${idx+1}">
           <span class="lb-rank">${idx+1}</span>
           <span class="lb-name">${p.name}</span>
           <span class="lb-score">${p.score} pts</span>
@@ -399,11 +338,6 @@
 
     function showCat(d) {
       document.getElementById('category-name-display').textContent = d.name;
-      var i = document.getElementById('category-img');
-      if(d.hasImage && d.imageURL) {
-        i.src = (d.imageURL.startsWith('http') ? d.imageURL : serverURL + d.imageURL) + '?t=' + Date.now();
-        i.style.display = 'block';
-      } else i.style.display = 'none';
       document.getElementById('category-overlay').classList.add('visible');
       if(d.duration) setTimeout(() => document.getElementById('category-overlay').classList.remove('visible'), d.duration * 1000);
     }
@@ -422,14 +356,6 @@
       } else q.classList.remove('visible');
     }
 
-    function showCheater(d) {
-      var o = document.getElementById('cheater-overlay');
-      document.getElementById('cheater-name-text').textContent = d.name;
-      document.getElementById('cheater-penalty-text').textContent = '-' + (d.penalty || 50) + ' PTS';
-      o.classList.add('visible');
-      setTimeout(() => o.classList.remove('visible'), 6000);
-    }
-
     function applyA(d) {
       var lb = document.getElementById('leaderboard');
       if(d.showScores) lb.style.display = (d.scoreAnimationMode === 'bottom-right' ? 'block' : 'flex');
@@ -445,7 +371,6 @@
     }
 
     playerManager.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, req => {
-      log("LOAD RECEIVED");
       if(req.media && req.media.customData && req.media.customData.serverURL) initS(req.media.customData.serverURL);
       return req;
     });
@@ -455,8 +380,7 @@
     const options = new cast.framework.CastReceiverOptions();
     options.maxInactivity = 86400;
     context.start(options);
-    log("Receiver Started V5.0.2-Recovery-Premium");
+    log("Receiver Started V5.0.3-Classic");
   </script>
 </body>
-</html>
 </html>
