@@ -1090,6 +1090,10 @@
       log("Reveal requested");
       var i = document.getElementById('cover');
       var b = document.getElementById('cover-blurred');
+      
+      // Always show video layer on reveal
+      document.body.classList.add('video-revealed');
+      
       if (i && currentTrackData && currentTrackData.cover_clear) {
         var fullClear = currentTrackData.cover_clear.indexOf('http') === 0 ? currentTrackData.cover_clear : (serverURL + currentTrackData.cover_clear);
         i.src = fullClear + (fullClear.indexOf('?') !== -1 ? '&' : '?') + Date.now();
@@ -1097,9 +1101,6 @@
         if (b) b.style.opacity = '0';
         i.style.transform = 'scale(1.05)';
         setTimeout(function () { i.style.transform = 'scale(1)'; }, 300);
-      } else {
-        log("REVEAL: video only");
-        document.body.classList.add('video-revealed');
       }
     }
 
@@ -1270,17 +1271,11 @@
     }
 
     function setMute(m) {
-    log("Setting MUTE: " + m);
-    if (window.castReceiverContext) {
+      log("Setting MUTE: " + m);
+      if (window.castReceiverContext) {
         window.castReceiverContext.setSystemMuted(m);
+      }
     }
-}
-
-function setMute(m) {
-  if (window.castReceiverContext) {
-    window.castReceiverContext.setSystemMuted(m);
-  }
-}
 
 function showRules(mode, rules) {
       var over = document.getElementById('rules-overlay');
