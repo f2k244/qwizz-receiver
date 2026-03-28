@@ -300,7 +300,6 @@ function setMute(m){
 
 const options = new cast.framework.CastReceiverOptions();
 options.maxInactivity = 86400; // 24h
-castCtx.start(options);
 
 const playerManager = castCtx.getPlayerManager();
 
@@ -333,9 +332,10 @@ playerManager.addEventListener(cast.framework.events.EventType.PLAYER_STATE_CHAN
   }
 });
 
+// Global error and status listeners
 playerManager.addEventListener(cast.framework.events.EventType.ERROR, e => {
   log("PLAYER ERROR: " + e.detailedErrorCode);
-  if (e.error) log("Error message: " + e.error.message);
+  if (e.error) log("Detail: " + JSON.stringify(e.error));
 });
 
 playerManager.addEventListener(cast.framework.events.EventType.MEDIA_STATUS_CHANGED, e => {
@@ -351,6 +351,10 @@ playerManager.addEventListener(cast.framework.events.EventType.MEDIA_STATUS_CHAN
     log("Video detected (" + media.contentType + ")");
   }
 });
+
+// Start receiver AFTER listeners are ready
+castCtx.start(options);
+log("Receiver started");
 
 function initS(u){
   serverURL=u;
