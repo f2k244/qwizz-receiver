@@ -263,6 +263,9 @@ playerManager.setMessageInterceptor(
     document.body.classList.add('video-revealed');
     
     if (loadRequestData.media && loadRequestData.media.customData) {
+      if (loadRequestData.media.customData.serverURL) {
+        initS(loadRequestData.media.customData.serverURL);
+      }
       if (loadRequestData.media.customData.mute !== undefined) {
         appState.mute = loadRequestData.media.customData.mute;
         setMute(appState.mute);
