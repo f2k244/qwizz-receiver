@@ -282,7 +282,7 @@
     const playerManager = context.getPlayerManager();
 
     function initS(u) {
-      if(!u || u === serverURL) return;
+      if(!u) return;
       serverURL = (u.endsWith('/') ? u.slice(0,-1) : u);
       log("SYNC SERVER: " + serverURL);
       document.getElementById('splash').classList.add('hidden');
@@ -297,6 +297,7 @@
       if(!d) return;
       log("RECV MESSAGE: " + (d.type || d.gameState || "raw"));
       
+      if(d.serverURL) initS(d.serverURL);
       if(d.players) renderLB(d.players);
       if(d.track) updateT(d.track);
       if(d.type === 'reveal' || d.reveal === true || d.gameState === 'revealed') revealInfo();
@@ -323,22 +324,17 @@
         return;
       }
       
-      // If same track, just check if we need to reveal it now
-      if(d.trackID === lastTrackId) {
-          if (d.gameState === 'revealed') revealInfo();
-          return;
-      }
-      
       lastTrackId = d.trackID;
-      isRevealed = false;
-      document.getElementById('track-info-container').classList.remove('revealed');
+      isRevealed = (d.gameState === 'revealed');
       
       document.getElementById('idle').classList.add('gone');
       document.getElementById('player').classList.add('visible');
       document.body.classList.remove('video-revealed');
       document.getElementById('category-overlay').classList.remove('visible');
       
-      // Metadata always hidden initially
+      // Metadata visibility: hidden only if blurred AND not revealed
+      var hideInfo = d.shouldBlur && !isRevealed;
+      document.getElementById('track-info-container').classList.toggle('revealed', !hideInfo);
       document.getElementById('track-title').textContent = d.title || "";
       document.getElementById('track-artist').textContent = d.artist || "";
       
@@ -346,26 +342,37 @@
       if(d.cover) {
         var src = (d.cover.startsWith('http') ? d.cover : serverURL + d.cover) + '&t=' + Date.now();
         
-        // Blurred is shown immediately if requested
-        b.src = src; b.onload = () => { if(!isRevealed) b.style.opacity = '1'; p.style.display = 'none'; };
+        // Blurred is shown immediately if requested and NOT revealed
+        b.src = src; 
+        b.onload = () => { 
+          if(d.shouldBlur && !isRevealed) {
+            b.style.opacity = '1'; 
+            p.style.display = 'none'; 
+          }
+        };
         
-        // Clear cover is loaded but hidden initially
-        i.src = src; i.style.opacity = '0';
+        // Clear cover 
+        i.src = src; 
+        i.style.opacity = hideInfo ? '0' : '1';
         
-        // If not blurring, but also not revealed, show NOTHING (placeholder) until reveal
-        if(!d.shouldBlur && d.gameState !== 'revealed') {
+        // Placeholder handling
+        p.style.display = hideInfo ? 'flex' : 'none';
+        
+        // If not blurring, show immediately
+        if(!d.shouldBlur || isRevealed) {
             b.style.opacity = '0';
-            p.style.display = 'flex';
+            i.style.opacity = '1';
+            p.style.display = 'none';
+            document.body.classList.add('video-revealed'); // Show video if immediate visibility
         }
       } else {
         p.style.display = 'flex'; i.style.opacity = '0'; b.style.opacity = '0';
       }
       
-      if(d.gameState === 'revealed') revealInfo();
+      if(isRevealed) revealInfo();
     }
 
     function revealInfo() {
-      if(isRevealed) return;
       isRevealed = true;
       log("REVEALING TRACK INFO");
       document.getElementById('track-info-container').classList.add('revealed');
