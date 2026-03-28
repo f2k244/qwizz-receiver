@@ -223,7 +223,7 @@
   <div id="debug-log"></div>
 
 <script>
-let serverURL = '',
+var serverURL = '',
     socket,
     appState = { showCheaterStatus: true, revealAnim: 'random', mute: false },
     isAnimating = false,
@@ -231,10 +231,10 @@ let serverURL = '',
     currentTrackData = null;
 
 function log(m) {
-  const l = document.getElementById('debug-log');
+  var l = document.getElementById('debug-log');
   if (!l) return;
-  const d = document.createElement('div');
-  d.textContent = `[${new Date().toLocaleTimeString()}] ${m}`;
+  var d = document.createElement('div');
+  d.textContent = '[' + new Date().toLocaleTimeString() + '] ' + m;
   l.appendChild(d);
   l.scrollTop = l.scrollHeight;
   console.log(m);
@@ -242,29 +242,28 @@ function log(m) {
 
 // EMERGENCY DIAGNOSTICS
 document.getElementById('debug-log').style.display = 'block';
-document.getElementById('splash-status').innerText = "Script chargé...";
+document.getElementById('splash-status').innerText = "Script ES5 chargé...";
 
-let castCtx, playerManager;
+var castCtx, playerManager;
 try {
   castCtx = cast.framework.CastReceiverContext.getInstance();
   playerManager = castCtx.getPlayerManager();
   log("Cast Context & Player Manager initialized");
 } catch (e) {
-  document.getElementById('splash-status').innerText = "Erreur INIT: " + e.message;
+  document.getElementById('splash-status').innerText = "Erreur INIT: " + (e.message || e);
 }
 
-const options = new cast.framework.CastReceiverOptions();
+var options = new cast.framework.CastReceiverOptions();
 options.maxInactivity = 86400; // 24h
 
-// Intercept LOAD - ULTIMATE SIMPLICITY
+// Intercept LOAD
 playerManager.setMessageInterceptor(
   cast.framework.messages.MessageType.LOAD,
-  loadRequestData => {
-    const media = loadRequestData.media || {};
-    const url = media.contentId || media.contentUrl || "NOT_FOUND";
+  function(loadRequestData) {
+    var media = loadRequestData.media || {};
+    var url = media.contentId || media.contentUrl || "NOT_FOUND";
     log("LOAD URL RECEIVED: " + url);
     
-    // Force visibility immediately
     document.getElementById('splash').classList.add('hidden');
     document.getElementById('idle').classList.add('gone');
     document.body.classList.add('video-revealed');
@@ -282,8 +281,8 @@ playerManager.setMessageInterceptor(
   }
 );
 
-// Listeners BEFORE start()
-playerManager.addEventListener(cast.framework.events.EventType.PLAYER_STATE_CHANGED, e => {
+// Listeners
+playerManager.addEventListener(cast.framework.events.EventType.PLAYER_STATE_CHANGED, function(e) {
   log("Player state: " + e.value);
   if (e.value === 'BUFFERING' || e.value === 'PLAYING') {
       document.getElementById('splash').classList.add('hidden');
@@ -292,13 +291,13 @@ playerManager.addEventListener(cast.framework.events.EventType.PLAYER_STATE_CHAN
   if (appState.mute) setMute(true);
 });
 
-playerManager.addEventListener(cast.framework.events.EventType.ERROR, e => {
+playerManager.addEventListener(cast.framework.events.EventType.ERROR, function(e) {
   log("PLAYER ERROR: " + e.detailedErrorCode);
   if (e.error) log("Detail: " + JSON.stringify(e.error));
 });
 
-playerManager.addEventListener(cast.framework.events.EventType.MEDIA_STATUS_CHANGED, e => {
-  const status = playerManager.getPlayerState();
+playerManager.addEventListener(cast.framework.events.EventType.MEDIA_STATUS_CHANGED, function(e) {
+  var status = playerManager.getPlayerState();
   log("Media Status: " + status);
   if (status === 'PLAYING') {
     document.body.classList.add('video-revealed');
@@ -306,7 +305,7 @@ playerManager.addEventListener(cast.framework.events.EventType.MEDIA_STATUS_CHAN
   }
 });
 
-castCtx.addCustomMessageListener('urn:x-cast:com.qwizz.control', e => {
+castCtx.addCustomMessageListener('urn:x-cast:com.qwizz.control', function(e) {
   log("Custom message: " + JSON.stringify(e.data));
   if(e.data && e.data.serverURL) initS(e.data.serverURL);
   if(e.data && e.data.type === 'reveal') revealCover();
@@ -321,11 +320,11 @@ function revealCover(){
   document.body.classList.add('video-revealed');
   var i=document.getElementById('cover');
   if(i && currentTrackData && currentTrackData.cover_clear){
-    var fullClear = currentTrackData.cover_clear.startsWith('http') ? currentTrackData.cover_clear : (serverURL + currentTrackData.cover_clear);
-    i.src = fullClear + (fullClear.includes('?')?'&':'?') + Date.now();
+    var fullClear = currentTrackData.cover_clear.indexOf('http') === 0 ? currentTrackData.cover_clear : (serverURL + currentTrackData.cover_clear);
+    i.src = fullClear + (fullClear.indexOf('?') !== -1 ? '&' : '?') + Date.now();
     i.style.filter = 'none';
     i.style.transform = 'scale(1.05)';
-    setTimeout(()=>i.style.transform='scale(1)', 300);
+    setTimeout(function(){ i.style.transform='scale(1)'; }, 300);
   }
 }
 
@@ -334,9 +333,9 @@ function setMute(m){
   log("SET_MUTE: Request=" + m);
   castCtx.setSystemVolume({ muted: m, level: m ? 0.0 : 1.0 });
   
-  const pm = castCtx.getPlayerManager();
+  var pm = castCtx.getPlayerManager();
   if (pm) {
-    const el = pm.getMediaElement();
+    var el = pm.getMediaElement();
     if (el) {
        el.muted = m;
        el.volume = m ? 0.0 : 1.0;
@@ -348,25 +347,25 @@ function initS(u){
   if (!u) return;
   serverURL = u;
   log("Server URL set: " + u);
-  
-  // Hide splash immediately when we have the URL
   document.getElementById('splash').classList.add('hidden');
   
-  ['splash-logo','idle-logo','logo-img','podium-logo'].forEach(id=>{
-    var el=document.getElementById(id); if(!el) return;
-    el.onload=()=>{
-        el.style.display='block';
-        if(id==='splash-logo') document.getElementById('splash-text').style.display='none';
-        if(id==='idle-logo') document.getElementById('idle-title-text').style.display='block';
-    };
-    el.onerror=()=>{
-        if(id==='splash-logo') document.getElementById('splash-text').style.display='block';
-        if(id==='idle-logo') document.getElementById('idle-title-text').style.display='block';
-    };
-    el.src=u+'/tv_logo?'+Date.now();
-  });
-  
-  // Start high-frequency polling
+  var ids = ['splash-logo','idle-logo','logo-img','podium-logo'];
+  for (var k=0; k<ids.length; k++) {
+    (function(id) {
+       var el = document.getElementById(id);
+       if (!el) return;
+       el.onload = function() {
+           el.style.display = 'block';
+           if(id === 'splash-logo') document.getElementById('splash-text').style.display = 'none';
+           if(id === 'idle-logo') document.getElementById('idle-title-text').style.display = 'block';
+       };
+       el.onerror = function() {
+           if(id === 'splash-logo') document.getElementById('splash-text').style.display = 'block';
+           if(id === 'idle-logo') document.getElementById('idle-title-text').style.display = 'block';
+       };
+       el.src = u + '/tv_logo?' + Date.now();
+    })(ids[k]);
+  }
   poll();
 }
 
@@ -390,7 +389,7 @@ function handle(d){
   if (d.mute !== undefined) setMute(d.mute);
 
   if (d.showCategoryPermanently !== undefined) {
-    const cp = document.getElementById('category-persistent');
+    var cp = document.getElementById('category-persistent');
     if (!d.showCategoryPermanently) cp.classList.remove('visible');
   }
 }
@@ -428,7 +427,7 @@ function updateT(d){
   document.getElementById('main-logo-wrap').classList.remove('hidden');
   document.body.classList.remove('video-revealed');
   
-  const catP = document.getElementById('category-persistent');
+  var catP = document.getElementById('category-persistent');
   if (d.showCategoryPermanently && d.category) {
     catP.textContent = d.category;
     catP.classList.add('visible');
@@ -441,41 +440,38 @@ function updateT(d){
   var i=document.getElementById('cover'),p=document.getElementById('cover-placeholder');
   
   if(d.cover){
-    var fullCover = d.cover.startsWith('http') ? d.cover : (serverURL + d.cover);
-    i.onload=()=>{i.style.display='block';p.style.display='none'};
-    i.onerror=()=>{i.src=serverURL+'/tv_logo?'+Date.now()};
-    i.src=fullCover+(fullCover.includes('?')?'&':'?')+Date.now();
+    var fullCover = d.cover.indexOf('http') === 0 ? d.cover : (serverURL + d.cover);
+    i.onload=function(){i.style.display='block';p.style.display='none'};
+    i.onerror=function(){i.src=serverURL+'/tv_logo?'+Date.now()};
+    i.src=fullCover+(fullCover.indexOf('?') !== -1 ? '&' : '?')+Date.now();
     
-    // Apply initial blur if needed
     if(d.shouldBlur) i.style.filter = 'blur(30px)';
     else i.style.filter = 'none';
     
-    // Pre-load CLEAR version in background
     if(d.cover_clear){
         var pre = new Image();
-        var fullClear = d.cover_clear.startsWith('http') ? d.cover_clear : (serverURL + d.cover_clear);
-        pre.src = fullClear + (fullClear.includes('?')?'&':'?') + Date.now();
+        var fullClear = d.cover_clear.indexOf('http') === 0 ? d.cover_clear : (serverURL + d.cover_clear);
+        pre.src = fullClear + (fullClear.indexOf('?') !== -1 ? '&' : '?') + Date.now();
     }
   } else {
-    // ... rest of the code for no cover
-    i.onload=()=>{i.style.display='block';p.style.display='none'};
+    i.onload=function(){i.style.display='block';p.style.display='none'};
     i.src=serverURL+'/tv_logo?'+Date.now();
     i.style.filter = 'none';
   }
 }
 
 function showRules(mode, rules) {
-    const over = document.getElementById('rules-overlay');
+    var over = document.getElementById('rules-overlay');
     document.getElementById('rules-mode').innerText = mode;
     document.getElementById('rules-text').innerText = rules;
     over.classList.add('visible');
-    setTimeout(() => { over.classList.remove('visible'); }, 6000);
+    setTimeout(function(){ over.classList.remove('visible'); }, 6000);
 }
 
 function showCat(name, hasImage, imageURL, showName, dur) {
-    const over = document.getElementById('category-overlay');
-    const img = document.getElementById('category-img');
-    const nameDisp = document.getElementById('category-name-display');
+    var over = document.getElementById('category-overlay');
+    var img = document.getElementById('category-img');
+    var nameDisp = document.getElementById('category-name-display');
     
     if (showName === false) {
         nameDisp.style.display = 'none';
@@ -485,7 +481,7 @@ function showCat(name, hasImage, imageURL, showName, dur) {
     }
     
     if (hasImage) {
-        const fullURL = (imageURL && imageURL.startsWith('http')) ? imageURL : (serverURL + imageURL);
+        var fullURL = (imageURL && imageURL.indexOf('http') === 0) ? imageURL : (serverURL + imageURL);
         img.src = fullURL + '?' + Date.now();
         img.style.display = 'block';
     } else {
@@ -496,57 +492,55 @@ function showCat(name, hasImage, imageURL, showName, dur) {
     
     if (window.catTimeout) clearTimeout(window.catTimeout);
     if (dur && dur > 0) {
-        window.catTimeout = setTimeout(() => { over.classList.remove('visible'); }, dur * 1000);
+        window.catTimeout = setTimeout(function(){ over.classList.remove('visible'); }, dur * 1000);
     }
 }
 
 function showCheater(name, penalty, style) {
-    console.log("Cheater detected:", name, penalty, style);
-    const over = document.getElementById('cheater-overlay');
-    
+    var over = document.getElementById('cheater-overlay');
     if (!over) return;
-
-    // Reset state to trigger re-animation
     over.classList.remove('visible');
     over.className = ''; 
-    void over.offsetWidth; // Force reflow
+    void over.offsetWidth; 
 
-    const styleClass = 'style-' + (style || 'Cinéma').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
+    var s = (style || 'Cinéma').toLowerCase();
+    var styleClass = 'style-' + s; // Simple replacement for normalization for now
     
     if (styleClass === 'style-defilement') {
-        over.innerHTML = `<div class="cheater-card"><div class="ticker-badge"><div class="ticker-dot"></div>ALERTE TRICHE</div><div id="cheater-name-text" class="cheater-name-big">⚠️ TRICHE DÉTECTÉE : ${name.toUpperCase()} (SANCTION : -${penalty} PTS) —– REPLAY : ${name.toUpperCase()} A TRICHÉ —– ⚠️</div></div>`;
+        over.innerHTML = '<div class="cheater-card"><div class="ticker-badge"><div class="ticker-dot"></div>ALERTE TRICHE</div><div id="cheater-name-text" class="cheater-name-big">⚠️ TRICHE DÉTECTÉE : ' + name.toUpperCase() + ' (SANCTION : -' + penalty + ' PTS) —– REPLAY : ' + name.toUpperCase() + ' A TRICHÉ —– ⚠️</div></div>';
     } else {
-        over.innerHTML = `<div class="cheater-card"><div class="cheater-header">ALERTE TRICHE</div><div id="cheater-name-text" class="cheater-name-big">${name}</div><div class="cheater-info">Sanction confirmée</div><div id="cheater-penalty-text" class="cheater-penalty-badge">-${penalty} pts</div></div>`;
+        over.innerHTML = '<div class="cheater-card"><div class="cheater-header">ALERTE TRICHE</div><div id="cheater-name-text" class="cheater-name-big">' + name + '</div><div class="cheater-info">Sanction confirmée</div><div id="cheater-penalty-text" class="cheater-penalty-badge">-' + penalty + ' pts</div></div>';
     }
     
     over.classList.add('visible');
     over.classList.add(styleClass);
     
     if (window.cheaterTimeout) clearTimeout(window.cheaterTimeout);
-    window.cheaterTimeout = setTimeout(() => { 
+    window.cheaterTimeout = setTimeout(function(){ 
         over.classList.remove('visible'); 
-        setTimeout(() => { over.className = ''; }, 600); // Wait for transition
+        setTimeout(function(){ over.className = ''; }, 600); 
     }, styleClass === 'style-defilement' ? 12000 : 8000);
 }
 
 function renderLB(p){
   if(isAnimating)return;
-  var l=document.getElementById('lb-list'),s=p.sort((a,b)=>b.score-a.score).slice(0,10);
-  l.innerHTML=s.map((x,i)=>{
+  var l=document.getElementById('lb-list'),s=p.sort(function(a,b){return b.score-a.score}).slice(0,10);
+  l.innerHTML=s.map(function(x,i){
     var c=x.isCheating&&appState.showCheaterStatus;
-    return `<div class="lb-row ${c?'cheater':''}" style="opacity:1"><span class="lb-rank">${i+1}</span><span class="lb-name">${esc(x.name)}${c?' ⚠️ TRICHE':''}</span><span class="lb-score">${x.score} pts</span></div>`
+    return '<div class="lb-row ' + (c?'cheater':'') + '" style="opacity:1"><span class="lb-rank">' + (i+1) + '</span><span class="lb-name">' + esc(x.name) + (c?' ⚠️ TRICHE':'') + '</span><span class="lb-score">' + x.score + ' pts</span></div>'
   }).join('');
 }
 
 function showAnimLB(){
   var rows=Array.from(document.querySelectorAll('.lb-row')); if(!rows.length)return;
-  isAnimating=true; rows.forEach(r=>r.style.opacity='0');
-  var anim=appState.revealAnim==='random'?['suspense','cascade','wipe','neon','zoom'][Math.floor(Math.random()*5)]:appState.revealAnim;
-  rows.forEach((r,i)=>{
+  isAnimating=true; rows.forEach(function(r){r.style.opacity='0'});
+  var types = ['suspense','cascade','wipe','neon','zoom'];
+  var anim = appState.revealAnim==='random'?types[Math.floor(Math.random()*5)]:appState.revealAnim;
+  rows.forEach(function(r,i){
     var d=anim==='suspense'?(rows.length-i)*1200:i*100;
-    setTimeout(()=>{r.style.opacity='1';r.classList.add('anim-'+anim)},d);
+    setTimeout(function(){r.style.opacity='1';r.classList.add('anim-'+anim)},d);
   });
-  setTimeout(()=>isAnimating=false,rows.length*1000+1200);
+  setTimeout(function(){isAnimating=false},rows.length*1000+1200);
 }
 
 function toggleQR(d){
@@ -569,37 +563,36 @@ function showPodium(data) {
   document.getElementById('player').classList.remove('visible');
   document.getElementById('leaderboard').classList.add('hidden');
   document.getElementById('main-logo-wrap').classList.add('hidden');
-  const over = document.getElementById('podium-overlay');
-  const container = document.getElementById('podium-steps');
+  var over = document.getElementById('podium-overlay');
+  var container = document.getElementById('podium-steps');
   over.classList.add('visible');
-  container.innerHTML = `
-    <div class="podium-step" style="animation-delay:0.4s">
-        <div style="font-size:3rem;font-weight:900;margin-bottom:1vmin">${esc(data[1]?.name || '')}</div>
-        <div style="font-size:2rem;color:var(--blue);margin-bottom:2vmin">${data[1]?.score || 0} pts</div>
-        <div style="width:20vw;height:25vh;background:linear-gradient(to top,#1A1A3A,var(--bg));border:3px solid silver;border-radius:2vmin 2vmin 0 0;display:flex;align-items:center;justify-content:center;font-size:5rem;font-weight:900;box-shadow:0 0 30px rgba(192,192,192,0.2)">2</div>
-    </div>
-    <div class="podium-step" style="animation-delay:0s">
-        <div style="font-size:4.5rem;font-weight:900;color:gold;margin-bottom:1vmin">${esc(data[0]?.name || '')}</div>
-        <div style="font-size:2.5rem;color:var(--blue);margin-bottom:2vmin">${data[0]?.score || 0} pts</div>
-        <div style="width:28vw;height:42vh;background:linear-gradient(to top,#1A1A3A,var(--bg));border:3px solid gold;border-radius:2vmin 2vmin 0 0;display:flex;align-items:center;justify-content:center;font-size:9rem;font-weight:900;box-shadow:0 0 80px rgba(255,215,0,0.4)">1</div>
-    </div>
-    <div class="podium-step" style="animation-delay:0.8s">
-        <div style="font-size:2.5rem;font-weight:900;margin-bottom:1vmin">${esc(data[2]?.name || '')}</div>
-        <div style="font-size:2rem;color:var(--blue);margin-bottom:2vmin">${data[2]?.score || 0} pts</div>
-        <div style="width:18vw;height:16vh;background:linear-gradient(to top,#1A1A3A,var(--bg));border:3px solid #CD7F32;border-radius:2vmin 2vmin 0 0;display:flex;align-items:center;justify-content:center;font-size:4rem;font-weight:900;box-shadow:0 0 30px rgba(205,127,50,0.2)">3</div>
-    </div>
-  `;
+  container.innerHTML = 
+    '<div class="podium-step" style="animation-delay:0.4s">' +
+        '<div style="font-size:3rem;font-weight:900;margin-bottom:1vmin">' + esc(data[1] ? data[1].name : '') + '</div>' +
+        '<div style="font-size:2rem;color:var(--blue);margin-bottom:2vmin">' + (data[1] ? data[1].score : 0) + ' pts</div>' +
+        '<div style="width:20vw;height:25vh;background:linear-gradient(to top,#1A1A3A,var(--bg));border:3px solid silver;border-radius:2vmin 2vmin 0 0;display:flex;align-items:center;justify-content:center;font-size:5rem;font-weight:900;box-shadow:0 0 30px rgba(192,192,192,0.2)">2</div>' +
+    '</div>' +
+    '<div class="podium-step" style="animation-delay:0s">' +
+        '<div style="font-size:4.5rem;font-weight:900;color:gold;margin-bottom:1vmin">' + esc(data[0] ? data[0].name : '') + '</div>' +
+        '<div style="font-size:2.5rem;color:var(--blue);margin-bottom:2vmin">' + (data[0] ? data[0].score : 0) + ' pts</div>' +
+        '<div style="width:28vw;height:42vh;background:linear-gradient(to top,#1A1A3A,var(--bg));border:3px solid gold;border-radius:2vmin 2vmin 0 0;display:flex;align-items:center;justify-content:center;font-size:9rem;font-weight:900;box-shadow:0 0 80px rgba(255,215,0,0.4)">1</div>' +
+    '</div>' +
+    '<div class="podium-step" style="animation-delay:0.8s">' +
+        '<div style="font-size:2.5rem;font-weight:900;margin-bottom:1vmin">' + esc(data[2] ? data[2].name : '') + '</div>' +
+        '<div style="font-size:2rem;color:var(--blue);margin-bottom:2vmin">' + (data[2] ? data[2].score : 0) + ' pts</div>' +
+        '<div style="width:18vw;height:16vh;background:linear-gradient(to top,#1A1A3A,var(--bg));border:3px solid #CD7F32;border-radius:2vmin 2vmin 0 0;display:flex;align-items:center;justify-content:center;font-size:4rem;font-weight:900;box-shadow:0 0 30px rgba(205,127,50,0.2)">3</div>' +
+    '</div>';
 }
 
 function poll(){
   if(!serverURL)return;
   fetch(serverURL+'/tv_state')
-    .then(r=>r.json())
-    .then(status=>{
+    .then(function(r){ return r.json(); })
+    .then(function(status){
       handle(status);
     })
-    .catch(err=>console.error("Poll error:", err))
-    .finally(()=>{
+    .catch(function(err){ console.error("Poll error:", err); })
+    .finally(function(){
       setTimeout(poll, 800);
     });
 }
