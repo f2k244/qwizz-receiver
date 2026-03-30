@@ -35,6 +35,17 @@
     .idle-logo { width:75vmin; filter: drop-shadow(0 0 50px rgba(0,168,255,0.7)); animation: pulseLogo 4s ease-in-out infinite; }
     .idle-status { font-size:2.5rem; font-weight:700; letter-spacing:1.5vmin; color:var(--blue); margin-top:4vmin; text-transform:uppercase; opacity:0.6; }
 
+    /* Toast de rechargement */
+    #reload-toast {
+      position:fixed; bottom:6vmin; left:50%; transform:translateX(-50%);
+      background:rgba(0,168,255,0.15); border:1.5px solid var(--blue);
+      backdrop-filter:blur(20px); border-radius:3vmin;
+      padding:2vmin 4vmin; font-size:2rem; font-weight:700; color:var(--blue);
+      letter-spacing:0.3vmin; z-index:99999;
+      opacity:0; pointer-events:none; transition:opacity 0.4s;
+    }
+    #reload-toast.show { opacity:1; }
+
     /* Main Scene */
     #player-scene {
       position:fixed; inset:0; z-index:10; padding:8vmin;
@@ -159,6 +170,7 @@
   </div>
 
   <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="logo-top" style="width:25vmin"></div>
+  <div id="reload-toast">⟳ &nbsp;Rechargement en cours...</div>
   <cast-media-player></cast-media-player>
 
   <script>
@@ -176,7 +188,12 @@
       if(!d) return;
       if(typeof d === 'string') { try{d=JSON.parse(d);}catch(e){return;} }
 
-      if(d.type === 'reload') { window.location.reload(true); return; }
+      if(d.type === 'reload') {
+        var toast = document.getElementById('reload-toast');
+        toast.classList.add('show');
+        setTimeout(() => { window.location.reload(true); }, 600);
+        return;
+      }
 
       if(d.serverURL) {
         STATE.serverURL = d.serverURL.endsWith('/') ? d.serverURL.slice(0,-1) : d.serverURL;
