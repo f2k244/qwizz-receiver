@@ -202,7 +202,7 @@
         if(!window.poll) window.poll = setInterval(() => { fetch(STATE.serverURL+'/tv_state').then(r=>r.json()).then(sync).catch(()=>{}) }, 5000);
       }
 
-      if(d.type === 'track_update' || d.trackID) render(d.track || d);
+      if(d.type === 'track_update' || d.trackID || (d.track && d.track.trackID)) render(d.track || d);
       if(d.type === 'reveal' || d.gameState === 'revealed' || d.reveal === true) doReveal();
 
       // Mettre à jour la visibilité depuis chaque message
@@ -308,6 +308,9 @@
     // Intercepter le chargement média pour récupérer l'URL du serveur
     pm.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, req => {
       if(req.media && req.media.customData) sync(req.media.customData);
+      // Sortir de l'écran idle dès qu'un média est chargé, même sans trackID complet
+      document.getElementById('idle').classList.add('gone');
+      document.getElementById('player-scene').classList.add('visible');
       return req;
     });
 
