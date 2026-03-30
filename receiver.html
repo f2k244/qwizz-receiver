@@ -897,6 +897,7 @@
       applyUI(d);
 
       if (d.type === 'mode_switch') showRules(d);
+      if (d.type === 'hide_rules') document.getElementById('rules-overlay').classList.remove('active');
       if (d.type === 'category_transition') transition(d);
       if (d.type === 'end_game') podium(d.data);
     }
