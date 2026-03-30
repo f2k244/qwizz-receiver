@@ -179,7 +179,7 @@
       serverURL: '', track: null, revealed: false,
       showScores: false, scoreMode: 'br',
       showQR: false, qrURL: '', qrPos: 'top-right',
-      endGame: false, currentTrackID: null
+      endGame: false, currentTrackID: null, currentCoverKey: null
     };
 
     const ctx = cast.framework.CastReceiverContext.getInstance();
@@ -244,15 +244,26 @@
       document.getElementById('t-title').textContent = STATE.revealed ? (t.title || "") : "QUEL EST LE TITRE ?";
       document.getElementById('t-artist').textContent = STATE.revealed ? (t.artist || "") : "???";
 
-      // Ne recharger la pochette que si la piste a changé (évite le flash nocover à chaque polling)
-      if(t.trackID !== STATE.currentTrackID) {
+      // Résoudre la source cover — customData envoie coverURL (absolu), track_update envoie cover (relatif)
+      var rawCover = t.cover || t.coverURL || null;
+      var coverSrc = null;
+      if(rawCover && !rawCover.includes('no_cover')) {
+        coverSrc = rawCover.startsWith('http') ? rawCover : (STATE.serverURL + rawCover);
+        // Clé de comparaison sans timestamp (?t=...) pour éviter rechargements inutiles
+        coverSrc = coverSrc.replace(/[?&]t=\d+/g, '');
+      }
+      var coverKey = t.trackID + '|' + (coverSrc || 'nocover');
+
+      // Recharger uniquement si la piste ou la pochette a changé
+      if(coverKey !== STATE.currentCoverKey) {
         STATE.currentTrackID = t.trackID;
+        STATE.currentCoverKey = coverKey;
         var i = document.getElementById('img-main'), b = document.getElementById('img-blur');
-        i.src = ''; b.src = ''; i.style.opacity = '0'; b.style.opacity = '0';
-        if(t.cover && !t.cover.includes('no_cover')) {
-          var src = (t.cover.startsWith('http') ? t.cover : (STATE.serverURL + t.cover));
-          b.src = src; b.onload = () => { if(t.shouldBlur && !STATE.revealed) b.style.opacity = '1'; };
-          i.src = src; if(STATE.revealed) { i.style.opacity = '1'; b.style.opacity = '0'; }
+        i.removeAttribute('src'); b.removeAttribute('src');
+        i.style.opacity = '0'; b.style.opacity = '0';
+        if(coverSrc) {
+          b.src = coverSrc; b.onload = () => { if(t.shouldBlur && !STATE.revealed) b.style.opacity = '1'; };
+          i.src = coverSrc; if(STATE.revealed) { i.style.opacity = '1'; b.style.opacity = '0'; }
         }
       }
       if(STATE.revealed) doReveal();
