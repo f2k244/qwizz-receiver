@@ -118,10 +118,92 @@
     cast-media-player { position:fixed; inset:0; z-index:1; opacity:0; transition:opacity .6s; }
     body.video-active cast-media-player { opacity:1; z-index:100 !important; }
 
+    /* QR Ticker bandeau défilant */
+    #qr-ticker {
+      position:fixed; bottom:0; left:0; right:0; z-index:2000;
+      height:9vmin; display:none; align-items:center; overflow:hidden;
+      background:rgba(0,168,255,0.12); border-top:1.5px solid rgba(0,168,255,0.4);
+      backdrop-filter:blur(20px);
+    }
+    #qr-ticker.visible { display:flex; }
+    .ticker-track {
+      display:flex; align-items:center; white-space:nowrap;
+      animation:tickerScroll 28s linear infinite;
+    }
+    .ticker-item {
+      display:inline-flex; align-items:center; gap:2.5vmin;
+      padding:0 6vmin;
+    }
+    .ticker-qr {
+      width:6.5vmin; height:6.5vmin; background:#fff;
+      padding:0.4vmin; border-radius:0.8vmin; flex-shrink:0;
+    }
+    .ticker-text {
+      font-size:2.6rem; font-weight:700; color:var(--blue);
+      letter-spacing:0.15vmin;
+    }
+    .ticker-sep { color:rgba(0,168,255,0.4); font-size:2rem; margin:0 2vmin; }
+
+    /* Rules overlay */
+    #rules-overlay {
+      position:fixed; inset:0; z-index:60000;
+      background:rgba(9,7,43,0.95); backdrop-filter:blur(30px);
+      display:none; flex-direction:column; align-items:center; justify-content:center;
+      transition:opacity 0.5s ease;
+    }
+    #rules-overlay.visible { display:flex; animation: fadeIn 0.5s ease; }
+    #rules-overlay.hiding { animation: fadeOut 0.5s ease forwards; display:flex; }
+    .rules-card {
+      background:var(--glass); border:2px solid rgba(0,168,255,0.4);
+      border-radius:6vmin; padding:7vmin 10vmin;
+      max-width:90vmin; width:100%;
+      box-shadow:0 60px 150px rgba(0,0,0,0.9);
+      text-align:center;
+    }
+    #rules-overlay.visible .rules-card { animation:rulesIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+    .rules-mode-badge {
+      display:inline-block; background:rgba(0,168,255,0.18);
+      border:1.5px solid rgba(0,168,255,0.5); border-radius:3vmin;
+      padding:1.2vmin 4vmin; font-size:2.6rem; font-weight:700;
+      color:var(--blue); letter-spacing:0.4vmin; text-transform:uppercase;
+      margin-bottom:4vmin;
+    }
+    .rules-title {
+      font-size:9rem; font-weight:900; line-height:1;
+      margin-bottom:5vmin;
+      background:linear-gradient(135deg,#fff 40%,var(--blue));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .rules-text {
+      font-size:3.6rem; font-weight:400; color:rgba(255,255,255,0.85);
+      line-height:1.55; margin-bottom:5vmin;
+    }
+    .rules-chips {
+      display:flex; flex-wrap:wrap; gap:2.5vmin; justify-content:center;
+    }
+    .rules-chip {
+      background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15);
+      border-radius:2.5vmin; padding:1.5vmin 3.5vmin;
+      font-size:2.6rem; font-weight:700; color:rgba(255,255,255,0.9);
+    }
+    .rules-chip span { color:var(--blue); }
+    .rules-countdown {
+      margin-top:5vmin; width:100%; height:0.6vmin;
+      background:rgba(255,255,255,0.1); border-radius:1vmin; overflow:hidden;
+    }
+    .rules-countdown-bar {
+      height:100%; background:var(--blue); border-radius:1vmin;
+      animation:rulesCountdown var(--rules-duration,8s) linear forwards;
+    }
+    @keyframes rulesIn { from { transform:scale(0.85) translateY(40px); opacity:0; } to { transform:scale(1) translateY(0); opacity:1; } }
+    @keyframes rulesCountdown { from { width:100%; } to { width:0%; } }
+
     @keyframes pulseLogo { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 50px rgba(0,168,255,0.7)); } 50% { transform: scale(1.05); filter: drop-shadow(0 0 80px rgba(0,168,255,0.9)); } }
     @keyframes slideUp { from { transform: translateY(100px); opacity:0; } to { transform: translateY(0); opacity:1; } }
     @keyframes popQR { from { transform: scale(0.5) translateY(50px); opacity:0; } to { transform: scale(1) translateY(0); opacity:1; } }
     @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+    @keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
+    @keyframes tickerScroll { 0% { transform:translateX(0); } 100% { transform:translateX(-50%); } }
   </style>
 </head>
 
@@ -130,7 +212,7 @@
 
   <div id="idle">
     <img id="logo-idle" class="idle-logo">
-    <div class="idle-status">PRÊT À QWIZZER ? </div>
+    <div class="idle-status">PRÊT À QWIZZER</div>
   </div>
 
   <div id="player-scene">
@@ -159,6 +241,10 @@
     <div class="qr-img"><img id="img-qr" style="width:100%;height:100%;object-fit:contain"></div>
   </div>
 
+  <div id="qr-ticker">
+    <div class="ticker-track" id="ticker-inner"></div>
+  </div>
+
   <div id="overlay-layer">
     <div id="cat-wrap" style="display:none; flex-direction:column; align-items:center">
       <h1 id="cat-name" style="font-size:12rem; font-weight:900; letter-spacing:6vmin; text-transform:uppercase; filter: drop-shadow(0 0 50px var(--blue))">CATEGORY</h1>
@@ -166,6 +252,16 @@
     <div id="podium-wrap" style="display:none; flex-direction:column; align-items:center; width:100%">
       <h1 style="font-size:6rem; font-weight:900; color:var(--blue); text-transform:uppercase; margin-bottom:5vmin">Top Players</h1>
       <div id="podium-items" class="podium-stage"></div>
+    </div>
+  </div>
+
+  <div id="rules-overlay">
+    <div class="rules-card">
+      <div class="rules-mode-badge" id="rules-mode"></div>
+      <div class="rules-title">RÈGLES DU JEU</div>
+      <div class="rules-text" id="rules-text"></div>
+      <div class="rules-chips" id="rules-chips"></div>
+      <div class="rules-countdown"><div class="rules-countdown-bar" id="rules-bar"></div></div>
     </div>
   </div>
 
@@ -225,6 +321,7 @@
 
       applyUI(d);
 
+      if(d.type === 'mode_switch') showRules(d);
       if(d.type === 'category_transition') transition(d);
       if(d.type === 'end_game') podium(d.data);
     }
@@ -291,16 +388,27 @@
         }
       } else { lb.className = ''; lb.style.display = 'none'; }
 
-      // QR Code — généré localement depuis le serveur iOS (pas d'internet requis)
+      // QR Code — mode flottant (sans piste) ou bandeau défilant (piste en cours)
       var qr = document.getElementById('qr-float');
+      var ticker = document.getElementById('qr-ticker');
       if(STATE.showQR && STATE.serverURL) {
-        qr.className = 'visible pos-' + STATE.qrPos;
-        // Utiliser l'endpoint local /qr_code au lieu d'un service externe
-        document.getElementById('img-qr').src = STATE.serverURL + '/qr_code?t=' + Date.now();
-        qr.style.display = 'block';
+        var qrSrc = STATE.serverURL + '/qr_code?t=' + Date.now();
+        if(STATE.track) {
+          // Bandeau défilant en bas
+          qr.classList.remove('visible'); qr.style.display = 'none';
+          var item = '<div class="ticker-item"><img class="ticker-qr" src="' + qrSrc + '"><span class="ticker-text">Rejoins la partie sur QWIZZ</span><span class="ticker-sep">◆</span></div>';
+          document.getElementById('ticker-inner').innerHTML = item + item;
+          ticker.classList.add('visible');
+        } else {
+          // QR flottant classique
+          ticker.classList.remove('visible');
+          qr.className = 'visible pos-' + STATE.qrPos;
+          document.getElementById('img-qr').src = qrSrc;
+          qr.style.display = 'block';
+        }
       } else {
-        qr.classList.remove('visible');
-        qr.style.display = 'none';
+        qr.classList.remove('visible'); qr.style.display = 'none';
+        ticker.classList.remove('visible');
       }
     }
 
@@ -322,6 +430,46 @@
       document.getElementById('cat-wrap').style.display = 'none';
     }
 
+    var rulesTimer = null;
+    function showRules(d) {
+      console.log('Mode Switch Received:', d);
+      var duration = 9; // secondes d'affichage
+      var overlay = document.getElementById('rules-overlay');
+      
+      // Force UI reset efficiently
+      overlay.classList.remove('hiding', 'visible');
+      void overlay.offsetWidth;
+
+      document.getElementById('rules-mode').innerText = d.mode || 'Classique';
+      document.getElementById('rules-text').innerText = d.rules || '';
+
+      // Chips : points, pénalité, timer
+      var chips = [];
+      if(d.points !== undefined) chips.push({ label: 'Bonne réponse', val: '+' + d.points + ' pts', color: true });
+      if(d.wrong && d.wrong < 0) chips.push({ label: 'Mauvaise réponse', val: d.wrong + ' pts', color: false });
+      else if(d.wrong) chips.push({ label: 'Pénalité', val: '-' + d.wrong + ' pts', color: false });
+      if(d.timer && d.timer > 0) chips.push({ label: 'Temps / réponse', val: d.timer + 's', color: true });
+      if(d.speed) chips.push({ label: 'Bonus vitesse', val: 'Activé', color: true });
+      if(d.streak) chips.push({ label: 'Bonus série', val: 'Activé', color: true });
+      document.getElementById('rules-chips').innerHTML = chips.map(c =>
+        '<div class="rules-chip">' + c.label + ' : <span>' + c.val + '</span></div>'
+      ).join('');
+
+      // Barre de countdown — forcer le restart de l'animation
+      var bar = document.getElementById('rules-bar');
+      bar.style.animation = 'none';
+      void bar.offsetWidth; // force reflow
+      bar.style.animation = 'rulesCountdown ' + duration + 's linear forwards';
+
+      overlay.classList.add('visible');
+
+      if(rulesTimer) clearTimeout(rulesTimer);
+      rulesTimer = setTimeout(() => {
+        overlay.classList.add('hiding');
+        setTimeout(() => { overlay.classList.remove('visible', 'hiding'); }, 500);
+      }, duration * 1000);
+    }
+
     // Intercepter le chargement média pour récupérer l'URL du serveur
     pm.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, req => {
       if(req.media && req.media.customData) sync(req.media.customData);
@@ -335,6 +483,18 @@
     ctx.addCustomMessageListener('urn:x-cast:com.qwizz.control', e => sync(e.data));
 
     ctx.start({ disableIdleTimeout: true });
+
+    // Empêcher la TV de passer en veille via la Screen Wake Lock API
+    async function keepAwake() {
+      if (!navigator.wakeLock) return;
+      try {
+        await navigator.wakeLock.request('screen');
+      } catch (e) {}
+    }
+    keepAwake();
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') keepAwake();
+    });
   </script>
 </body>
 </html>
