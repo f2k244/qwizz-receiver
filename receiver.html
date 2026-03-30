@@ -273,7 +273,7 @@
           var s = d.players.sort((a,b) => b.score - a.score).slice(0, 8);
           document.getElementById('lb-list').innerHTML = s.map((p, idx) => `<div class="lb-row"><span class="lb-rank">${idx+1}</span><span class="lb-name">${p.name}</span><span class="lb-score">${p.score} pts</span></div>`).join('');
         }
-      } else { lb.style.display = 'none'; }
+      } else { lb.className = ''; lb.style.display = 'none'; }
 
       // QR Code — généré localement depuis le serveur iOS (pas d'internet requis)
       var qr = document.getElementById('qr-float');
