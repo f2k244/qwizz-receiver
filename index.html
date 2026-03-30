@@ -174,11 +174,12 @@
   <cast-media-player></cast-media-player>
 
   <script>
-    // Master State V5.3.1 — QR local, leaderboard toggle, Cast channel
+    // Master State V5.3.2 — QR local, leaderboard toggle, Cast channel
     var STATE = {
       serverURL: '', track: null, revealed: false,
       showScores: false, scoreMode: 'br',
-      showQR: false, qrURL: '', qrPos: 'top-right'
+      showQR: false, qrURL: '', qrPos: 'top-right',
+      endGame: false, currentTrackID: null
     };
 
     const ctx = cast.framework.CastReceiverContext.getInstance();
@@ -230,6 +231,7 @@
 
     function render(t) {
       if(!t || !t.trackID) return;
+      if(STATE.endGame) return; // Ne pas écraser le podium de fin de partie
       STATE.track = t;
       STATE.revealed = (t.gameState === 'revealed' || t.reveal === true);
 
@@ -238,17 +240,20 @@
       document.getElementById('overlay-layer').classList.remove('active');
       document.body.classList.remove('video-active');
 
-      var i = document.getElementById('img-main'), b = document.getElementById('img-blur');
-      i.src = ''; b.src = ''; i.style.opacity = '0'; b.style.opacity = '0';
-
       // Affichage caché : "QUEL EST LE TITRE ?" / dévoilé : titre + artiste réels
       document.getElementById('t-title').textContent = STATE.revealed ? (t.title || "") : "QUEL EST LE TITRE ?";
       document.getElementById('t-artist').textContent = STATE.revealed ? (t.artist || "") : "???";
 
-      if(t.cover && !t.cover.includes('no_cover')) {
-        var src = (t.cover.startsWith('http') ? t.cover : (STATE.serverURL + t.cover)) + '&t=' + Date.now();
-        b.src = src; b.onload = () => { if(t.shouldBlur && !STATE.revealed) b.style.opacity = '1' };
-        i.src = src; if(STATE.revealed) { i.style.opacity = '1'; b.style.opacity = '0' }
+      // Ne recharger la pochette que si la piste a changé (évite le flash nocover à chaque polling)
+      if(t.trackID !== STATE.currentTrackID) {
+        STATE.currentTrackID = t.trackID;
+        var i = document.getElementById('img-main'), b = document.getElementById('img-blur');
+        i.src = ''; b.src = ''; i.style.opacity = '0'; b.style.opacity = '0';
+        if(t.cover && !t.cover.includes('no_cover')) {
+          var src = (t.cover.startsWith('http') ? t.cover : (STATE.serverURL + t.cover));
+          b.src = src; b.onload = () => { if(t.shouldBlur && !STATE.revealed) b.style.opacity = '1'; };
+          i.src = src; if(STATE.revealed) { i.style.opacity = '1'; b.style.opacity = '0'; }
+        }
       }
       if(STATE.revealed) doReveal();
     }
@@ -297,6 +302,7 @@
     }
 
     function podium(data) {
+      STATE.endGame = true; // Bloquer render() pour que le podium reste affiché
       var top3 = data.sort((a,b) => b.score - a.score).slice(0, 3);
       var m = ["🥈", "🥇", "🥉"];
       document.getElementById('podium-items').innerHTML = top3.map((p, idx) => `<div class="podium-box rank-${idx+1}"><div class="p-trophy">${m[idx]}</div><div class="p-name">${p.name}</div><div style="font-size:3.5rem;color:var(--blue);font-weight:700">${p.score} pts</div></div>`).join('');
