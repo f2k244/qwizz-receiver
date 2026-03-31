@@ -443,6 +443,26 @@
       margin-bottom: 1.2vmin;
       border: 1px solid rgba(255, 255, 255, 0.06);
       transition: transform 0.3s ease;
+      animation-fill-mode: both !important;
+    }
+    
+    /* Animation Styles */
+    .anim-fade .lb-row { animation: revealFade 0.6s ease-out both; }
+    .anim-slide .lb-row { animation: revealSlide 0.6s cubic-bezier(0.19, 1, 0.22, 1) both; }
+    .anim-pop .lb-row { animation: revealPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+    .anim-classic .lb-row { animation: none; }
+
+    @keyframes revealFade {
+      from { opacity: 0; filter: blur(10px); transform: translateY(10px); }
+      to { opacity: 1; filter: blur(0); transform: translateY(0); }
+    }
+    @keyframes revealSlide {
+      from { opacity: 0; transform: translateX(100px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes revealPop {
+      from { opacity: 0; transform: scale(0.5); }
+      to { opacity: 1; transform: scale(1); }
     }
     .lb-row-premium:hover { transform: translateX(10px); background: rgba(255, 255, 255, 0.08); }
 
@@ -1071,11 +1091,15 @@
       // Classement — affiché/masqué selon showScores
       var lb = document.getElementById('leaderboard');
       if (STATE.showScores) {
-        lb.className = STATE.scoreMode === 'full' ? 'mode-full' : 'mode-br';
+        var animClass = 'anim-' + (STATE.scoreRevealAnimation || 'fade');
+        lb.className = (STATE.scoreMode === 'full' ? 'mode-full ' : 'mode-br ') + animClass;
         lb.style.display = STATE.scoreMode === 'full' ? 'flex' : 'block';
         if (d && d.players) {
           var s = d.players.sort((a, b) => b.score - a.score).slice(0, 8);
-          document.getElementById('lb-list').innerHTML = s.map((p, idx) => `<div class="lb-row"><span class="lb-rank">${idx + 1}</span><span class="lb-name">${p.name}</span><span class="lb-score">${p.score} pts</span></div>`).join('');
+          document.getElementById('lb-list').innerHTML = s.map((p, idx) => {
+            var delay = (idx * 0.15).toFixed(2) + 's';
+            return `<div class="lb-row" style="animation-delay: ${delay}"><span class="lb-rank">${idx + 1}</span><span class="lb-name">${p.name}</span><span class="lb-score">${p.score} pts</span></div>`;
+          }).join('');
         }
       } else { lb.className = ''; lb.style.display = 'none'; }
 
@@ -1196,6 +1220,7 @@
       if (d.points !== undefined) chips.push({ label: 'Bonne réponse', val: '+' + d.points + ' pts', color: true });
       if (d.wrong && d.wrong < 0) chips.push({ label: 'Mauvaise réponse', val: d.wrong + ' pts', color: false });
       else if (d.wrong) chips.push({ label: 'Pénalité', val: '-' + d.wrong + ' pts', color: false });
+      if (d.cheat && d.cheat > 0) chips.push({ label: 'Triche', val: '-' + d.cheat + ' pts', color: false });
       if (d.timer && d.timer > 0) chips.push({ label: 'Temps / réponse', val: d.timer + 's', color: true });
       if (d.speed) chips.push({ label: 'Bonus vitesse', val: 'Activé', color: true });
       if (d.streak) chips.push({ label: 'Bonus série', val: 'Activé', color: true });
