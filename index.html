@@ -289,6 +289,26 @@
     }
 
     /* Transitions & Overlays */
+    #podium-wrap {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    #podium-wrap::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%; width: 200%; height: 200%;
+      background: radial-gradient(circle at center, rgba(0, 168, 255, 0.15) 0%, transparent 40%);
+      z-index: -1;
+      animation: drift 20s linear infinite;
+      pointer-events: none;
+    }
+    
+    @keyframes drift {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
     #overlay-layer {
       position: fixed;
       inset: 0;
@@ -895,7 +915,7 @@
     <div id="podium-wrap" style="display:none; flex-direction:column; align-items:center; width:100%; height:100%; justify-content: flex-start; padding-top: 5vh">
       <h1 class="rules-mode-badge">Résultats de la partie</h1>
       <h1 style="font-size:10rem; font-weight:900; background: linear-gradient(135deg, #FFF 40%, var(--blue)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-transform:uppercase; margin-bottom:1vmin; filter: drop-shadow(0 0 40px rgba(0, 168, 255, 0.4))">
-        Top Player</h1>
+        PODIUM</h1>
       
       <div id="podium-items" class="podium-stage" style="margin-bottom: 6vh"></div>
       
