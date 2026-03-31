@@ -305,43 +305,104 @@
       animation: fadeIn .5s;
     }
 
+    #podium-wrap {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      padding: 0 5vw;
+    }
+
     .podium-stage {
       display: flex;
       align-items: flex-end;
-      gap: 5vmin;
-      height: 60vh;
-      width: 90vw;
+      justify-content: center;
+      gap: 3vw;
+      width: 100%;
       margin-top: 5vh;
+      perspective: 1000px;
     }
 
     .podium-box {
-      flex: 1;
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(30px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 3vh;
+      padding: 4vh 2vw;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 4vmin;
-      border-radius: 4vmin 4vmin 1vmin 1vmin;
-      background: rgba(255, 255, 255, 0.04);
+      position: relative;
+      transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      opacity: 0;
+      transform: translateY(10vh) rotateX(-20deg);
+      min-width: 20vw;
+      box-shadow: 0 4vh 12vh rgba(0,0,0,0.6);
+    }
+
+    .podium-box.animate-in {
+      opacity: 1;
+      transform: translateY(0) rotateX(0);
     }
 
     .rank-1 {
-      height: 100%;
-      border: 3px solid #FFD700;
+      height: 60vh;
+      background: linear-gradient(135deg, rgba(0, 168, 255, 0.2), rgba(138, 43, 226, 0.2));
+      border: 2px solid rgba(0, 168, 255, 0.5);
+      z-index: 10;
+      box-shadow: 0 10vh 25vh rgba(0, 168, 255, 0.3);
       order: 2;
-      background: linear-gradient(180deg, rgba(255, 215, 0, 0.1) 0%, transparent 100%);
     }
 
-    .rank-2 {
-      height: 80%;
-      border: 3px solid #C0C0C0;
-      order: 1;
+    .rank-2 { height: 48vh; order: 1; }
+    .rank-3 { height: 38vh; order: 3; }
+
+    .p-rank-label {
+      font-size: 2.2vh;
+      font-weight: 900;
+      color: rgba(255, 255, 255, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.6vh;
+      margin-bottom: 2vh;
     }
 
-    .rank-3 {
-      height: 65%;
-      border: 3px solid #CD7F32;
-      order: 3;
+    .p-trophy {
+      font-size: 9vh;
+      margin-bottom: 2vh;
+      filter: drop-shadow(0 0 3vh rgba(255,255,255,0.4));
     }
+
+    .p-name {
+      font-size: 4.5vh;
+      font-weight: 800;
+      color: #fff;
+      text-align: center;
+      margin-bottom: 1.5vh;
+      text-transform: uppercase;
+      letter-spacing: 0.1vh;
+    }
+
+    .p-score {
+      font-size: 6vh;
+      font-weight: 900;
+      color: var(--blue);
+      text-shadow: 0 0 3vh rgba(0, 168, 255, 0.4);
+    }
+
+    .p-glow {
+      position: absolute;
+      top: -15%; left: -15%; right: -15%; bottom: -15%;
+      background: radial-gradient(circle, rgba(0, 168, 255, 0.15) 0%, transparent 70%);
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 1.5s ease;
+    }
+
+    .rank-1 .p-glow { opacity: 1; }
+    .rank-1 .p-name { font-size: 5.5vh; }
+    .rank-1 .p-score { font-size: 8vh; }
 
     .p-trophy {
       font-size: 10rem;
@@ -449,6 +510,25 @@
       color: rgba(0, 168, 255, 0.4);
       font-size: 2rem;
       margin: 0 2vmin;
+    }
+
+    /* Animation Styles */
+    .anim-fade .lb-row { animation: revealFade 0.6s ease-out both; }
+    .anim-slide .lb-row { animation: revealSlide 0.6s cubic-bezier(0.19, 1, 0.22, 1) both; }
+    .anim-pop .lb-row { animation: revealPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+    .anim-classic .lb-row { animation: none; }
+
+    @keyframes revealFade {
+      from { opacity: 0; filter: blur(10px); transform: translateY(10px); }
+      to { opacity: 1; filter: blur(0); transform: translateY(0); }
+    }
+    @keyframes revealSlide {
+      from { opacity: 0; transform: translateX(100px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes revealPop {
+      from { opacity: 0; transform: scale(0.5); }
+      to { opacity: 1; transform: scale(1); }
     }
 
     /* Rules overlay */
@@ -763,7 +843,7 @@
 
   <div id="idle">
     <img id="logo-idle" class="idle-logo">
-    <div class="idle-status">PRÊT À QWIZZER</div>
+    <div class="idle-status">PRÊT À QWIZZER?</div>
   </div>
 
   <div id="player-scene">
@@ -790,7 +870,7 @@
   </div>
 
   <div id="qr-float" class="pos-top-right">
-    <div class="qr-title">Rejoindre la partie</div>
+    <div class="qr-title">SCANNER & JOUER</div>
     <div class="qr-img"><img id="img-qr" style="width:100%;height:100%;object-fit:contain"></div>
   </div>
 
@@ -876,6 +956,7 @@
         if (d.data.showScores !== undefined) STATE.showScores = (d.data.showScores === true || d.data.showScores === "true");
         if (d.data.qrPosition) STATE.qrPos = d.data.qrPosition;
         if (d.data.scoreAnimationMode) STATE.scoreMode = d.data.scoreAnimationMode;
+        if (d.data.scoreRevealAnimation) STATE.scoreRevealAnimation = d.data.scoreRevealAnimation;
         if (d.data.qrCodeDynamicPositioning !== undefined) STATE.qrDynamic = d.data.qrCodeDynamicPositioning;
       }
       if (d.type === 'show_qr') {
@@ -957,11 +1038,15 @@
       // Classement — affiché/masqué selon showScores
       var lb = document.getElementById('leaderboard');
       if (STATE.showScores) {
-        lb.className = STATE.scoreMode === 'full' ? 'mode-full' : 'mode-br';
+        var animClass = 'anim-' + (STATE.scoreRevealAnimation || 'fade');
+        lb.className = (STATE.scoreMode === 'full' ? 'mode-full ' : 'mode-br ') + animClass;
         lb.style.display = STATE.scoreMode === 'full' ? 'flex' : 'block';
         if (d && d.players) {
           var s = d.players.sort((a, b) => b.score - a.score).slice(0, 8);
-          document.getElementById('lb-list').innerHTML = s.map((p, idx) => `<div class="lb-row"><span class="lb-rank">${idx + 1}</span><span class="lb-name">${p.name}</span><span class="lb-score">${p.score} pts</span></div>`).join('');
+          document.getElementById('lb-list').innerHTML = s.map((p, idx) => {
+            var delay = (idx * 0.15).toFixed(2) + 's';
+            return `<div class="lb-row" style="animation-delay: ${delay}"><span class="lb-rank">${idx + 1}</span><span class="lb-name">${p.name}</span><span class="lb-score">${p.score} pts</span></div>`;
+          }).join('');
         }
       } else { lb.className = ''; lb.style.display = 'none'; }
 
@@ -973,7 +1058,7 @@
         if (STATE.track && STATE.qrDynamic) {
           // Bandeau défilant en bas
           qr.classList.remove('visible'); qr.style.display = 'none';
-          var item = '<div class="ticker-item"><img class="ticker-qr" src="' + qrSrc + '"><span class="ticker-text">Rejoins la partie sur QWIZZ</span><span class="ticker-sep">◆</span></div>';
+          var item = '<div class="ticker-item"><img class="ticker-qr" src="' + qrSrc + '"><span class="ticker-text">SCANNER & JOUER</span><span class="ticker-sep">◆</span></div>';
           document.getElementById('ticker-inner').innerHTML = item + item;
           ticker.classList.add('visible');
         } else {
@@ -1007,13 +1092,42 @@
     }
 
     function podium(data) {
-      STATE.endGame = true; // Bloquer render() pour que le podium reste affiché
+      STATE.endGame = true;
       var top3 = data.sort((a, b) => b.score - a.score).slice(0, 3);
-      var m = ["🥈", "🥇", "🥉"];
-      document.getElementById('podium-items').innerHTML = top3.map((p, idx) => `<div class="podium-box rank-${idx + 1}"><div class="p-trophy">${m[idx]}</div><div class="p-name">${p.name}</div><div style="font-size:3.5rem;color:var(--blue);font-weight:700">${p.score} pts</div></div>`).join('');
+      var medals = ["🥈", "🥇", "🥉"];
+      var ranks = ["2nd", "1st", "3rd"]; // Logical order for podium layout is often 2-1-3
+      
+      // We want to display them in order 2, 1, 3 for visual podium look
+      var podiumOrder = [];
+      if (top3.length > 1) podiumOrder.push({ p: top3[1], r: 2 });
+      if (top3.length > 0) podiumOrder.push({ p: top3[0], r: 1 });
+      if (top3.length > 2) podiumOrder.push({ p: top3[2], r: 3 });
+      
+      document.getElementById('podium-items').innerHTML = podiumOrder.map(item => {
+        var p = item.p;
+        var r = item.r;
+        return `
+          <div class="podium-box rank-${r} premium-entry">
+            <div class="p-rank-label">${ranks[r-1]}</div>
+            <div class="p-trophy">${medals[r-1]}</div>
+            <div class="p-name">${p.name}</div>
+            <div class="p-score">${p.score} <span style="font-size:1.5rem;opacity:0.6">PTS</span></div>
+            <div class="p-glow"></div>
+          </div>
+        `;
+      }).join('');
+      
       document.getElementById('overlay-layer').classList.add('active');
       document.getElementById('podium-wrap').style.display = 'flex';
       document.getElementById('cat-wrap').style.display = 'none';
+      
+      // Trigger confetti if possible or just a nice CSS scale
+      setTimeout(() => {
+          document.querySelectorAll('.premium-entry').forEach((el, i) => {
+              el.style.animationDelay = (i * 0.3) + "s";
+              el.classList.add('animate-in');
+          });
+      }, 100);
     }
 
     function showRules(d) {
