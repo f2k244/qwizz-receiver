@@ -891,7 +891,7 @@
 
   <div id="idle">
     <img id="logo-idle" class="idle-logo">
-    <div class="idle-status">PRÊT À QWIZZER?</div>
+    <div class="idle-status">PRÊT À QWIZZER</div>
   </div>
 
   <div id="player-scene">
@@ -918,7 +918,7 @@
   </div>
 
   <div id="qr-float" class="pos-top-right">
-    <div class="qr-title">SCANNER<br>& JOUER</div>
+    <div class="qr-title">SCANNER & JOUER</div>
     <div class="qr-img"><img id="img-qr" style="width:100%;height:100%;object-fit:contain"></div>
   </div>
 
@@ -1246,6 +1246,16 @@
 
     // Écouter les messages du canal Cast (urn:x-cast:com.qwizz.control)
     ctx.addCustomMessageListener('urn:x-cast:com.qwizz.control', e => sync(e.data));
+
+    // Signal sender when it connects so CastManager can push full state immediately
+    ctx.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, function(event) {
+        setTimeout(function() {
+            try {
+                ctx.sendCustomMessage('urn:x-cast:com.qwizz.control', event.senderId, JSON.stringify({ type: 'ready' }));
+                console.log('QWIZZ: sent ready to sender', event.senderId);
+            } catch(e) { console.warn('QWIZZ: ready send failed', e); }
+        }, 300);
+    });
 
     ctx.start({ disableIdleTimeout: true });
 
