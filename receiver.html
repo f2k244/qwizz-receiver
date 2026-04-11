@@ -922,6 +922,11 @@
       endGame: false, currentTrackID: null, currentCoverKey: null
     };
 
+    if (typeof cast === 'undefined' || !cast.framework) {
+      document.body.innerHTML = '<div style="color:red;font-size:4vmin;padding:5vmin">ERREUR: Cast SDK non chargé</div>';
+      throw new Error('Cast SDK unavailable');
+    }
+
     const ctx = cast.framework.CastReceiverContext.getInstance();
     const pm = ctx.getPlayerManager();
 
@@ -1165,10 +1170,22 @@
       return req;
     });
 
-    // Écouter les messages du canal Cast (urn:x-cast:com.qwizz.control)
-    ctx.addCustomMessageListener('urn:x-cast:com.qwizz.control', e => sync(e.data));
-
-    ctx.start({ disableIdleTimeout: true });
+    // start() en premier — certaines versions récentes du CAF SDK l'exigent avant addCustomMessageListener
+    // customNamespaces déclaré dans les options (obligatoire dans les versions récentes)
+    try {
+      var msgType = (cast.framework.system && cast.framework.system.MessageType)
+        ? cast.framework.system.MessageType.STRING
+        : 'string';
+      ctx.start({
+        disableIdleTimeout: true,
+        maxInactivity: 3600,
+        customNamespaces: { 'urn:x-cast:com.qwizz.control': msgType }
+      });
+      ctx.addCustomMessageListener('urn:x-cast:com.qwizz.control', function(e) { sync(e.data); });
+    } catch(e) {
+      console.error('QWIZZ receiver init error:', e);
+      document.body.innerHTML = '<div style="color:red;font-size:3vmin;padding:5vmin;font-family:monospace">ERREUR INIT:<br>' + e.message + '</div>';
+    }
 
     // Empêcher la TV de passer en veille via la Screen Wake Lock API
     async function keepAwake() {
