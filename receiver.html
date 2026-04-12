@@ -959,6 +959,7 @@
         STATE.qrBase64 = d.qrBase64;
       }
 
+      if (d.type === 'cover_update' && d.coverBase64 && d.trackID === STATE.track?.trackID) applyCover(d.coverBase64);
       if (d.type === 'track_update' || d.trackID || (d.track && d.track.trackID)) render(d.track || d);
       if (d.type === 'reveal' || d.gameState === 'revealed' || d.reveal === true) doReveal();
 
@@ -1007,8 +1008,7 @@
 
       document.getElementById('idle').classList.add('gone');
       document.getElementById('player-scene').classList.add('visible');
-      document.getElementById('overlay-layer').classList.remove('active');
-      document.getElementById('rules-overlay').classList.remove('active');
+      // Ne pas effacer les overlays catégorie/règles/podium — gérés par leurs propres messages
       document.body.classList.remove('video-active');
 
       // Affichage caché : "QUEL EST LE TITRE ?" / dévoilé : titre + artiste réels
@@ -1040,6 +1040,16 @@
       if (STATE.revealed) doReveal();
     }
 
+    function applyCover(base64) {
+      var i = document.getElementById('img-main'), b = document.getElementById('img-blur');
+      if (!base64) return;
+      if (STATE.track && STATE.track.shouldBlur && !STATE.revealed) {
+        b.src = base64; b.style.opacity = '1';
+      } else {
+        i.src = base64; i.style.opacity = '1';
+      }
+    }
+
     function doReveal() {
       if (!STATE.track) return;
       STATE.revealed = true;
@@ -1069,9 +1079,9 @@
       // QR Code — mode flottant (sans piste) ou bandeau défilant (piste en cours)
       var qr = document.getElementById('qr-float');
       var ticker = document.getElementById('qr-ticker');
-      if (STATE.showQR && (STATE.qrBase64 || STATE.serverURL)) {
-        // Priorité base64 (pas de mixed content) sinon fallback HTTP (AirPlay local)
-        var qrSrc = STATE.qrBase64 || (STATE.serverURL + '/qr_code?t=' + Date.now());
+      if (STATE.showQR && STATE.qrBase64) {
+        // Base64 uniquement — fallback HTTP bloqué par HTTPS receiver
+        var qrSrc = STATE.qrBase64;
         if (STATE.track && STATE.qrDynamic) {
           // Bandeau défilant en bas
           qr.classList.remove('visible'); qr.style.display = 'none';
