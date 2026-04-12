@@ -913,13 +913,14 @@
   <cast-media-player></cast-media-player>
 
   <script>
-    // Master State V5.3.2 — QR local, leaderboard toggle, Cast channel
+    // Master State V5.3.3 — base64 logo/QR pour éviter mixed content HTTPS→HTTP
     var STATE = {
       serverURL: '', track: null, revealed: false,
       showScores: false, scoreMode: 'br',
       showQR: false, qrURL: '', qrPos: 'top-right', qrDynamic: true,
       isPaused: false, pauseMessage: '',
-      endGame: false, currentTrackID: null, currentCoverKey: null
+      endGame: false, currentTrackID: null, currentCoverKey: null,
+      logoBase64: null, qrBase64: null
     };
 
     if (typeof cast === 'undefined' || !cast.framework) {
@@ -943,9 +944,19 @@
 
       if (d.serverURL) {
         STATE.serverURL = d.serverURL.endsWith('/') ? d.serverURL.slice(0, -1) : d.serverURL;
-        ['logo-idle', 'logo-top'].forEach(id => document.getElementById(id).src = STATE.serverURL + '/tv_logo?t=' + Date.now());
-        // Polling fallback toutes les 5s pour rester synchronisé
+        // Polling fallback toutes les 5s pour rester synchronisé (HTTP→HTTP, pas de mixed content ici)
         if (!window.poll) window.poll = setInterval(() => { fetch(STATE.serverURL + '/tv_state').then(r => r.json()).then(sync).catch(() => { }) }, 5000);
+      }
+
+      // Logo base64 (évite mixed content HTTPS receiver → HTTP BuzzerServer)
+      if (d.logoBase64) {
+        STATE.logoBase64 = d.logoBase64;
+        ['logo-idle', 'logo-top'].forEach(id => document.getElementById(id).src = d.logoBase64);
+      }
+
+      // QR base64
+      if (d.qrBase64) {
+        STATE.qrBase64 = d.qrBase64;
       }
 
       if (d.type === 'track_update' || d.trackID || (d.track && d.track.trackID)) render(d.track || d);
@@ -1058,8 +1069,9 @@
       // QR Code — mode flottant (sans piste) ou bandeau défilant (piste en cours)
       var qr = document.getElementById('qr-float');
       var ticker = document.getElementById('qr-ticker');
-      if (STATE.showQR && STATE.serverURL) {
-        var qrSrc = STATE.serverURL + '/qr_code?t=' + Date.now();
+      if (STATE.showQR && (STATE.qrBase64 || STATE.serverURL)) {
+        // Priorité base64 (pas de mixed content) sinon fallback HTTP (AirPlay local)
+        var qrSrc = STATE.qrBase64 || (STATE.serverURL + '/qr_code?t=' + Date.now());
         if (STATE.track && STATE.qrDynamic) {
           // Bandeau défilant en bas
           qr.classList.remove('visible'); qr.style.display = 'none';
