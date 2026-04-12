@@ -947,6 +947,16 @@
         return;
       }
 
+      if (d.type === 'clear') {
+        STATE.track = null; STATE.endGame = false; STATE.showQR = false; STATE.qrBase64 = null;
+        if (window.poll) { clearInterval(window.poll); window.poll = null; }
+        document.getElementById('idle').classList.remove('gone');
+        document.getElementById('player-scene').classList.remove('visible');
+        document.getElementById('overlay-layer').classList.remove('active');
+        document.getElementById('rules-overlay').classList.remove('active');
+        return;
+      }
+
       if (d.serverURL) {
         STATE.serverURL = d.serverURL.endsWith('/') ? d.serverURL.slice(0, -1) : d.serverURL;
         // Polling fallback toutes les 5s pour rester synchronisé (HTTP→HTTP, pas de mixed content ici)
