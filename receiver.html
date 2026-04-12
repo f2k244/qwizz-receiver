@@ -1209,16 +1209,6 @@
         customNamespaces: { 'urn:x-cast:com.qwizz.control': msgType }
       });
       ctx.addCustomMessageListener('urn:x-cast:com.qwizz.control', function(e) { sync(e.data); });
-
-      // Retour à l'idle quand l'app iOS se déconnecte
-      ctx.addEventListener(cast.framework.system.EventType.SENDER_DISCONNECTED, function() {
-        STATE.track = null; STATE.endGame = false; STATE.showQR = false; STATE.qrBase64 = null;
-        document.getElementById('idle').classList.remove('gone');
-        document.getElementById('player-scene').classList.remove('visible');
-        document.getElementById('overlay-layer').classList.remove('active');
-        document.getElementById('rules-overlay').classList.remove('active');
-        if (window.poll) { clearInterval(window.poll); window.poll = null; }
-      });
     } catch(e) {
       console.error('QWIZZ receiver init error:', e);
       document.body.innerHTML = '<div style="color:red;font-size:3vmin;padding:5vmin;font-family:monospace">ERREUR INIT:<br>' + e.message + '</div>';
