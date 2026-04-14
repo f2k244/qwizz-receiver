@@ -925,7 +925,7 @@
       showQR: false, qrURL: '', qrPos: 'top-right', qrDynamic: true,
       isPaused: false, pauseMessage: '',
       endGame: false, currentTrackID: null, currentCoverKey: null,
-      logoBase64: null, qrBase64: null
+      logoBase64: null, qrBase64: null, hasBase64Logo: false
     };
 
     if (typeof cast === 'undefined' || !cast.framework) {
@@ -939,6 +939,14 @@
     function sync(d) {
       if (!d) return;
       if (typeof d === 'string') { try { d = JSON.parse(d); } catch (e) { return; } }
+
+      // Throttle polling if we are receiving live messages via custom channel
+      if (window.poll && d.serverURL === undefined) { // If it's a socket message, relax polling
+          clearInterval(window.poll);
+          window.poll = setInterval(() => { 
+              fetch(STATE.serverURL + '/tv_state').then(r => r.json()).then(sync).catch(() => { }) 
+          }, 8000); 
+      }
 
       if (d.type === 'reload') {
         var toast = document.getElementById('reload-toast');
@@ -959,22 +967,27 @@
 
       if (d.serverURL) {
         STATE.serverURL = d.serverURL.endsWith('/') ? d.serverURL.slice(0, -1) : d.serverURL;
-        // Polling fallback toutes les 5s pour rester synchronisé (HTTP→HTTP, pas de mixed content ici)
+        // Seconde chance : n'écraser par URL que si on n'a pas de Base64 (plus stable en HTTPS)
+        if (!STATE.hasBase64Logo) {
+          ['logo-idle', 'logo-top'].forEach(id => document.getElementById(id).src = STATE.serverURL + '/tv_logo?t=' + Date.now());
+        }
         if (!window.poll) window.poll = setInterval(() => { fetch(STATE.serverURL + '/tv_state').then(r => r.json()).then(sync).catch(() => { }) }, 5000);
       }
 
-      // Logo base64 (évite mixed content HTTPS receiver → HTTP BuzzerServer)
+      // Handle Base64 Logo (Mixed Content Bypass)
       if (d.logoBase64) {
+        STATE.hasBase64Logo = true;
         STATE.logoBase64 = d.logoBase64;
         ['logo-idle', 'logo-top'].forEach(id => document.getElementById(id).src = d.logoBase64);
       }
 
-      // QR base64
-      if (d.qrBase64) {
-        STATE.qrBase64 = d.qrBase64;
+      // Handle Base64 Cover Update (async delivery)
+      if (d.type === 'cover_update' && d.coverBase64) {
+        if (d.trackID === STATE.currentTrackID || !STATE.currentTrackID) {
+           applyCover(d.coverBase64);
+        }
       }
 
-      if (d.type === 'cover_update' && d.coverBase64 && d.trackID === STATE.track?.trackID) applyCover(d.coverBase64);
       if (d.type === 'track_update' || d.trackID || (d.track && d.track.trackID)) render(d.track || d);
       if (d.type === 'reveal' || d.gameState === 'revealed' || d.reveal === true) doReveal();
 
@@ -996,6 +1009,7 @@
         if (d.url) STATE.qrURL = d.url;
         if (d.position) STATE.qrPos = d.position;
         if (d.dynamic !== undefined) STATE.qrDynamic = d.dynamic;
+        if (d.qrBase64) STATE.qrBase64 = d.qrBase64; 
       }
 
       // Handle pause updates
@@ -1017,41 +1031,51 @@
 
     function render(t) {
       if (!t || !t.trackID) return;
-      if (STATE.endGame) return; // Ne pas écraser le podium de fin de partie
+      if (STATE.endGame) return; 
+      
+      var isNewTrack = (t.trackID !== STATE.currentTrackID);
       STATE.track = t;
+      STATE.currentTrackID = t.trackID;
       STATE.revealed = (t.gameState === 'revealed' || t.reveal === true);
 
       document.getElementById('idle').classList.add('gone');
       document.getElementById('player-scene').classList.add('visible');
-      // Ne pas effacer les overlays catégorie/règles/podium — gérés par leurs propres messages
       document.body.classList.remove('video-active');
 
-      // Affichage caché : "QUEL EST LE TITRE ?" / dévoilé : titre + artiste réels
       document.getElementById('t-title').textContent = STATE.revealed ? (t.title || "") : "QUEL EST LE TITRE ?";
       document.getElementById('t-artist').textContent = STATE.revealed ? (t.artist || "") : "???";
 
-      // Résoudre la source cover — customData envoie coverURL (absolu), track_update envoie cover (relatif)
+      if (isNewTrack) {
+        // Reset images for new track to avoid ghosting
+        var i = document.getElementById('img-main'), b = document.getElementById('img-blur');
+        i.style.opacity = '0'; b.style.opacity = '0';
+        i.removeAttribute('src'); b.removeAttribute('src');
+        STATE.currentCoverKey = null;
+      }
+
+      // Résoudre la source cover
       var rawCover = t.cover || t.coverURL || null;
       var coverSrc = null;
       if (rawCover && !rawCover.includes('no_cover')) {
         coverSrc = rawCover.startsWith('http') ? rawCover : (STATE.serverURL + rawCover);
-        // Clé de comparaison sans timestamp (?t=...) pour éviter rechargements inutiles
         coverSrc = coverSrc.replace(/[?&]t=\d+/g, '');
       }
       var coverKey = t.trackID + '|' + (coverSrc || 'nocover');
 
-      // Recharger uniquement si la piste ou la pochette a changé
       if (coverKey !== STATE.currentCoverKey) {
-        STATE.currentTrackID = t.trackID;
         STATE.currentCoverKey = coverKey;
         var i = document.getElementById('img-main'), b = document.getElementById('img-blur');
-        i.removeAttribute('src'); b.removeAttribute('src');
-        i.style.opacity = '0'; b.style.opacity = '0';
         if (coverSrc) {
-          b.src = coverSrc; b.onload = () => { if (t.shouldBlur && !STATE.revealed) b.style.opacity = '1'; };
+          b.src = coverSrc; b.onload = () => { if (STATE.track.shouldBlur && !STATE.revealed) b.style.opacity = '1'; };
           i.src = coverSrc; if (STATE.revealed) { i.style.opacity = '1'; b.style.opacity = '0'; }
         }
       }
+      
+      // Priorité Base64 si disponible
+      if (t.coverBase64) {
+          applyCover(t.coverBase64);
+      }
+
       if (STATE.revealed) doReveal();
     }
 
@@ -1061,7 +1085,7 @@
       if (STATE.track && STATE.track.shouldBlur && !STATE.revealed) {
         b.src = base64; b.style.opacity = '1';
       } else {
-        i.src = base64; i.style.opacity = '1';
+        i.src = base64; i.style.opacity = '1'; b.style.opacity = '0';
       }
     }
 
@@ -1080,34 +1104,47 @@
       var lb = document.getElementById('leaderboard');
       if (STATE.showScores) {
         var animClass = 'anim-' + (STATE.scoreRevealAnimation || 'fade');
-        lb.className = (STATE.scoreMode === 'full' ? 'mode-full ' : 'mode-br ') + animClass;
+        var newClassName = (STATE.scoreMode === 'full' ? 'mode-full ' : 'mode-br ') + animClass;
+        if (lb.className !== newClassName) lb.className = newClassName;
         lb.style.display = STATE.scoreMode === 'full' ? 'flex' : 'block';
+        
         if (d && d.players) {
           var s = d.players.sort((a, b) => b.score - a.score).slice(0, 8);
-          document.getElementById('lb-list').innerHTML = s.map((p, idx) => {
+          var html = s.map((p, idx) => {
             var delay = (idx * 0.15).toFixed(2) + 's';
             return `<div class="lb-row" style="animation-delay: ${delay}"><span class="lb-rank">${idx + 1}</span><span class="lb-name">${p.name}</span><span class="lb-score">${p.score} pts</span></div>`;
           }).join('');
+          
+          var listEl = document.getElementById('lb-list');
+          if (listEl.innerHTML !== html) listEl.innerHTML = html; // Simple check to avoid flicker
         }
-      } else { lb.className = ''; lb.style.display = 'none'; }
+      } else { 
+        if (lb.style.display !== 'none') {
+            lb.className = ''; 
+            lb.style.display = 'none'; 
+        }
+      }
 
       // QR Code — mode flottant (sans piste) ou bandeau défilant (piste en cours)
       var qr = document.getElementById('qr-float');
       var ticker = document.getElementById('qr-ticker');
-      if (STATE.showQR && STATE.qrBase64) {
-        // Base64 uniquement — fallback HTTP bloqué par HTTPS receiver
-        var qrSrc = STATE.qrBase64;
+      if (STATE.showQR && (STATE.serverURL || STATE.qrBase64)) {
+        var qrSrc = STATE.qrBase64 || (STATE.serverURL + '/qr_code?t=' + Date.now());
+        
         if (STATE.track && STATE.qrDynamic) {
           // Bandeau défilant en bas
           qr.classList.remove('visible'); qr.style.display = 'none';
           var item = '<div class="ticker-item"><img class="ticker-qr" src="' + qrSrc + '"><span class="ticker-text">SCANNER & JOUER</span><span class="ticker-sep">◆</span></div>';
-          document.getElementById('ticker-inner').innerHTML = item + item;
+          var tickerInner = document.getElementById('ticker-inner');
+          if (tickerInner.innerHTML !== (item + item)) tickerInner.innerHTML = item + item;
           ticker.classList.add('visible');
         } else {
           // QR flottant classique
           ticker.classList.remove('visible');
-          qr.className = 'visible pos-' + STATE.qrPos;
-          document.getElementById('img-qr').src = qrSrc;
+          var newQrClass = 'visible pos-' + STATE.qrPos;
+          if (qr.className !== newQrClass) qr.className = newQrClass;
+          var qrImg = document.getElementById('img-qr');
+          if (qrImg.src !== qrSrc) qrImg.src = qrSrc;
           qr.style.display = 'block';
         }
       } else {
@@ -1118,12 +1155,14 @@
       // Pause Mode
       var pauseOver = document.getElementById('pause-overlay');
       if (STATE.isPaused) {
-        pauseOver.classList.add('active');
-        document.getElementById('pause-msg').textContent = STATE.pauseMessage || "";
+        if (!pauseOver.classList.contains('active')) pauseOver.classList.add('active');
+        var msgEl = document.getElementById('pause-msg');
+        if (msgEl.textContent !== STATE.pauseMessage) msgEl.textContent = STATE.pauseMessage || "";
       } else {
-        pauseOver.classList.remove('active');
+        if (pauseOver.classList.contains('active')) pauseOver.classList.remove('active');
       }
     }
+
 
     function transition(d) {
       document.getElementById('cat-name').textContent = d.name;
@@ -1215,7 +1254,7 @@
         : 'string';
       ctx.start({
         disableIdleTimeout: true,
-        maxInactivity: 60,
+        maxInactivity: 3600,
         customNamespaces: { 'urn:x-cast:com.qwizz.control': msgType }
       });
       ctx.addCustomMessageListener('urn:x-cast:com.qwizz.control', function(e) { sync(e.data); });
