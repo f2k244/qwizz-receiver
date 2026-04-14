@@ -1082,7 +1082,7 @@
   </div>
 
   <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="logo-top" style="width:25vmin"></div>
-  <div class="version-tag">V5.3.6</div>
+  <div class="version-tag">V5.4.0</div>
   <div id="reload-toast">⟳ &nbsp;Rechargement en cours...</div>
   <cast-media-player></cast-media-player>
 
@@ -1162,81 +1162,102 @@
 
       // ── QCM ─────────────────────────────────────────────────────────────────
       // Process QCM FIRST so the overlay is always rendered regardless of track state
-      if (d.type === 'qcm_question' || (d.qcmActive && d.question && !d.isQCMRevealed)) {
-        STATE.qcmDuration = d.duration || STATE.qcmDuration || 30;
-        STATE.qcmImageURL = d.imageURL || null;
-        document.getElementById('qcm-question').textContent = d.question || '';
-        var sideImg = document.getElementById('qcm-side-image');
-        sideImg.style.display = 'none';
-        sideImg.src = d.imageURL || '';
-        document.getElementById('qcm-choices').style.gridTemplateColumns = '1fr 1fr';
-        var choicesEl = document.getElementById('qcm-choices');
-        if (d.choices && d.choices.length) {
-          choicesEl.innerHTML = (d.choices || []).map((c, i) =>
-            '<div class="qcm-tv-btn" id="qcm-choice-' + i + '">'
-            + '<span class="label">' + (_labels[i] || i+1) + '</span>'
-            + '<span>' + c + '</span>'
-            + '<span class="answer-count" id="qcm-count-' + i + '"></span>'
-            + '</div>'
-          ).join('');
-        }
-        var bar = document.getElementById('qcm-timer-bar');
-        if (d.type === 'qcm_question') {
-          bar.style.transition = 'none'; bar.style.width = '100%';
-          bar.style.background = 'linear-gradient(90deg, var(--blue), var(--purple))';
-        } else if (d.remaining !== undefined) {
-          var pct = Math.max(0, (d.remaining / STATE.qcmDuration) * 100);
-          bar.style.transition = 'none'; bar.style.width = pct + '%';
+      try {
+        if (d.type === 'qcm_question' || (d.qcmActive && d.question && !d.isQCMRevealed)) {
+          STATE.qcmDuration = d.duration || STATE.qcmDuration || 30;
+          STATE.qcmImageURL = d.imageURL || null;
+          
+          var qText = d.question || document.getElementById('qcm-question').textContent || '';
+          document.getElementById('qcm-question').textContent = qText;
+          
+          var sideImg = document.getElementById('qcm-side-image');
+          sideImg.style.display = 'none';
+          if (d.imageURL) sideImg.src = d.imageURL;
+
+          document.getElementById('qcm-choices').style.gridTemplateColumns = '1fr 1fr';
+          var choicesEl = document.getElementById('qcm-choices');
+          var rawChoices = d.choices || [];
+          if (rawChoices.length > 0) {
+            choicesEl.innerHTML = rawChoices.map((c, i) =>
+              '<div class="qcm-tv-btn" id="qcm-choice-' + i + '">'
+              + '<span class="label">' + (_labels[i] || (i + 1)) + '</span>'
+              + '<span>' + c + '</span>'
+              + '<span class="answer-count" id="qcm-count-' + i + '"></span>'
+              + '</div>'
+            ).join('');
+          }
+          
+          var bar = document.getElementById('qcm-timer-bar');
+          if (d.type === 'qcm_question') {
+            bar.style.transition = 'none'; bar.style.width = '100%';
+            bar.style.background = 'linear-gradient(90deg, var(--blue), var(--purple))';
+          } else if (d.remaining !== undefined) {
+            var pct = Math.max(0, (d.remaining / STATE.qcmDuration) * 100);
+            bar.style.transition = 'none'; bar.style.width = pct + '%';
+            if (pct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
+            else if (pct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
+            else bar.style.background = 'linear-gradient(90deg, var(--blue), var(--purple))';
+          }
+          
+          // CRITICAL: Hide everything under the QCM
+          document.getElementById('idle').classList.add('gone');
+          document.getElementById('qcm-overlay').classList.add('visible');
+          document.getElementById('rules-overlay').classList.remove('active');
+          
+          applyUI(d);
+          return; // Don't process track/reveal logic while QCM is active
+
+        } else if (d.type === 'qcm_timer') {
+          var remaining = d.remaining;
+          var pct = Math.max(0, (remaining / STATE.qcmDuration) * 100);
+          var bar = document.getElementById('qcm-timer-bar');
+          bar.style.transition = 'width 1s linear';
+          bar.style.width = pct + '%';
           if (pct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
           else if (pct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
-          else bar.style.background = 'linear-gradient(90deg, var(--blue), var(--purple))';
+          return;
+
+        } else if (d.type === 'qcm_reveal' || (d.qcmActive && d.isQCMRevealed)) {
+          var correct = d.correctIndex;
+          var answers = d.answers || {};
+          var imgURL = d.imageURL || STATE.qcmImageURL;
+          
+          if (imgURL) {
+            var sideImg = document.getElementById('qcm-side-image');
+            sideImg.src = imgURL;
+            sideImg.style.display = 'block';
+            sideImg.style.animation = 'fadeIn .8s cubic-bezier(0.165, 0.84, 0.44, 1)';
+            document.getElementById('qcm-choices').style.gridTemplateColumns = '1fr';
+          }
+
+          var counts = {};
+          var ansValues = Object.values(answers);
+          for (var k = 0; k < ansValues.length; k++) { 
+            var idx = ansValues[k];
+            counts[idx] = (counts[idx] || 0) + 1; 
+          }
+          
+          document.querySelectorAll('.qcm-tv-btn').forEach(function(btn, i) {
+            if (i === correct) btn.classList.add('correct');
+            else btn.classList.add('wrong');
+            btn.classList.add('results');
+            var countEl = document.getElementById('qcm-count-' + i);
+            if (countEl && counts[i]) countEl.textContent = '×' + counts[i];
+          });
+          document.getElementById('qcm-timer-bar').style.transition = 'none';
+          document.getElementById('idle').classList.add('gone');
+          document.getElementById('qcm-overlay').classList.add('visible');
+          applyUI(d);
+          return; // Don't process track logic while in reveal
+
+        } else if (d.type === 'qcm_stop') {
+          document.getElementById('qcm-overlay').classList.remove('visible');
+          document.getElementById('qcm-choices').innerHTML = '';
+          var si = document.getElementById('qcm-side-image');
+          si.style.display = 'none'; si.src = '';
         }
-        document.getElementById('qcm-overlay').classList.add('visible');
-        applyUI(d);
-        return; // Don't process track/reveal logic while QCM is active
-
-      } else if (d.type === 'qcm_timer') {
-        var remaining = d.remaining;
-        var pct = Math.max(0, (remaining / STATE.qcmDuration) * 100);
-        var bar = document.getElementById('qcm-timer-bar');
-        bar.style.transition = 'width 1s linear';
-        bar.style.width = pct + '%';
-        if (pct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
-        else if (pct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
-        return;
-
-      } else if (d.type === 'qcm_reveal' || (d.qcmActive && d.isQCMRevealed)) {
-        var correct = d.correctIndex;
-        var answers = d.answers || {};
-        var imgURL = d.imageURL || STATE.qcmImageURL;
-        
-        if (imgURL) {
-          var sideImg = document.getElementById('qcm-side-image');
-          sideImg.src = imgURL;
-          sideImg.style.display = 'block';
-          sideImg.style.animation = 'fadeIn .8s cubic-bezier(0.165, 0.84, 0.44, 1)';
-          document.getElementById('qcm-choices').style.gridTemplateColumns = '1fr';
-        }
-
-        var counts = {};
-        Object.values(answers).forEach(function(idx) { counts[idx] = (counts[idx] || 0) + 1; });
-        document.querySelectorAll('.qcm-tv-btn').forEach(function(btn, i) {
-          if (i === correct) btn.classList.add('correct');
-          else btn.classList.add('wrong');
-          btn.classList.add('results');
-          var countEl = document.getElementById('qcm-count-' + i);
-          if (countEl && counts[i]) countEl.textContent = '×' + counts[i];
-        });
-        document.getElementById('qcm-timer-bar').style.transition = 'none';
-        document.getElementById('qcm-overlay').classList.add('visible');
-        applyUI(d);
-        return; // Don't process track logic while in reveal
-
-      } else if (d.type === 'qcm_stop') {
-        document.getElementById('qcm-overlay').classList.remove('visible');
-        document.getElementById('qcm-choices').innerHTML = '';
-        var si = document.getElementById('qcm-side-image');
-        si.style.display = 'none'; si.src = '';
+      } catch (err) {
+        console.error("QCM Process Error:", err);
       }
 
       // ── TRACK ────────────────────────────────────────────────────────────────
