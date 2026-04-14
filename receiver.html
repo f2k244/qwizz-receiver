@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>QWIZZ Master V5.3.5-Premium</title>
+  <title>QWIZZ Master V5.3.6-Premium</title>
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
@@ -1082,7 +1082,7 @@
   </div>
 
   <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="logo-top" style="width:25vmin"></div>
-  <div class="version-tag">V5.3.5</div>
+  <div class="version-tag">V5.3.6</div>
   <div id="reload-toast">⟳ &nbsp;Rechargement en cours...</div>
   <cast-media-player></cast-media-player>
 
@@ -1164,16 +1164,16 @@
       // Handle QCM Messages
       if (d.type === 'qcm_question') {
         STATE.qcmDuration = d.duration || 30;
+        STATE.qcmImageURL = d.imageURL || null;
         document.getElementById('qcm-question').textContent = d.question || '';
         const sideImg = document.getElementById('qcm-side-image');
+        sideImg.style.display = 'none'; // Only show during reveal
         if (d.imageURL) {
           sideImg.src = d.imageURL;
-          sideImg.style.display = 'block';
-          document.getElementById('qcm-choices').style.gridTemplateColumns = '1fr';
         } else {
-          sideImg.style.display = 'none'; sideImg.src = '';
-          document.getElementById('qcm-choices').style.gridTemplateColumns = '1fr 1fr';
+          sideImg.src = '';
         }
+        document.getElementById('qcm-choices').style.gridTemplateColumns = '1fr 1fr';
         const choicesEl = document.getElementById('qcm-choices');
         choicesEl.innerHTML = (d.choices || []).map((c, i) =>
           `<div class="qcm-tv-btn" id="qcm-choice-${i}">
@@ -1199,6 +1199,16 @@
       } else if (d.type === 'qcm_reveal') {
         const correct = d.correctIndex;
         const answers = d.answers || {};
+        const imgURL = d.imageURL || STATE.qcmImageURL;
+        
+        if (imgURL) {
+          const sideImg = document.getElementById('qcm-side-image');
+          sideImg.src = imgURL;
+          sideImg.style.display = 'block';
+          sideImg.style.animation = 'fadeIn .8s cubic-bezier(0.165, 0.84, 0.44, 1)';
+          document.getElementById('qcm-choices').style.gridTemplateColumns = '1fr';
+        }
+
         const counts = {};
         Object.values(answers).forEach(idx => { counts[idx] = (counts[idx] || 0) + 1; });
         document.querySelectorAll('.qcm-tv-btn').forEach((btn, i) => {
