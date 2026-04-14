@@ -1286,8 +1286,21 @@
 
       applyUI(d);
 
-      if (d.type === 'mode_switch' || d.rules) showRules(d);
-      if (d.type === 'hide_rules') document.getElementById('rules-overlay').classList.remove('active');
+      // ── RULES ───────────────────────────────────────────────────────────────
+      if (d.type === 'mode_switch') {
+        showRules(d);
+      } else if (d.type === 'hide_rules') {
+        document.getElementById('rules-overlay').classList.remove('active');
+      } else if (d.rulesVisible !== undefined) {
+        // Polling: sync rules visibility from server truth
+        var rulesOverlay = document.getElementById('rules-overlay');
+        if (d.rulesVisible && d.rules) {
+          if (!rulesOverlay.classList.contains('active')) showRules(d);
+        } else if (!d.rulesVisible) {
+          rulesOverlay.classList.remove('active');
+        }
+      }
+
       if (d.type === 'category_transition') transition(d);
       if (d.type === 'end_game') podium(d.data);
     }
