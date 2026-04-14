@@ -1147,7 +1147,7 @@
               if (el) el.src = STATE.serverURL + '/tv_logo?t=' + Date.now();
           });
         }
-        if (!window.poll) window.poll = setInterval(() => { fetch(STATE.serverURL + '/tv_state').then(r => r.json()).then(sync).catch(() => { }) }, 5000);
+        if (!window.poll) window.poll = setInterval(() => { fetch(STATE.serverURL + '/tv_state').then(r => r.json()).then(sync).catch(() => { }) }, 2000);
       }
 
       // Handle Base64 Logo
