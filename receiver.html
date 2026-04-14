@@ -976,10 +976,15 @@
 
       // Handle Base64 Logo (Mixed Content Bypass)
       if (d.logoBase64) {
+        console.log("Receiver: Logo base64 received (" + d.logoBase64.length + " chars)");
         STATE.hasBase64Logo = true;
         STATE.logoBase64 = d.logoBase64;
-        ['logo-idle', 'logo-top'].forEach(id => document.getElementById(id).src = d.logoBase64);
+        ['logo-idle', 'logo-top'].forEach(id => {
+            var el = document.getElementById(id);
+            if (el) el.src = d.logoBase64;
+        });
       }
+
 
       // Handle Base64 Cover Update (async delivery)
       if (d.type === 'cover_update' && d.coverBase64) {
@@ -1009,7 +1014,10 @@
         if (d.url) STATE.qrURL = d.url;
         if (d.position) STATE.qrPos = d.position;
         if (d.dynamic !== undefined) STATE.qrDynamic = d.dynamic;
-        if (d.qrBase64) STATE.qrBase64 = d.qrBase64; 
+        if (d.qrBase64) {
+          console.log("Receiver: QR base64 received (" + d.qrBase64.length + " chars)");
+          STATE.qrBase64 = d.qrBase64; 
+        }
       }
 
       // Handle pause updates
