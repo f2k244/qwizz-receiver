@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>QWIZZ Master V5.3.0-Premium</title>
+  <title>QWIZZ Master V5.3.4-Premium</title>
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
@@ -90,7 +90,7 @@
       transform: translateX(-50%);
       background: rgba(0, 168, 255, 0.15);
       border: 1.5px solid var(--blue);
-      backdrop-filter: blur(20px);
+      backdrop-filter: blur(10px);
       border-radius: 3vmin;
       padding: 2vmin 4vmin;
       font-size: 2rem;
@@ -198,7 +198,7 @@
       z-index: 1000;
       display: none;
       background: var(--glass);
-      backdrop-filter: blur(40px);
+      backdrop-filter: blur(15px);
       border: 1px solid rgba(0, 168, 255, 0.3);
       border-radius: 5vmin;
       padding: 4vmin;
@@ -263,7 +263,7 @@
       display: none;
       text-align: center;
       background: var(--glass);
-      backdrop-filter: blur(40px);
+      backdrop-filter: blur(15px);
       padding: 3.5vmin;
       border-radius: 5vmin;
       border: 2.5px solid var(--blue);
@@ -332,7 +332,7 @@
 
     .podium-box {
       background: rgba(255, 255, 255, 0.03);
-      backdrop-filter: blur(30px);
+      backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 3vh;
       padding: 4vh 2vw;
@@ -474,7 +474,7 @@
       overflow: hidden;
       background: rgba(0, 168, 255, 0.12);
       border-top: 1.5px solid rgba(0, 168, 255, 0.4);
-      backdrop-filter: blur(20px);
+      backdrop-filter: blur(10px);
     }
 
     #qr-ticker.visible {
@@ -542,7 +542,7 @@
       inset: 0;
       z-index: 60000;
       background: rgba(9, 7, 43, 0.85); /* Slightly darker backdrop */
-      backdrop-filter: blur(40px);
+      backdrop-filter: blur(15px);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -599,7 +599,7 @@
       inset: 0;
       z-index: 65000;
       background: rgba(9, 7, 43, 0.95);
-      backdrop-filter: blur(30px);
+      backdrop-filter: blur(15px);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -840,6 +840,128 @@
         transform: translateX(-50%);
       }
     }
+
+    /* QCM Overlay */
+    #qcm-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 66000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6vmin;
+      box-sizing: border-box;
+      gap: 4vmin;
+    }
+
+    #qcm-overlay.visible { display: flex; animation: fadeIn .4s; }
+
+    #qcm-main {
+      display: flex;
+      gap: 6vmin;
+      align-items: center;
+      width: 100%;
+      max-width: 140vmin;
+    }
+
+    #qcm-side-image {
+      display: none;
+      width: 45vmin;
+      height: 35vmin;
+      object-fit: cover;
+      border-radius: 3vmin;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    #qcm-timer-bar-wrap {
+      width: 100%;
+      max-width: 110vmin;
+      height: 1vmin;
+      background: rgba(255,255,255,0.1);
+      border-radius: 1vmin;
+      overflow: hidden;
+    }
+    #qcm-timer-bar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, var(--blue), var(--purple));
+      border-radius: 1vmin;
+      transition: width 1s linear, background 0.5s;
+    }
+
+    #qcm-question {
+      font-size: 5rem;
+      font-weight: 900;
+      text-align: center;
+      max-width: 1200px;
+      line-height: 1.25;
+      color: #fff;
+      text-shadow: 0 0 30px rgba(0,0,0,0.5);
+    }
+
+    #qcm-choices {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3vmin;
+      width: 100%;
+      max-width: 110vmin;
+    }
+
+    .qcm-tv-btn {
+      background: rgba(255,255,255,0.06);
+      border: 2px solid rgba(255,255,255,0.12);
+      border-radius: 3vmin;
+      padding: 3vmin 4vmin;
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 2.5vmin;
+      transition: all 0.4s;
+    }
+
+    .qcm-tv-btn .label {
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--blue);
+      min-width: 4vmin;
+    }
+
+    .qcm-tv-btn.correct {
+      background: rgba(0,200,83,0.3);
+      border-color: #00c853;
+      color: #69f0ae;
+      transform: scale(1.05);
+      box-shadow: 0 0 40px rgba(0,200,83,0.4);
+    }
+
+    .qcm-tv-btn.wrong {
+      opacity: 0.3;
+      transform: scale(0.95);
+    }
+
+    .qcm-tv-btn .answer-count {
+      margin-left: auto;
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .version-tag {
+        position: fixed;
+        bottom: 2vmin;
+        left: 2vmin;
+        font-size: 1.5rem;
+        font-weight: 900;
+        color: rgba(255,255,255,0.2);
+        z-index: 100000;
+        letter-spacing: 0.1vmin;
+    }
   </style>
 </head>
 
@@ -913,20 +1035,36 @@
     </div>
   </div>
 
+  <div id="qcm-overlay">
+    <div id="qcm-timer-bar-wrap">
+      <div id="qcm-timer-bar"></div>
+    </div>
+    <div id="qcm-main">
+      <img id="qcm-side-image" src="" alt="">
+      <div style="display:flex;flex-direction:column;gap:4vmin;flex:1;min-width:0;">
+        <div id="qcm-question">Chargement de la question...</div>
+        <div id="qcm-choices"></div>
+      </div>
+    </div>
+  </div>
+
   <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="logo-top" style="width:25vmin"></div>
+  <div class="version-tag">V5.3.4</div>
   <div id="reload-toast">⟳ &nbsp;Rechargement en cours...</div>
   <cast-media-player></cast-media-player>
 
   <script>
-    // Master State V5.3.3 — base64 logo/QR pour éviter mixed content HTTPS→HTTP
+    // Master State V5.3.4 — base64 logo/QR + Mode QCM
     var STATE = {
       serverURL: '', track: null, revealed: false,
       showScores: false, scoreMode: 'br',
       showQR: false, qrURL: '', qrPos: 'top-right', qrDynamic: true,
       isPaused: false, pauseMessage: '',
       endGame: false, currentTrackID: null, currentCoverKey: null,
-      logoBase64: null, qrBase64: null, hasBase64Logo: false
+      logoBase64: null, qrBase64: null, hasBase64Logo: false,
+      qcmDuration: 30
     };
+    const _labels = ['A', 'B', 'C', 'D'];
 
     if (typeof cast === 'undefined' || !cast.framework) {
       document.body.innerHTML = '<div style="color:red;font-size:4vmin;padding:5vmin">ERREUR: Cast SDK non chargé</div>';
@@ -939,9 +1077,11 @@
     function sync(d) {
       if (!d) return;
       if (typeof d === 'string') { try { d = JSON.parse(d); } catch (e) { return; } }
+      
+      console.log("Receiver Sync:", d.type || "state_update", d);
 
       // Throttle polling if we are receiving live messages via custom channel
-      if (window.poll && d.serverURL === undefined) { // If it's a socket message, relax polling
+      if (window.poll && d.serverURL === undefined) { 
           clearInterval(window.poll);
           window.poll = setInterval(() => { 
               fetch(STATE.serverURL + '/tv_state').then(r => r.json()).then(sync).catch(() => { }) 
@@ -962,19 +1102,22 @@
         document.getElementById('player-scene').classList.remove('visible');
         document.getElementById('overlay-layer').classList.remove('active');
         document.getElementById('rules-overlay').classList.remove('active');
+        document.getElementById('qcm-overlay').classList.remove('visible');
         return;
       }
 
       if (d.serverURL) {
         STATE.serverURL = d.serverURL.endsWith('/') ? d.serverURL.slice(0, -1) : d.serverURL;
-        // Seconde chance : n'écraser par URL que si on n'a pas de Base64 (plus stable en HTTPS)
         if (!STATE.hasBase64Logo) {
-          ['logo-idle', 'logo-top'].forEach(id => document.getElementById(id).src = STATE.serverURL + '/tv_logo?t=' + Date.now());
+          ['logo-idle', 'logo-top'].forEach(id => {
+              var el = document.getElementById(id);
+              if (el) el.src = STATE.serverURL + '/tv_logo?t=' + Date.now();
+          });
         }
         if (!window.poll) window.poll = setInterval(() => { fetch(STATE.serverURL + '/tv_state').then(r => r.json()).then(sync).catch(() => { }) }, 5000);
       }
 
-      // Handle Base64 Logo (Mixed Content Bypass)
+      // Handle Base64 Logo
       if (d.logoBase64) {
         console.log("Receiver: Logo base64 received (" + d.logoBase64.length + " chars)");
         STATE.hasBase64Logo = true;
@@ -985,8 +1128,62 @@
         });
       }
 
+      // Handle QCM Messages
+      if (d.type === 'qcm_question') {
+        STATE.qcmDuration = d.duration || 30;
+        document.getElementById('qcm-question').textContent = d.question || '';
+        const sideImg = document.getElementById('qcm-side-image');
+        if (d.imageURL) {
+          sideImg.src = d.imageURL;
+          sideImg.style.display = 'block';
+          document.getElementById('qcm-choices').style.gridTemplateColumns = '1fr';
+        } else {
+          sideImg.style.display = 'none'; sideImg.src = '';
+          document.getElementById('qcm-choices').style.gridTemplateColumns = '1fr 1fr';
+        }
+        const choicesEl = document.getElementById('qcm-choices');
+        choicesEl.innerHTML = (d.choices || []).map((c, i) =>
+          `<div class="qcm-tv-btn" id="qcm-choice-${i}">
+            <span class="label">${_labels[i] || i+1}</span>
+            <span>${c}</span>
+            <span class="answer-count" id="qcm-count-${i}"></span>
+          </div>`
+        ).join('');
+        const bar = document.getElementById('qcm-timer-bar');
+        bar.style.transition = 'none'; bar.style.width = '100%';
+        bar.style.background = 'linear-gradient(90deg, var(--blue), var(--purple))';
+        document.getElementById('qcm-overlay').classList.add('visible');
 
-      // Handle Base64 Cover Update (async delivery)
+      } else if (d.type === 'qcm_timer') {
+        const remaining = d.remaining;
+        const pct = Math.max(0, (remaining / STATE.qcmDuration) * 100);
+        const bar = document.getElementById('qcm-timer-bar');
+        bar.style.transition = 'width 1s linear';
+        bar.style.width = pct + '%';
+        if (pct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
+        else if (pct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
+
+      } else if (d.type === 'qcm_reveal') {
+        const correct = d.correctIndex;
+        const answers = d.answers || {};
+        const counts = {};
+        Object.values(answers).forEach(idx => { counts[idx] = (counts[idx] || 0) + 1; });
+        document.querySelectorAll('.qcm-tv-btn').forEach((btn, i) => {
+          if (i === correct) btn.classList.add('correct');
+          else btn.classList.add('wrong');
+          const countEl = document.getElementById(`qcm-count-${i}`);
+          if (countEl && counts[i]) countEl.textContent = `×${counts[i]}`;
+        });
+        document.getElementById('qcm-timer-bar').style.transition = 'none';
+
+      } else if (d.type === 'qcm_stop') {
+        document.getElementById('qcm-overlay').classList.remove('visible');
+        document.getElementById('qcm-choices').innerHTML = '';
+        const si = document.getElementById('qcm-side-image');
+        si.style.display = 'none'; si.src = '';
+      }
+
+      // Track updates
       if (d.type === 'cover_update' && d.coverBase64) {
         if (d.trackID === STATE.currentTrackID || !STATE.currentTrackID) {
            applyCover(d.coverBase64);
@@ -996,7 +1193,7 @@
       if (d.type === 'track_update' || d.trackID || (d.track && d.track.trackID)) render(d.track || d);
       if (d.type === 'reveal' || d.gameState === 'revealed' || d.reveal === true) doReveal();
 
-      // Mettre à jour la visibilité depuis chaque message
+      // UI Config
       if (d.showScores !== undefined) STATE.showScores = (d.showScores === true || d.showScores === "true");
       if (d.showQR !== undefined) STATE.showQR = (d.showQR === true || d.showQR === "true");
       if (d.qrPosition) STATE.qrPos = d.qrPosition;
