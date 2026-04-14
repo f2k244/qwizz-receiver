@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>QWIZZ Master V5.3.4-Premium</title>
+  <title>QWIZZ Master V5.3.5-Premium</title>
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
@@ -846,121 +846,154 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: var(--bg);
+      background: #09072B;
       z-index: 66000;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 6vmin;
       box-sizing: border-box;
-      gap: 4vmin;
+      gap: 5vmin;
     }
 
-    #qcm-overlay.visible { display: flex; animation: fadeIn .4s; }
+    #qcm-overlay.visible { display: flex; animation: fadeIn .6s cubic-bezier(0.165, 0.84, 0.44, 1); }
 
     #qcm-main {
       display: flex;
-      gap: 6vmin;
+      gap: 8vmin;
       align-items: center;
       width: 100%;
-      max-width: 140vmin;
+      max-width: 150vmin;
     }
 
     #qcm-side-image {
       display: none;
-      width: 45vmin;
-      height: 35vmin;
+      width: 60vmin;
+      height: 45vmin;
       object-fit: cover;
-      border-radius: 3vmin;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      border-radius: 2.5vmin; /* ~8px for common TV sizes */
+      box-shadow: 0 30px 80px rgba(0,0,0,0.8);
       flex-shrink: 0;
-      border: 1px solid rgba(255,255,255,0.2);
+      border: 3px solid rgba(255,255,255,0.2);
     }
 
     #qcm-timer-bar-wrap {
       width: 100%;
-      max-width: 110vmin;
-      height: 1vmin;
+      max-width: 120vmin;
+      height: 1.2vmin;
       background: rgba(255,255,255,0.1);
       border-radius: 1vmin;
       overflow: hidden;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
     }
     #qcm-timer-bar {
       height: 100%;
       width: 100%;
-      background: linear-gradient(90deg, var(--blue), var(--purple));
+      background: linear-gradient(90deg, #00A8FF, #8A2BE2);
       border-radius: 1vmin;
       transition: width 1s linear, background 0.5s;
     }
 
     #qcm-question {
-      font-size: 5rem;
+      font-size: 6.5rem;
       font-weight: 900;
-      text-align: center;
-      max-width: 1200px;
-      line-height: 1.25;
+      text-align: left;
+      line-height: 1.15;
       color: #fff;
-      text-shadow: 0 0 30px rgba(0,0,0,0.5);
+      text-shadow: 0 10px 40px rgba(0,0,0,0.6);
+      margin-bottom: 2vmin;
     }
 
     #qcm-choices {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 3vmin;
+      gap: 3.5vmin;
       width: 100%;
-      max-width: 110vmin;
     }
 
     .qcm-tv-btn {
-      background: rgba(255,255,255,0.06);
-      border: 2px solid rgba(255,255,255,0.12);
-      border-radius: 3vmin;
-      padding: 3vmin 4vmin;
-      font-size: 3.5rem;
+      background: rgba(26, 26, 58, 0.6);
+      border: 2px solid rgba(0, 168, 255, 0.2);
+      border-radius: 2.2vmin; /* ~8px */
+      padding: 3.5vmin 4.5vmin;
+      font-size: 4rem;
       font-weight: 700;
       color: #fff;
       display: flex;
       align-items: center;
-      gap: 2.5vmin;
-      transition: all 0.4s;
+      gap: 3vmin;
+      transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .qcm-tv-btn::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(0, 168, 255, 0.1), transparent);
+        opacity: 0;
+        transition: opacity 0.3s;
     }
 
     .qcm-tv-btn .label {
-      font-size: 2.5rem;
+      font-size: 3rem;
       font-weight: 900;
-      color: var(--blue);
-      min-width: 4vmin;
+      color: #00A8FF;
+      background: rgba(0, 168, 255, 0.1);
+      width: 6vmin;
+      height: 6vmin;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 1.5vmin;
+      margin-right: 1.5vmin;
     }
 
     .qcm-tv-btn.correct {
-      background: rgba(0,200,83,0.3);
+      background: rgba(0,200,83,0.25);
       border-color: #00c853;
-      color: #69f0ae;
+      color: #fff;
       transform: scale(1.05);
-      box-shadow: 0 0 40px rgba(0,200,83,0.4);
+      box-shadow: 0 0 50px rgba(0,200,83,0.3);
+    }
+    
+    .qcm-tv-btn.correct .label {
+        background: #00c853;
+        color: #fff;
     }
 
     .qcm-tv-btn.wrong {
-      opacity: 0.3;
+      opacity: 0.15;
+      filter: grayscale(1);
       transform: scale(0.95);
     }
 
     .qcm-tv-btn .answer-count {
       margin-left: auto;
-      font-size: 2.2rem;
+      font-size: 2.8rem;
       font-weight: 900;
-      color: rgba(255,255,255,0.5);
+      color: #00A8FF;
+      opacity: 0;
+      transform: translateX(20px);
+      transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    .qcm-tv-btn.results .answer-count {
+        opacity: 1;
+        transform: translateX(0);
     }
 
     .version-tag {
         position: fixed;
         bottom: 2vmin;
-        left: 2vmin;
-        font-size: 1.5rem;
+        left: 3vmin;
+        font-size: 1.6rem;
         font-weight: 900;
-        color: rgba(255,255,255,0.2);
+        color: rgba(0, 168, 255, 0.2);
         z-index: 100000;
-        letter-spacing: 0.1vmin;
+        letter-spacing: 0.2vmin;
+        text-transform: uppercase;
     }
   </style>
 </head>
@@ -1041,15 +1074,15 @@
     </div>
     <div id="qcm-main">
       <img id="qcm-side-image" src="" alt="">
-      <div style="display:flex;flex-direction:column;gap:4vmin;flex:1;min-width:0;">
-        <div id="qcm-question">Chargement de la question...</div>
+      <div style="display:flex;flex-direction:column;flex:1;min-width:0;">
+        <div id="qcm-question">Chargement...</div>
         <div id="qcm-choices"></div>
       </div>
     </div>
   </div>
 
   <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="logo-top" style="width:25vmin"></div>
-  <div class="version-tag">V5.3.4</div>
+  <div class="version-tag">V5.3.5</div>
   <div id="reload-toast">⟳ &nbsp;Rechargement en cours...</div>
   <cast-media-player></cast-media-player>
 
@@ -1171,6 +1204,7 @@
         document.querySelectorAll('.qcm-tv-btn').forEach((btn, i) => {
           if (i === correct) btn.classList.add('correct');
           else btn.classList.add('wrong');
+          btn.classList.add('results');
           const countEl = document.getElementById(`qcm-count-${i}`);
           if (countEl && counts[i]) countEl.textContent = `×${counts[i]}`;
         });
