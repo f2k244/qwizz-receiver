@@ -1435,12 +1435,20 @@
           if (d.type === 'qcm_question') {
             bar.style.transition = 'none'; bar.style.width = '100%';
             bar.style.background = 'linear-gradient(90deg, #00A8FF, #8A2BE2)';
+            bar.offsetHeight; // force reflow
+            bar.style.transition = 'width ' + STATE.qcmDuration + 's linear';
+            bar.style.width = '0%';
           } else if (d.remaining !== undefined) {
-            var pct = Math.max(0, (d.remaining / STATE.qcmDuration) * 100);
-            bar.style.transition = 'width 0.5s linear';
-            bar.style.width = pct + '%';
-            if (pct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
-            else if (pct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
+            var colorPct = (d.remaining / STATE.qcmDuration) * 100;
+            if (bar.style.width === '' || bar.style.width === '100%') {
+                bar.style.transition = 'none';
+                bar.style.width = colorPct + '%';
+                bar.offsetHeight; // force reflow
+                bar.style.transition = 'width ' + d.remaining + 's linear';
+                bar.style.width = '0%';
+            }
+            if (colorPct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
+            else if (colorPct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
             else bar.style.background = 'linear-gradient(90deg, #00A8FF, #8A2BE2)';
           }
           
@@ -1454,12 +1462,17 @@
 
         } else if (d.type === 'qcm_timer') {
           var remaining = d.remaining;
-          var pct = Math.max(0, (remaining / STATE.qcmDuration) * 100);
           var bar = document.getElementById('qcm-timer-bar');
-          bar.style.transition = 'width 0.5s linear';
-          bar.style.width = pct + '%';
-          if (pct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
-          else if (pct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
+          var colorPct = (remaining / STATE.qcmDuration) * 100;
+          if (bar.style.width === '' || bar.style.width === '100%') {
+              bar.style.transition = 'none';
+              bar.style.width = colorPct + '%';
+              bar.offsetHeight; // force reflow
+              bar.style.transition = 'width ' + remaining + 's linear';
+              bar.style.width = '0%';
+          }
+          if (colorPct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
+          else if (colorPct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
           return;
 
         } else if (d.type === 'qcm_reveal' || (d.qcmActive && d.isQCMRevealed)) {
@@ -1588,6 +1601,12 @@
 
       if (d.type === 'category_transition') transition(d);
       if (d.type === 'end_game') podium(d.data);
+      else if (d.podiumData && !STATE.endGame) podium(d.podiumData);
+      else if (!d.podiumData && STATE.endGame) {
+          STATE.endGame = false;
+          document.getElementById('podium-wrap').style.display = 'none';
+          document.querySelectorAll('.premium-entry').forEach(el => el.classList.remove('animate-in'));
+      }
     }
 
     function render(t) {
