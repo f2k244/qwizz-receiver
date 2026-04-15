@@ -842,11 +842,13 @@
     }
 
     /* QCM Overlay */
+    /* QCM Overlay PREMIUM UI */
     #qcm-overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: #09072B;
+      background: radial-gradient(circle at center, rgba(9, 7, 43, 0.9) 0%, var(--bg) 100%);
+      backdrop-filter: blur(20px);
       z-index: 66000;
       flex-direction: column;
       align-items: center;
@@ -858,65 +860,109 @@
 
     #qcm-overlay.visible { display: flex; animation: fadeIn .6s cubic-bezier(0.165, 0.84, 0.44, 1); }
 
-    #qcm-main {
-      display: flex;
-      gap: 8vmin;
-      align-items: center;
-      width: 100%;
-      max-width: 150vmin;
-    }
-
-    #qcm-side-image {
-      display: none;
-      width: 60vmin;
-      height: 45vmin;
-      object-fit: cover;
-      border-radius: 2.5vmin; /* ~8px for common TV sizes */
-      box-shadow: 0 30px 80px rgba(0,0,0,0.8);
-      flex-shrink: 0;
-      border: 3px solid rgba(255,255,255,0.2);
-    }
-
     #qcm-timer-bar-wrap {
       width: 100%;
-      max-width: 120vmin;
-      height: 1.2vmin;
-      background: rgba(255,255,255,0.1);
+      height: 1.5vmin;
+      background: rgba(255, 255, 255, 0.05);
       border-radius: 1vmin;
       overflow: hidden;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      flex-shrink: 0;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+      position: absolute;
+      top: 0; left: 0;
+      border-radius: 0;
     }
+    
     #qcm-timer-bar {
       height: 100%;
       width: 100%;
       background: linear-gradient(90deg, #00A8FF, #8A2BE2);
-      border-radius: 1vmin;
-      transition: width 1s linear, background 0.5s;
+      transition: width 0.5s linear, background 0.5s;
+      box-shadow: 0 0 20px rgba(0, 168, 255, 0.6);
+    }
+
+    #qcm-main {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      justify-content: center;
+      align-items: stretch;
+      gap: 5vmin;
+      padding-top: 3vmin;
+    }
+
+    /* Condition: with image -> flex-row */
+    #qcm-main.with-image {
+      flex-direction: row;
+      align-items: center;
+    }
+
+    #qcm-side-image {
+      display: none;
+      width: 42vw;
+      max-height: 75vh;
+      object-fit: cover;
+      border-radius: 4vmin;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.8), 0 0 40px rgba(0, 168, 255, 0.15);
+      border: 3px solid rgba(255,255,255,0.15);
+      flex-shrink: 0;
+    }
+    
+    #qcm-content {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 5vmin;
+      padding: 6vmin;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    }
+    
+    #qcm-main.with-image #qcm-content {
+      padding: 4vmin;
     }
 
     #qcm-question {
-      font-size: 6.5rem;
+      font-size: 5.5rem;
       font-weight: 900;
-      text-align: left;
-      line-height: 1.15;
+      text-align: center;
+      line-height: 1.25;
       color: #fff;
-      text-shadow: 0 10px 40px rgba(0,0,0,0.6);
-      margin-bottom: 2vmin;
+      text-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      margin-bottom: 6vmin;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    #qcm-main.with-image #qcm-question {
+      font-size: 4.5rem; /* Réduire dynamiquement */
+      margin-bottom: 4vmin;
     }
 
     #qcm-choices {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 3.5vmin;
+      gap: 3vmin;
       width: 100%;
+      flex-shrink: 0;
+    }
+
+    #qcm-main.with-image #qcm-choices {
+      grid-template-columns: 1fr; /* Stack vertically si image */
+      gap: 2vmin;
     }
 
     .qcm-tv-btn {
-      background: rgba(26, 26, 58, 0.6);
-      border: 2px solid rgba(0, 168, 255, 0.2);
-      border-radius: 2.2vmin; /* ~8px */
-      padding: 3.5vmin 4.5vmin;
-      font-size: 4rem;
+      background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01));
+      border: 2px solid rgba(0, 168, 255, 0.15);
+      border-radius: 2.5vmin;
+      padding: 3.5vmin 4vmin;
+      font-size: 3.5rem;
       font-weight: 700;
       color: #fff;
       display: flex;
@@ -925,19 +971,16 @@
       transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       position: relative;
       overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
     }
     
-    .qcm-tv-btn::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(135deg, rgba(0, 168, 255, 0.1), transparent);
-        opacity: 0;
-        transition: opacity 0.3s;
+    #qcm-main.with-image .qcm-tv-btn {
+      padding: 2.5vmin 3.5vmin;
+      font-size: 3rem;
     }
 
     .qcm-tv-btn .label {
-      font-size: 3rem;
+      font-size: 2.8rem;
       font-weight: 900;
       color: #00A8FF;
       background: rgba(0, 168, 255, 0.1);
@@ -947,33 +990,37 @@
       align-items: center;
       justify-content: center;
       border-radius: 1.5vmin;
-      margin-right: 1.5vmin;
+      margin-right: 1vmin;
+      flex-shrink: 0;
     }
 
     .qcm-tv-btn.correct {
-      background: rgba(0,200,83,0.25);
-      border-color: #00c853;
+      background: linear-gradient(135deg, rgba(46, 213, 115, 0.3), rgba(46, 213, 115, 0.1));
+      border-color: #2ed573;
       color: #fff;
-      transform: scale(1.05);
-      box-shadow: 0 0 50px rgba(0,200,83,0.3);
+      transform: scale(1.03);
+      box-shadow: 0 0 60px rgba(46, 213, 115, 0.4), inset 0 0 20px rgba(46, 213, 115, 0.2);
     }
     
     .qcm-tv-btn.correct .label {
-        background: #00c853;
-        color: #fff;
+        background: #2ed573;
+        color: #09072B;
     }
 
     .qcm-tv-btn.wrong {
-      opacity: 0.15;
-      filter: grayscale(1);
+      opacity: 0.2;
+      filter: grayscale(100%);
       transform: scale(0.95);
     }
 
     .qcm-tv-btn .answer-count {
       margin-left: auto;
-      font-size: 2.8rem;
+      font-size: 2.5rem;
       font-weight: 900;
-      color: #00A8FF;
+      color: #09072B;
+      background: #fff;
+      padding: 1vmin 2vmin;
+      border-radius: 1.5vmin;
       opacity: 0;
       transform: translateX(20px);
       transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -1074,7 +1121,7 @@
     </div>
     <div id="qcm-main">
       <img id="qcm-side-image" src="" alt="">
-      <div style="display:flex;flex-direction:column;flex:1;min-width:0;">
+      <div id="qcm-content">
         <div id="qcm-question">Chargement...</div>
         <div id="qcm-choices"></div>
       </div>
@@ -1082,7 +1129,7 @@
   </div>
 
   <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="logo-top" style="width:25vmin"></div>
-  <div class="version-tag">V5.4.0</div>
+  <div class="version-tag">V5.4.3</div>
   <div id="reload-toast">⟳ &nbsp;Rechargement en cours...</div>
   <cast-media-player></cast-media-player>
 
@@ -1147,7 +1194,7 @@
               if (el) el.src = STATE.serverURL + '/tv_logo?t=' + Date.now();
           });
         }
-        if (!window.poll) window.poll = setInterval(() => { fetch(STATE.serverURL + '/tv_state').then(r => r.json()).then(sync).catch(() => { }) }, 2000);
+        if (!window.poll) window.poll = setInterval(() => { fetch(STATE.serverURL + '/tv_state').then(r => r.json()).then(sync).catch(() => { }) }, 500);
       }
 
       // Handle Base64 Logo
@@ -1171,10 +1218,18 @@
           document.getElementById('qcm-question').textContent = qText;
           
           var sideImg = document.getElementById('qcm-side-image');
+          var mainEl = document.getElementById('qcm-main');
+          
           sideImg.style.display = 'none';
-          if (d.imageURL) sideImg.src = d.imageURL;
+          mainEl.classList.remove('with-image');
+          
+          if (d.imageURL) {
+            sideImg.src = d.imageURL;
+            // Ne pas afficher tout de suite si c'est pas encore revealé
+            // Mais la logique de V5 disait: si imageURL alors on display block dans le reveal 
+            // C'est géré plus bas.
+          }
 
-          document.getElementById('qcm-choices').style.gridTemplateColumns = '1fr 1fr';
           var choicesEl = document.getElementById('qcm-choices');
           var rawChoices = d.choices || [];
           if (rawChoices.length > 0) {
@@ -1190,13 +1245,13 @@
           var bar = document.getElementById('qcm-timer-bar');
           if (d.type === 'qcm_question') {
             bar.style.transition = 'none'; bar.style.width = '100%';
-            bar.style.background = 'linear-gradient(90deg, var(--blue), var(--purple))';
+            bar.style.background = 'linear-gradient(90deg, #00A8FF, #8A2BE2)';
           } else if (d.remaining !== undefined) {
             var pct = Math.max(0, (d.remaining / STATE.qcmDuration) * 100);
             bar.style.transition = 'none'; bar.style.width = pct + '%';
             if (pct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
             else if (pct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
-            else bar.style.background = 'linear-gradient(90deg, var(--blue), var(--purple))';
+            else bar.style.background = 'linear-gradient(90deg, #00A8FF, #8A2BE2)';
           }
           
           // CRITICAL: Hide everything under the QCM
@@ -1211,7 +1266,7 @@
           var remaining = d.remaining;
           var pct = Math.max(0, (remaining / STATE.qcmDuration) * 100);
           var bar = document.getElementById('qcm-timer-bar');
-          bar.style.transition = 'width 1s linear';
+          bar.style.transition = 'width 0.5s linear';
           bar.style.width = pct + '%';
           if (pct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
           else if (pct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
@@ -1224,10 +1279,11 @@
           
           if (imgURL) {
             var sideImg = document.getElementById('qcm-side-image');
+            var mainEl = document.getElementById('qcm-main');
             sideImg.src = imgURL;
             sideImg.style.display = 'block';
-            sideImg.style.animation = 'fadeIn .8s cubic-bezier(0.165, 0.84, 0.44, 1)';
-            document.getElementById('qcm-choices').style.gridTemplateColumns = '1fr';
+            sideImg.style.animation = 'fadeIn 0.8s cubic-bezier(0.165, 0.84, 0.44, 1)';
+            mainEl.classList.add('with-image');
           }
 
           var counts = {};
