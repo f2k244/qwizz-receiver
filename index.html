@@ -1031,6 +1031,45 @@
         transform: translateX(0);
     }
 
+    #qcm-global-summary {
+      display: none;
+      flex-direction: row;
+      gap: 5vmin;
+      margin-top: 2vmin;
+      justify-content: center;
+      align-items: center;
+      animation: slideUp .6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    #qcm-global-summary.visible {
+      display: flex;
+    }
+
+    .qcm-stat-badge {
+      display: flex;
+      align-items: center;
+      gap: 2vmin;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4vmin;
+      padding: 1.5vmin 4vmin;
+      font-size: 3.5rem;
+      font-weight: 800;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    .stat-correct {
+      color: #2ed573;
+      border-color: rgba(46, 213, 115, 0.3);
+      background: linear-gradient(135deg, rgba(46, 213, 115, 0.1), transparent);
+    }
+
+    .stat-wrong {
+      color: #ff4757;
+      border-color: rgba(255, 71, 87, 0.3);
+      background: linear-gradient(135deg, rgba(255, 71, 87, 0.1), transparent);
+    }
+
     .version-tag {
         position: fixed;
         bottom: 2vmin;
@@ -1124,12 +1163,16 @@
       <div id="qcm-content">
         <div id="qcm-question">Chargement...</div>
         <div id="qcm-choices"></div>
+        <div id="qcm-global-summary">
+          <div class="qcm-stat-badge stat-correct">✅ <span id="stat-correct-count">0</span></div>
+          <div class="qcm-stat-badge stat-wrong">❌ <span id="stat-wrong-count">0</span></div>
+        </div>
       </div>
     </div>
   </div>
 
   <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="logo-top" style="width:25vmin"></div>
-  <div class="version-tag">V5.4.3</div>
+  <div class="version-tag">V5.4.4</div>
   <div id="reload-toast">⟳ &nbsp;Rechargement en cours...</div>
   <cast-media-player></cast-media-player>
 
@@ -1219,9 +1262,11 @@
           
           var sideImg = document.getElementById('qcm-side-image');
           var mainEl = document.getElementById('qcm-main');
+          var summaryEl = document.getElementById('qcm-global-summary');
           
           sideImg.style.display = 'none';
           mainEl.classList.remove('with-image');
+          if (summaryEl) summaryEl.classList.remove('visible');
           
           if (d.imageURL) {
             sideImg.src = d.imageURL;
@@ -1288,9 +1333,18 @@
 
           var counts = {};
           var ansValues = Object.values(answers);
+          
+          var totalCorrect = 0;
+          var totalWrong = 0;
+
           for (var k = 0; k < ansValues.length; k++) { 
             var idx = ansValues[k];
             counts[idx] = (counts[idx] || 0) + 1; 
+            if (idx === correct) {
+              totalCorrect++;
+            } else {
+              totalWrong++;
+            }
           }
           
           document.querySelectorAll('.qcm-tv-btn').forEach(function(btn, i) {
@@ -1298,8 +1352,17 @@
             else btn.classList.add('wrong');
             btn.classList.add('results');
             var countEl = document.getElementById('qcm-count-' + i);
-            if (countEl && counts[i]) countEl.textContent = '×' + counts[i];
+            if (countEl) countEl.textContent = (counts[i] || 0) + '👤';
           });
+
+          // Afficher le résumé global
+          var summaryEl = document.getElementById('qcm-global-summary');
+          if (summaryEl) {
+            document.getElementById('stat-correct-count').textContent = totalCorrect;
+            document.getElementById('stat-wrong-count').textContent = totalWrong;
+            summaryEl.classList.add('visible');
+          };
+          
           document.getElementById('qcm-timer-bar').style.transition = 'none';
           document.getElementById('idle').classList.add('gone');
           document.getElementById('qcm-overlay').classList.add('visible');
