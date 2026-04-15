@@ -310,6 +310,105 @@
       animation: fadeIn .5s;
     }
 
+    /* Rules Overlay PREMIUM UX/UI */
+    #rules-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(9, 7, 43, 0.95) 0%, var(--bg) 100%);
+      backdrop-filter: blur(25px);
+      z-index: 55000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6vmin;
+    }
+
+    #rules-overlay.active {
+      display: flex;
+      animation: zoomIn .5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    @keyframes zoomIn {
+      0% { opacity: 0; transform: scale(0.9); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .rules-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.8), inset 0 0 40px rgba(0, 168, 255, 0.05);
+      border-radius: 5vmin;
+      padding: 8vmin 10vmin;
+      width: 100%;
+      max-width: 140vmin;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .rules-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 1vmin;
+      background: linear-gradient(90deg, #00A8FF, #8A2BE2);
+    }
+
+    .rules-mode-badge {
+      display: inline-block;
+      background: rgba(0, 168, 255, 0.15);
+      color: #00A8FF;
+      border: 1px solid rgba(0, 168, 255, 0.3);
+      padding: 1.5vmin 4vmin;
+      border-radius: 4vmin;
+      font-size: 3rem;
+      font-weight: 900;
+      letter-spacing: 0.5vmin;
+      text-transform: uppercase;
+      margin-bottom: 5vmin;
+      box-shadow: 0 0 30px rgba(0, 168, 255, 0.2);
+    }
+
+    .rules-title {
+      font-size: 5.5rem;
+      font-weight: 900;
+      margin-bottom: 6vmin;
+      text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      background: linear-gradient(135deg, #fff 0%, #d0d0d0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .rules-text {
+      font-size: 4rem;
+      font-weight: 600;
+      color: #E0E0E0;
+      line-height: 1.4;
+      margin-bottom: 8vmin;
+      text-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    }
+
+    .rules-chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 3vmin;
+    }
+
+    .rule-chip {
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 2vmin 4vmin;
+      border-radius: 3vmin;
+      font-size: 3rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 2vmin;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+
     #podium-wrap {
       display: none;
       flex-direction: column;
@@ -1172,7 +1271,7 @@
   </div>
 
   <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="logo-top" style="width:25vmin"></div>
-  <div class="version-tag">V5.4.4</div>
+  <div class="version-tag">V5.4.5</div>
   <div id="reload-toast">⟳ &nbsp;Rechargement en cours...</div>
   <cast-media-player></cast-media-player>
 
@@ -1203,13 +1302,7 @@
       
       console.log("Receiver Sync:", d.type || "state_update", d);
 
-      // Throttle polling when receiving live messages via custom channel
-      if (window.poll && d.serverURL === undefined) { 
-          clearInterval(window.poll);
-          window.poll = setInterval(() => { 
-              fetch(STATE.serverURL + '/tv_state').then(r => r.json()).then(sync).catch(() => { }) 
-          }, 8000); 
-      }
+      // Throttle logic was completely flawed and artificially throttled to 8000ms. Removed.
 
       if (d.type === 'reload') {
         var toast = document.getElementById('reload-toast');
@@ -1242,12 +1335,21 @@
 
       // Handle Base64 Logo
       if (d.logoBase64) {
-        STATE.hasBase64Logo = true;
-        STATE.logoBase64 = d.logoBase64;
-        ['logo-idle', 'logo-top'].forEach(id => {
-            var el = document.getElementById(id);
-            if (el) el.src = d.logoBase64;
-        });
+        if (d.logoBase64 !== STATE.logoBase64) {
+          STATE.hasBase64Logo = true;
+          STATE.logoBase64 = d.logoBase64;
+          ['logo-idle', 'logo-top'].forEach(id => {
+              var el = document.getElementById(id);
+              if (el) el.src = STATE.logoBase64;
+          });
+        }
+      } else if (!STATE.hasBase64Logo && STATE.serverURL) {
+          // Si le serveur n'envoie pas de d.logoBase64, on fetch l'image par défaut depuis tv_logo
+          STATE.hasBase64Logo = true;
+          ['logo-idle', 'logo-top'].forEach(id => {
+              var el = document.getElementById(id);
+              if (el) el.src = STATE.serverURL + '/tv_logo?t=' + Date.now();
+          });
       }
 
       // ── QCM ─────────────────────────────────────────────────────────────────
