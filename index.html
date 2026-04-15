@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>QWIZZ Master V5.3.0-Premium</title>
+  <title>QWIZZ Master V5.3.6-Premium</title>
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
@@ -12,7 +12,7 @@
       --blue: #00A8FF;
       --purple: #8A2BE2;
       --glass: rgba(26, 26, 58, 0.85);
-      --font: 'Outfit', 'SF Pro Display', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      --font: 'Outfit', sans-serif;
     }
 
     * {
@@ -20,6 +20,11 @@
       padding: 0;
       box-sizing: border-box;
       -webkit-font-smoothing: antialiased;
+    }
+
+    /* Masquer le player natif Cast — notre UI personnalisée prend toute la place */
+    cast-media-player {
+      display: none !important;
     }
 
     body,
@@ -85,7 +90,7 @@
       transform: translateX(-50%);
       background: rgba(0, 168, 255, 0.15);
       border: 1.5px solid var(--blue);
-      backdrop-filter: blur(20px);
+      backdrop-filter: blur(10px);
       border-radius: 3vmin;
       padding: 2vmin 4vmin;
       font-size: 2rem;
@@ -193,7 +198,7 @@
       z-index: 1000;
       display: none;
       background: var(--glass);
-      backdrop-filter: blur(40px);
+      backdrop-filter: blur(15px);
       border: 1px solid rgba(0, 168, 255, 0.3);
       border-radius: 5vmin;
       padding: 4vmin;
@@ -258,7 +263,7 @@
       display: none;
       text-align: center;
       background: var(--glass);
-      backdrop-filter: blur(40px);
+      backdrop-filter: blur(15px);
       padding: 3.5vmin;
       border-radius: 5vmin;
       border: 2.5px solid var(--blue);
@@ -289,26 +294,6 @@
     }
 
     /* Transitions & Overlays */
-    #podium-wrap {
-      position: relative;
-      overflow: hidden;
-    }
-    
-    #podium-wrap::after {
-      content: '';
-      position: absolute;
-      top: -50%; left: -50%; width: 200%; height: 200%;
-      background: radial-gradient(circle at center, rgba(0, 168, 255, 0.15) 0%, transparent 40%);
-      z-index: -1;
-      animation: drift 20s linear infinite;
-      pointer-events: none;
-    }
-    
-    @keyframes drift {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
     #overlay-layer {
       position: fixed;
       inset: 0;
@@ -325,162 +310,116 @@
       animation: fadeIn .5s;
     }
 
+    #podium-wrap {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      padding: 0 5vw;
+    }
+
     .podium-stage {
       display: flex;
       align-items: flex-end;
-      gap: 5vmin;
-      height: 60vh;
-      width: 90vw;
+      justify-content: center;
+      gap: 3vw;
+      width: 100%;
       margin-top: 5vh;
+      perspective: 1000px;
     }
 
     .podium-box {
-      flex: 1;
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 3vh;
+      padding: 4vh 2vw;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 4vmin;
-      border-radius: 4vmin 4vmin 1vmin 1vmin;
-      background: rgba(255, 255, 255, 0.04);
+      position: relative;
+      transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      opacity: 0;
+      transform: translateY(10vh) rotateX(-20deg);
+      min-width: 20vw;
+      box-shadow: 0 4vh 12vh rgba(0,0,0,0.6);
+    }
+
+    .podium-box.animate-in {
+      opacity: 1;
+      transform: translateY(0) rotateX(0);
     }
 
     .rank-1 {
-      height: 100%;
-      border: 3px solid #FFD700;
+      height: 60vh;
+      background: linear-gradient(135deg, rgba(0, 168, 255, 0.2), rgba(138, 43, 226, 0.2));
+      border: 2px solid rgba(0, 168, 255, 0.5);
+      z-index: 10;
+      box-shadow: 0 10vh 25vh rgba(0, 168, 255, 0.3);
       order: 2;
-      background: linear-gradient(180deg, rgba(255, 215, 0, 0.1) 0%, transparent 100%);
     }
 
-    .rank-2 {
-      height: 80%;
-      border: 3px solid #C0C0C0;
-      order: 1;
-    }
+    .rank-2 { height: 48vh; order: 1; }
+    .rank-3 { height: 38vh; order: 3; }
 
-    .rank-3 {
-      height: 65%;
-      border: 3px solid #CD7F32;
-      order: 3;
+    .p-rank-label {
+      font-size: 2.2vh;
+      font-weight: 900;
+      color: rgba(255, 255, 255, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.6vh;
+      margin-bottom: 2vh;
     }
 
     .p-trophy {
-      font-size: 8rem;
-      margin-bottom: 2vmin;
+      font-size: 9vh;
+      margin-bottom: 2vh;
+      filter: drop-shadow(0 0 3vh rgba(255,255,255,0.4));
+    }
+
+    .p-name {
+      font-size: 4.5vh;
+      font-weight: 800;
+      color: #fff;
+      text-align: center;
+      margin-bottom: 1.5vh;
+      text-transform: uppercase;
+      letter-spacing: 0.1vh;
+    }
+
+    .p-score {
+      font-size: 6vh;
+      font-weight: 900;
+      color: var(--blue);
+      text-shadow: 0 0 3vh rgba(0, 168, 255, 0.4);
+    }
+
+    .p-glow {
+      position: absolute;
+      top: -15%; left: -15%; right: -15%; bottom: -15%;
+      background: radial-gradient(circle, rgba(0, 168, 255, 0.15) 0%, transparent 70%);
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 1.5s ease;
+    }
+
+    .rank-1 .p-glow { opacity: 1; }
+    .rank-1 .p-name { font-size: 5.5vh; }
+    .rank-1 .p-score { font-size: 8vh; }
+
+    .p-trophy {
+      font-size: 10rem;
+      margin-bottom: 3vmin;
       filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.3));
     }
 
     .p-name {
-      font-size: 4rem;
-      font-weight: 950;
-      text-transform: uppercase;
-      letter-spacing: 0.2vmin;
-      margin-bottom: 1vmin;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-    }
-
-    .p-stats {
-      width: 100%;
-      margin-top: 3vmin;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.5vmin;
-      padding-top: 2.5vmin;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .p-stat-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5vmin;
-    }
-
-    .p-stat-label {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: rgba(255, 255, 255, 0.5);
-      text-transform: uppercase;
-      letter-spacing: 0.1vmin;
-    }
-
-    .p-stat-val {
-      font-size: 2.4rem;
+      font-size: 4.5rem;
       font-weight: 900;
-      color: #fff;
+      margin-top: auto;
     }
-
-    .p-stat-val.blue { color: var(--blue); }
-    .p-stat-val.purple { color: var(--purple); }
-    .p-stat-val.red { color: #FF3B30; }
-
-    /* Ranking Badges */
-    .rank-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 5.5vmin;
-      height: 5.5vmin;
-      border-radius: 50%;
-      font-weight: 900;
-      font-size: 2.6rem;
-      margin-right: 2vmin;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    }
-    .badge-1 { background: linear-gradient(135deg, #FFD700, #B8860B); color: #443300; border: 2px solid #FFF; }
-    .badge-2 { background: linear-gradient(135deg, #E0E0E0, #808080); color: #333; border: 2px solid #FFF; }
-    .badge-3 { background: linear-gradient(135deg, #CD7F32, #8B4513); color: #FFF; border: 2px solid #FFF; }
-    .badge-other { background: rgba(255, 255, 255, 0.1); color: var(--blue); border: 1px solid rgba(0, 168, 255, 0.3); }
-
-    .lb-row-premium {
-      display: flex;
-      align-items: center;
-      padding: 1.5vmin 3vmin;
-      background: rgba(255, 255, 255, 0.04);
-      border-radius: 2.5vmin;
-      margin-bottom: 1.2vmin;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      transition: transform 0.3s ease;
-      animation-fill-mode: both !important;
-    }
-    
-    /* Animation Styles */
-    .anim-fade .lb-row { animation: revealFade 0.6s ease-out both; }
-    .anim-slide .lb-row { animation: revealSlide 0.6s cubic-bezier(0.19, 1, 0.22, 1) both; }
-    .anim-pop .lb-row { animation: revealPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-    .anim-classic .lb-row { animation: none; }
-
-    @keyframes revealFade {
-      from { opacity: 0; filter: blur(10px); transform: translateY(10px); }
-      to { opacity: 1; filter: blur(0); transform: translateY(0); }
-    }
-    @keyframes revealSlide {
-      from { opacity: 0; transform: translateX(100px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes revealPop {
-      from { opacity: 0; transform: scale(0.5); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    .lb-row-premium:hover { transform: translateX(10px); background: rgba(255, 255, 255, 0.08); }
-
-    .lb-stats-inline {
-      display: flex;
-      gap: 3vmin;
-      margin-left: auto;
-      align-items: center;
-    }
-    .lb-stat {
-      display: flex;
-      align-items: center;
-      gap: 1vmin;
-      font-size: 2rem;
-      font-weight: 700;
-      color: rgba(255, 255, 255, 0.8);
-    }
-    .lb-stat i { font-size: 1.6rem; opacity: 0.6; }
 
     /* Utils */
     .pos-top-right {
@@ -535,7 +474,7 @@
       overflow: hidden;
       background: rgba(0, 168, 255, 0.12);
       border-top: 1.5px solid rgba(0, 168, 255, 0.4);
-      backdrop-filter: blur(20px);
+      backdrop-filter: blur(10px);
     }
 
     #qr-ticker.visible {
@@ -578,13 +517,32 @@
       margin: 0 2vmin;
     }
 
+    /* Animation Styles */
+    .anim-fade .lb-row { animation: revealFade 0.6s ease-out both; }
+    .anim-slide .lb-row { animation: revealSlide 0.6s cubic-bezier(0.19, 1, 0.22, 1) both; }
+    .anim-pop .lb-row { animation: revealPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+    .anim-classic .lb-row { animation: none; }
+
+    @keyframes revealFade {
+      from { opacity: 0; filter: blur(10px); transform: translateY(10px); }
+      to { opacity: 1; filter: blur(0); transform: translateY(0); }
+    }
+    @keyframes revealSlide {
+      from { opacity: 0; transform: translateX(100px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes revealPop {
+      from { opacity: 0; transform: scale(0.5); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
     /* Rules overlay */
     #rules-overlay {
       position: fixed;
       inset: 0;
       z-index: 60000;
       background: rgba(9, 7, 43, 0.85); /* Slightly darker backdrop */
-      backdrop-filter: blur(40px);
+      backdrop-filter: blur(15px);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -641,7 +599,7 @@
       inset: 0;
       z-index: 65000;
       background: rgba(9, 7, 43, 0.95);
-      backdrop-filter: blur(30px);
+      backdrop-filter: blur(15px);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -713,7 +671,6 @@
       margin-bottom: 2vh;
       background: linear-gradient(135deg, #fff 30%, var(--blue));
       -webkit-background-clip: text;
-      background-clip: text;
       -webkit-text-fill-color: transparent;
       filter: drop-shadow(0 1vh 2vh rgba(0, 0, 0, 0.5));
     }
@@ -800,9 +757,9 @@
     }
 
     .rules-countdown-bar {
+      height: 100%;
       background: var(--blue);
       border-radius: 1vmin;
-      background-clip: padding-box;
       animation: rulesCountdown var(--rules-duration, 8s) linear forwards;
     }
 
@@ -883,6 +840,161 @@
         transform: translateX(-50%);
       }
     }
+
+    /* QCM Overlay */
+    #qcm-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #09072B;
+      z-index: 66000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6vmin;
+      box-sizing: border-box;
+      gap: 5vmin;
+    }
+
+    #qcm-overlay.visible { display: flex; animation: fadeIn .6s cubic-bezier(0.165, 0.84, 0.44, 1); }
+
+    #qcm-main {
+      display: flex;
+      gap: 8vmin;
+      align-items: center;
+      width: 100%;
+      max-width: 150vmin;
+    }
+
+    #qcm-side-image {
+      display: none;
+      width: 60vmin;
+      height: 45vmin;
+      object-fit: cover;
+      border-radius: 2.5vmin; /* ~8px for common TV sizes */
+      box-shadow: 0 30px 80px rgba(0,0,0,0.8);
+      flex-shrink: 0;
+      border: 3px solid rgba(255,255,255,0.2);
+    }
+
+    #qcm-timer-bar-wrap {
+      width: 100%;
+      max-width: 120vmin;
+      height: 1.2vmin;
+      background: rgba(255,255,255,0.1);
+      border-radius: 1vmin;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    #qcm-timer-bar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #00A8FF, #8A2BE2);
+      border-radius: 1vmin;
+      transition: width 1s linear, background 0.5s;
+    }
+
+    #qcm-question {
+      font-size: 6.5rem;
+      font-weight: 900;
+      text-align: left;
+      line-height: 1.15;
+      color: #fff;
+      text-shadow: 0 10px 40px rgba(0,0,0,0.6);
+      margin-bottom: 2vmin;
+    }
+
+    #qcm-choices {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3.5vmin;
+      width: 100%;
+    }
+
+    .qcm-tv-btn {
+      background: rgba(26, 26, 58, 0.6);
+      border: 2px solid rgba(0, 168, 255, 0.2);
+      border-radius: 2.2vmin; /* ~8px */
+      padding: 3.5vmin 4.5vmin;
+      font-size: 4rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 3vmin;
+      transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .qcm-tv-btn::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(0, 168, 255, 0.1), transparent);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .qcm-tv-btn .label {
+      font-size: 3rem;
+      font-weight: 900;
+      color: #00A8FF;
+      background: rgba(0, 168, 255, 0.1);
+      width: 6vmin;
+      height: 6vmin;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 1.5vmin;
+      margin-right: 1.5vmin;
+    }
+
+    .qcm-tv-btn.correct {
+      background: rgba(0,200,83,0.25);
+      border-color: #00c853;
+      color: #fff;
+      transform: scale(1.05);
+      box-shadow: 0 0 50px rgba(0,200,83,0.3);
+    }
+    
+    .qcm-tv-btn.correct .label {
+        background: #00c853;
+        color: #fff;
+    }
+
+    .qcm-tv-btn.wrong {
+      opacity: 0.15;
+      filter: grayscale(1);
+      transform: scale(0.95);
+    }
+
+    .qcm-tv-btn .answer-count {
+      margin-left: auto;
+      font-size: 2.8rem;
+      font-weight: 900;
+      color: #00A8FF;
+      opacity: 0;
+      transform: translateX(20px);
+      transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    .qcm-tv-btn.results .answer-count {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .version-tag {
+        position: fixed;
+        bottom: 2vmin;
+        left: 3vmin;
+        font-size: 1.6rem;
+        font-weight: 900;
+        color: rgba(0, 168, 255, 0.2);
+        z-index: 100000;
+        letter-spacing: 0.2vmin;
+        text-transform: uppercase;
+    }
   </style>
 </head>
 
@@ -891,7 +1003,7 @@
 
   <div id="idle">
     <img id="logo-idle" class="idle-logo">
-    <div class="idle-status">PRÊT À QWIZZER</div>
+    <div class="idle-status">PRÊT À QWIZZER ?</div>
   </div>
 
   <div id="player-scene">
@@ -918,7 +1030,7 @@
   </div>
 
   <div id="qr-float" class="pos-top-right">
-    <div class="qr-title">SCANNER & JOUER</div>
+    <div class="qr-title">Rejoindre la partie</div>
     <div class="qr-img"><img id="img-qr" style="width:100%;height:100%;object-fit:contain"></div>
   </div>
 
@@ -932,16 +1044,10 @@
         style="font-size:12rem; font-weight:900; letter-spacing:6vmin; text-transform:uppercase; filter: drop-shadow(0 0 50px var(--blue))">
         CATEGORY</h1>
     </div>
-    <div id="podium-wrap" style="display:none; flex-direction:column; align-items:center; width:100%; height:100%; justify-content: flex-start; padding-top: 5vh">
-      <h1 class="rules-mode-badge">Résultats de la partie</h1>
-      <h1 style="font-size:10rem; font-weight:900; background: linear-gradient(135deg, #FFF 40%, var(--blue)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-transform:uppercase; margin-bottom:1vmin; filter: drop-shadow(0 0 40px rgba(0, 168, 255, 0.4))">
-        PODIUM</h1>
-      
-      <div id="podium-items" class="podium-stage" style="margin-bottom: 6vh"></div>
-      
-      <div id="lb-final-wrap" style="width: 85vw; max-height: 25vh; overflow: visible;">
-        <div id="lb-final-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2vmin;"></div>
-      </div>
+    <div id="podium-wrap" style="display:none; flex-direction:column; align-items:center; width:100%">
+      <h1 style="font-size:6rem; font-weight:900; color:var(--blue); text-transform:uppercase; margin-bottom:5vmin">Top
+        Players</h1>
+      <div id="podium-items" class="podium-stage"></div>
     </div>
   </div>
 
@@ -962,19 +1068,41 @@
     </div>
   </div>
 
+  <div id="qcm-overlay">
+    <div id="qcm-timer-bar-wrap">
+      <div id="qcm-timer-bar"></div>
+    </div>
+    <div id="qcm-main">
+      <img id="qcm-side-image" src="" alt="">
+      <div style="display:flex;flex-direction:column;flex:1;min-width:0;">
+        <div id="qcm-question">Chargement...</div>
+        <div id="qcm-choices"></div>
+      </div>
+    </div>
+  </div>
+
   <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="logo-top" style="width:25vmin"></div>
+  <div class="version-tag">V5.4.0</div>
   <div id="reload-toast">⟳ &nbsp;Rechargement en cours...</div>
   <cast-media-player></cast-media-player>
 
   <script>
-    // Master State V5.3.2 — QR local, leaderboard toggle, Cast channel
+    // Master State V5.3.4 — base64 logo/QR + Mode QCM
     var STATE = {
       serverURL: '', track: null, revealed: false,
       showScores: false, scoreMode: 'br',
       showQR: false, qrURL: '', qrPos: 'top-right', qrDynamic: true,
       isPaused: false, pauseMessage: '',
-      endGame: false, currentTrackID: null, currentCoverKey: null
+      endGame: false, currentTrackID: null, currentCoverKey: null,
+      logoBase64: null, qrBase64: null, hasBase64Logo: false,
+      qcmDuration: 30
     };
+    const _labels = ['A', 'B', 'C', 'D'];
+
+    if (typeof cast === 'undefined' || !cast.framework) {
+      document.body.innerHTML = '<div style="color:red;font-size:4vmin;padding:5vmin">ERREUR: Cast SDK non chargé</div>';
+      throw new Error('Cast SDK unavailable');
+    }
 
     const ctx = cast.framework.CastReceiverContext.getInstance();
     const pm = ctx.getPlayerManager();
@@ -982,6 +1110,16 @@
     function sync(d) {
       if (!d) return;
       if (typeof d === 'string') { try { d = JSON.parse(d); } catch (e) { return; } }
+      
+      console.log("Receiver Sync:", d.type || "state_update", d);
+
+      // Throttle polling when receiving live messages via custom channel
+      if (window.poll && d.serverURL === undefined) { 
+          clearInterval(window.poll);
+          window.poll = setInterval(() => { 
+              fetch(STATE.serverURL + '/tv_state').then(r => r.json()).then(sync).catch(() => { }) 
+          }, 8000); 
+      }
 
       if (d.type === 'reload') {
         var toast = document.getElementById('reload-toast');
@@ -990,20 +1128,164 @@
         return;
       }
 
+      if (d.type === 'clear') {
+        STATE.track = null; STATE.endGame = false; STATE.showQR = false; STATE.qrBase64 = null;
+        if (window.poll) { clearInterval(window.poll); window.poll = null; }
+        document.getElementById('idle').classList.remove('gone');
+        document.getElementById('player-scene').classList.remove('visible');
+        document.getElementById('overlay-layer').classList.remove('active');
+        document.getElementById('rules-overlay').classList.remove('active');
+        document.getElementById('qcm-overlay').classList.remove('visible');
+        return;
+      }
+
       if (d.serverURL) {
         STATE.serverURL = d.serverURL.endsWith('/') ? d.serverURL.slice(0, -1) : d.serverURL;
-        ['logo-idle', 'logo-top'].forEach(id => document.getElementById(id).src = STATE.serverURL + '/tv_logo?t=' + Date.now());
-        // Polling fallback toutes les 5s pour rester synchronisé
-        if (!window.poll) window.poll = setInterval(() => { fetch(STATE.serverURL + '/tv_state').then(r => r.json()).then(sync).catch(() => { }) }, 5000);
+        if (!STATE.hasBase64Logo) {
+          ['logo-idle', 'logo-top'].forEach(id => {
+              var el = document.getElementById(id);
+              if (el) el.src = STATE.serverURL + '/tv_logo?t=' + Date.now();
+          });
+        }
+        if (!window.poll) window.poll = setInterval(() => { fetch(STATE.serverURL + '/tv_state').then(r => r.json()).then(sync).catch(() => { }) }, 2000);
+      }
+
+      // Handle Base64 Logo
+      if (d.logoBase64) {
+        STATE.hasBase64Logo = true;
+        STATE.logoBase64 = d.logoBase64;
+        ['logo-idle', 'logo-top'].forEach(id => {
+            var el = document.getElementById(id);
+            if (el) el.src = d.logoBase64;
+        });
+      }
+
+      // ── QCM ─────────────────────────────────────────────────────────────────
+      // Process QCM FIRST so the overlay is always rendered regardless of track state
+      try {
+        if (d.type === 'qcm_question' || (d.qcmActive && d.question && !d.isQCMRevealed)) {
+          STATE.qcmDuration = d.duration || STATE.qcmDuration || 30;
+          STATE.qcmImageURL = d.imageURL || null;
+          
+          var qText = d.question || document.getElementById('qcm-question').textContent || '';
+          document.getElementById('qcm-question').textContent = qText;
+          
+          var sideImg = document.getElementById('qcm-side-image');
+          sideImg.style.display = 'none';
+          if (d.imageURL) sideImg.src = d.imageURL;
+
+          document.getElementById('qcm-choices').style.gridTemplateColumns = '1fr 1fr';
+          var choicesEl = document.getElementById('qcm-choices');
+          var rawChoices = d.choices || [];
+          if (rawChoices.length > 0) {
+            choicesEl.innerHTML = rawChoices.map((c, i) =>
+              '<div class="qcm-tv-btn" id="qcm-choice-' + i + '">'
+              + '<span class="label">' + (_labels[i] || (i + 1)) + '</span>'
+              + '<span>' + c + '</span>'
+              + '<span class="answer-count" id="qcm-count-' + i + '"></span>'
+              + '</div>'
+            ).join('');
+          }
+          
+          var bar = document.getElementById('qcm-timer-bar');
+          if (d.type === 'qcm_question') {
+            bar.style.transition = 'none'; bar.style.width = '100%';
+            bar.style.background = 'linear-gradient(90deg, var(--blue), var(--purple))';
+          } else if (d.remaining !== undefined) {
+            var pct = Math.max(0, (d.remaining / STATE.qcmDuration) * 100);
+            bar.style.transition = 'none'; bar.style.width = pct + '%';
+            if (pct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
+            else if (pct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
+            else bar.style.background = 'linear-gradient(90deg, var(--blue), var(--purple))';
+          }
+          
+          // CRITICAL: Hide everything under the QCM
+          document.getElementById('idle').classList.add('gone');
+          document.getElementById('qcm-overlay').classList.add('visible');
+          document.getElementById('rules-overlay').classList.remove('active');
+          
+          applyUI(d);
+          return; // Don't process track/reveal logic while QCM is active
+
+        } else if (d.type === 'qcm_timer') {
+          var remaining = d.remaining;
+          var pct = Math.max(0, (remaining / STATE.qcmDuration) * 100);
+          var bar = document.getElementById('qcm-timer-bar');
+          bar.style.transition = 'width 1s linear';
+          bar.style.width = pct + '%';
+          if (pct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
+          else if (pct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
+          return;
+
+        } else if (d.type === 'qcm_reveal' || (d.qcmActive && d.isQCMRevealed)) {
+          var correct = d.correctIndex;
+          var answers = d.answers || {};
+          var imgURL = d.imageURL || STATE.qcmImageURL;
+          
+          if (imgURL) {
+            var sideImg = document.getElementById('qcm-side-image');
+            sideImg.src = imgURL;
+            sideImg.style.display = 'block';
+            sideImg.style.animation = 'fadeIn .8s cubic-bezier(0.165, 0.84, 0.44, 1)';
+            document.getElementById('qcm-choices').style.gridTemplateColumns = '1fr';
+          }
+
+          var counts = {};
+          var ansValues = Object.values(answers);
+          for (var k = 0; k < ansValues.length; k++) { 
+            var idx = ansValues[k];
+            counts[idx] = (counts[idx] || 0) + 1; 
+          }
+          
+          document.querySelectorAll('.qcm-tv-btn').forEach(function(btn, i) {
+            if (i === correct) btn.classList.add('correct');
+            else btn.classList.add('wrong');
+            btn.classList.add('results');
+            var countEl = document.getElementById('qcm-count-' + i);
+            if (countEl && counts[i]) countEl.textContent = '×' + counts[i];
+          });
+          document.getElementById('qcm-timer-bar').style.transition = 'none';
+          document.getElementById('idle').classList.add('gone');
+          document.getElementById('qcm-overlay').classList.add('visible');
+          applyUI(d);
+          return; // Don't process track logic while in reveal
+
+        } else if (d.type === 'qcm_stop') {
+          document.getElementById('qcm-overlay').classList.remove('visible');
+          document.getElementById('qcm-choices').innerHTML = '';
+          var si = document.getElementById('qcm-side-image');
+          si.style.display = 'none'; si.src = '';
+        }
+      } catch (err) {
+        console.error("QCM Process Error:", err);
+      }
+
+      // ── TRACK ────────────────────────────────────────────────────────────────
+      if (d.type === 'cover_update' && d.coverBase64) {
+        if (d.trackID === STATE.currentTrackID || !STATE.currentTrackID) applyCover(d.coverBase64);
       }
 
       if (d.type === 'track_update' || d.trackID || (d.track && d.track.trackID)) render(d.track || d);
       if (d.type === 'reveal' || d.gameState === 'revealed' || d.reveal === true) doReveal();
 
-      // Mettre à jour la visibilité depuis chaque message
+      // ── QR CODE ──────────────────────────────────────────────────────────────
+      // Direct canal command takes priority; polling fills in when not a direct command
+      if (d.type === 'show_qr') {
+        STATE.showQR = d.show;  // trust direct show/hide command absolutely
+        if (d.url) STATE.qrURL = d.url;
+        if (d.position) STATE.qrPos = d.position;
+        if (d.dynamic !== undefined) STATE.qrDynamic = d.dynamic;
+        if (d.qrBase64) { STATE.qrBase64 = d.qrBase64; console.log("QR base64 received"); }
+      } else if (d.showQR !== undefined) {
+        // From polling — sync state from server truth
+        STATE.showQR = (d.showQR === true || d.showQR === "true");
+        if (d.qrBase64) STATE.qrBase64 = d.qrBase64;
+        if (d.qrPosition) STATE.qrPos = d.qrPosition;
+      }
+
+      // ── UI CONFIG ────────────────────────────────────────────────────────────
       if (d.showScores !== undefined) STATE.showScores = (d.showScores === true || d.showScores === "true");
-      if (d.showQR !== undefined) STATE.showQR = (d.showQR === true || d.showQR === "true");
-      if (d.qrPosition) STATE.qrPos = d.qrPosition;
+      if (d.qrPosition && d.type !== 'show_qr') STATE.qrPos = d.qrPosition;
       if (d.scoreAnimationMode) STATE.scoreMode = d.scoreAnimationMode;
 
       if (d.type === 'appearance' && d.data) {
@@ -1013,14 +1295,8 @@
         if (d.data.scoreRevealAnimation) STATE.scoreRevealAnimation = d.data.scoreRevealAnimation;
         if (d.data.qrCodeDynamicPositioning !== undefined) STATE.qrDynamic = d.data.qrCodeDynamicPositioning;
       }
-      if (d.type === 'show_qr') {
-        STATE.showQR = d.show;
-        if (d.url) STATE.qrURL = d.url;
-        if (d.position) STATE.qrPos = d.position;
-        if (d.dynamic !== undefined) STATE.qrDynamic = d.dynamic;
-      }
 
-      // Handle pause updates
+      // ── PAUSE ────────────────────────────────────────────────────────────────
       if (d.type === 'isPaused') {
         STATE.isPaused = d.data;
         if (d.pauseMessage) STATE.pauseMessage = d.pauseMessage;
@@ -1031,51 +1307,83 @@
 
       applyUI(d);
 
-      if (d.type === 'mode_switch') showRules(d);
-      if (d.type === 'hide_rules') document.getElementById('rules-overlay').classList.remove('active');
+      // ── RULES ───────────────────────────────────────────────────────────────
+      if (d.type === 'mode_switch') {
+        showRules(d);
+      } else if (d.type === 'hide_rules') {
+        document.getElementById('rules-overlay').classList.remove('active');
+      } else if (d.rulesVisible !== undefined) {
+        // Polling: sync rules visibility from server truth
+        var rulesOverlay = document.getElementById('rules-overlay');
+        if (d.rulesVisible && d.rules) {
+          if (!rulesOverlay.classList.contains('active')) showRules(d);
+        } else if (!d.rulesVisible) {
+          rulesOverlay.classList.remove('active');
+        }
+      }
+
       if (d.type === 'category_transition') transition(d);
       if (d.type === 'end_game') podium(d.data);
     }
 
     function render(t) {
       if (!t || !t.trackID) return;
-      if (STATE.endGame) return; // Ne pas écraser le podium de fin de partie
+      if (STATE.endGame) return; 
+      
+      var isNewTrack = (t.trackID !== STATE.currentTrackID);
       STATE.track = t;
+      STATE.currentTrackID = t.trackID;
       STATE.revealed = (t.gameState === 'revealed' || t.reveal === true);
 
       document.getElementById('idle').classList.add('gone');
       document.getElementById('player-scene').classList.add('visible');
-      document.getElementById('overlay-layer').classList.remove('active');
-      document.getElementById('rules-overlay').classList.remove('active');
       document.body.classList.remove('video-active');
 
-      // Affichage caché : "QUEL EST LE TITRE ?" / dévoilé : titre + artiste réels
       document.getElementById('t-title').textContent = STATE.revealed ? (t.title || "") : "QUEL EST LE TITRE ?";
       document.getElementById('t-artist').textContent = STATE.revealed ? (t.artist || "") : "???";
 
-      // Résoudre la source cover — customData envoie coverURL (absolu), track_update envoie cover (relatif)
+      if (isNewTrack) {
+        // Reset images for new track to avoid ghosting
+        var i = document.getElementById('img-main'), b = document.getElementById('img-blur');
+        i.style.opacity = '0'; b.style.opacity = '0';
+        i.removeAttribute('src'); b.removeAttribute('src');
+        STATE.currentCoverKey = null;
+      }
+
+      // Résoudre la source cover
       var rawCover = t.cover || t.coverURL || null;
       var coverSrc = null;
       if (rawCover && !rawCover.includes('no_cover')) {
         coverSrc = rawCover.startsWith('http') ? rawCover : (STATE.serverURL + rawCover);
-        // Clé de comparaison sans timestamp (?t=...) pour éviter rechargements inutiles
         coverSrc = coverSrc.replace(/[?&]t=\d+/g, '');
       }
       var coverKey = t.trackID + '|' + (coverSrc || 'nocover');
 
-      // Recharger uniquement si la piste ou la pochette a changé
       if (coverKey !== STATE.currentCoverKey) {
-        STATE.currentTrackID = t.trackID;
         STATE.currentCoverKey = coverKey;
         var i = document.getElementById('img-main'), b = document.getElementById('img-blur');
-        i.removeAttribute('src'); b.removeAttribute('src');
-        i.style.opacity = '0'; b.style.opacity = '0';
         if (coverSrc) {
-          b.src = coverSrc; b.onload = () => { if (t.shouldBlur && !STATE.revealed) b.style.opacity = '1'; };
+          b.src = coverSrc; b.onload = () => { if (STATE.track.shouldBlur && !STATE.revealed) b.style.opacity = '1'; };
           i.src = coverSrc; if (STATE.revealed) { i.style.opacity = '1'; b.style.opacity = '0'; }
         }
       }
+      
+      // Priorité Base64 si disponible
+      if (t.coverBase64) {
+          applyCover(t.coverBase64);
+      }
+
       if (STATE.revealed) doReveal();
+    }
+
+    function applyCover(base64) {
+      var i = document.getElementById('img-main'), b = document.getElementById('img-blur');
+      if (!base64) return;
+      if (STATE.track && STATE.track.shouldBlur && !STATE.revealed) {
+        b.src = base64; b.style.opacity = '1';
+      } else {
+        i.src = base64; i.style.opacity = '1'; b.style.opacity = '0';
+      }
     }
 
     function doReveal() {
@@ -1093,33 +1401,47 @@
       var lb = document.getElementById('leaderboard');
       if (STATE.showScores) {
         var animClass = 'anim-' + (STATE.scoreRevealAnimation || 'fade');
-        lb.className = (STATE.scoreMode === 'full' ? 'mode-full ' : 'mode-br ') + animClass;
+        var newClassName = (STATE.scoreMode === 'full' ? 'mode-full ' : 'mode-br ') + animClass;
+        if (lb.className !== newClassName) lb.className = newClassName;
         lb.style.display = STATE.scoreMode === 'full' ? 'flex' : 'block';
+        
         if (d && d.players) {
           var s = d.players.sort((a, b) => b.score - a.score).slice(0, 8);
-          document.getElementById('lb-list').innerHTML = s.map((p, idx) => {
+          var html = s.map((p, idx) => {
             var delay = (idx * 0.15).toFixed(2) + 's';
             return `<div class="lb-row" style="animation-delay: ${delay}"><span class="lb-rank">${idx + 1}</span><span class="lb-name">${p.name}</span><span class="lb-score">${p.score} pts</span></div>`;
           }).join('');
+          
+          var listEl = document.getElementById('lb-list');
+          if (listEl.innerHTML !== html) listEl.innerHTML = html; // Simple check to avoid flicker
         }
-      } else { lb.className = ''; lb.style.display = 'none'; }
+      } else { 
+        if (lb.style.display !== 'none') {
+            lb.className = ''; 
+            lb.style.display = 'none'; 
+        }
+      }
 
       // QR Code — mode flottant (sans piste) ou bandeau défilant (piste en cours)
       var qr = document.getElementById('qr-float');
       var ticker = document.getElementById('qr-ticker');
-      if (STATE.showQR && STATE.serverURL) {
-        var qrSrc = STATE.serverURL + '/qr_code?t=' + Date.now();
+      if (STATE.showQR && (STATE.serverURL || STATE.qrBase64)) {
+        var qrSrc = STATE.qrBase64 || (STATE.serverURL + '/qr_code?t=' + Date.now());
+        
         if (STATE.track && STATE.qrDynamic) {
           // Bandeau défilant en bas
           qr.classList.remove('visible'); qr.style.display = 'none';
-          var item = '<div class="ticker-item"><img class="ticker-qr" src="' + qrSrc + '"><span class="ticker-text">Rejoins la partie sur QWIZZ</span><span class="ticker-sep">◆</span></div>';
-          document.getElementById('ticker-inner').innerHTML = item + item;
+          var item = '<div class="ticker-item"><img class="ticker-qr" src="' + qrSrc + '"><span class="ticker-text">SCANNER & JOUER</span><span class="ticker-sep">◆</span></div>';
+          var tickerInner = document.getElementById('ticker-inner');
+          if (tickerInner.innerHTML !== (item + item)) tickerInner.innerHTML = item + item;
           ticker.classList.add('visible');
         } else {
           // QR flottant classique
           ticker.classList.remove('visible');
-          qr.className = 'visible pos-' + STATE.qrPos;
-          document.getElementById('img-qr').src = qrSrc;
+          var newQrClass = 'visible pos-' + STATE.qrPos;
+          if (qr.className !== newQrClass) qr.className = newQrClass;
+          var qrImg = document.getElementById('img-qr');
+          if (qrImg.src !== qrSrc) qrImg.src = qrSrc;
           qr.style.display = 'block';
         }
       } else {
@@ -1130,12 +1452,14 @@
       // Pause Mode
       var pauseOver = document.getElementById('pause-overlay');
       if (STATE.isPaused) {
-        pauseOver.classList.add('active');
-        document.getElementById('pause-msg').textContent = STATE.pauseMessage || "";
+        if (!pauseOver.classList.contains('active')) pauseOver.classList.add('active');
+        var msgEl = document.getElementById('pause-msg');
+        if (msgEl.textContent !== STATE.pauseMessage) msgEl.textContent = STATE.pauseMessage || "";
       } else {
-        pauseOver.classList.remove('active');
+        if (pauseOver.classList.contains('active')) pauseOver.classList.remove('active');
       }
     }
+
 
     function transition(d) {
       document.getElementById('cat-name').textContent = d.name;
@@ -1146,66 +1470,42 @@
     }
 
     function podium(data) {
-      STATE.endGame = true; 
-      var sorted = data.sort((a, b) => b.score - a.score);
-      var top3 = sorted.slice(0, 3);
-      var others = sorted.slice(3, 11); // Show up to 8 more in the bottom grid
-      var m = ["🥈", "🥇", "🥉"];
+      STATE.endGame = true;
+      var top3 = data.sort((a, b) => b.score - a.score).slice(0, 3);
+      var medals = ["🥈", "🥇", "🥉"];
+      var ranks = ["2nd", "1st", "3rd"]; // Logical order for podium layout is often 2-1-3
       
-      // Render Top 3
-      document.getElementById('podium-items').innerHTML = top3.map((p, idx) => {
-        var rank = idx + 1;
-        // Swap 1 and 2 for visual order (2-1-3)
-        var visualIdx = idx;
-        if (idx === 0) visualIdx = 1; // 2nd place
-        else if (idx === 1) visualIdx = 0; // 1st place
-        
+      // We want to display them in order 2, 1, 3 for visual podium look
+      var podiumOrder = [];
+      if (top3.length > 1) podiumOrder.push({ p: top3[1], r: 2 });
+      if (top3.length > 0) podiumOrder.push({ p: top3[0], r: 1 });
+      if (top3.length > 2) podiumOrder.push({ p: top3[2], r: 3 });
+      
+      document.getElementById('podium-items').innerHTML = podiumOrder.map(item => {
+        var p = item.p;
+        var r = item.r;
         return `
-          <div class="podium-box rank-${rank}" style="order: ${visualIdx}">
-            <div class="p-trophy">${m[idx]}</div>
+          <div class="podium-box rank-${r} premium-entry">
+            <div class="p-rank-label">${ranks[r-1]}</div>
+            <div class="p-trophy">${medals[r-1]}</div>
             <div class="p-name">${p.name}</div>
-            <div style="font-size:4rem; color:var(--blue); font-weight:900; margin-bottom:1vmin">${p.score} <span style="font-size:2rem; opacity:0.7">pts</span></div>
-            <div class="p-stats">
-              <div class="p-stat-item">
-                <span class="p-stat-label">Temps</span>
-                <span class="p-stat-val blue">${p.avgTime}s</span>
-              </div>
-              <div class="p-stat-item">
-                <span class="p-stat-label">Bon</span>
-                <span class="p-stat-val purple">${p.correct}</span>
-              </div>
-              <div class="p-stat-item">
-                <span class="p-stat-label">Faux</span>
-                <span class="p-stat-val red">${p.wrong}</span>
-              </div>
-            </div>
+            <div class="p-score">${p.score} <span style="font-size:1.5rem;opacity:0.6">PTS</span></div>
+            <div class="p-glow"></div>
           </div>
         `;
       }).join('');
-
-      // Render Others
-      document.getElementById('lb-final-list').innerHTML = others.map((p, idx) => {
-        var rank = idx + 4;
-        return `
-          <div class="lb-row-premium">
-            <div class="rank-badge badge-other">${rank}</div>
-            <div class="lb-name" style="font-size:2.8rem; padding:0">${p.name}</div>
-            <div class="lb-stats-inline">
-              <div class="lb-stat"><span style="color:var(--blue)">${p.score}</span> <span style="font-size:1.4rem; opacity:0.6">pts</span></div>
-              <div class="lb-stat"><span style="font-size:1.4rem; opacity:0.4">⏱</span> ${p.avgTime}s</div>
-              <div class="lb-stat"><span style="color:#00C853">✓</span> ${p.correct}</div>
-            </div>
-          </div>
-        `;
-      }).join('');
-
+      
       document.getElementById('overlay-layer').classList.add('active');
       document.getElementById('podium-wrap').style.display = 'flex';
       document.getElementById('cat-wrap').style.display = 'none';
       
-      // Hide standard leaderboard and other UI
-      document.getElementById('leaderboard').style.display = 'none';
-      document.getElementById('player-scene').classList.remove('visible');
+      // Trigger confetti if possible or just a nice CSS scale
+      setTimeout(() => {
+          document.querySelectorAll('.premium-entry').forEach((el, i) => {
+              el.style.animationDelay = (i * 0.3) + "s";
+              el.classList.add('animate-in');
+          });
+      }, 100);
     }
 
     function showRules(d) {
@@ -1221,7 +1521,6 @@
       if (d.points !== undefined) chips.push({ label: 'Bonne réponse', val: '+' + d.points + ' pts', color: true });
       if (d.wrong && d.wrong < 0) chips.push({ label: 'Mauvaise réponse', val: d.wrong + ' pts', color: false });
       else if (d.wrong) chips.push({ label: 'Pénalité', val: '-' + d.wrong + ' pts', color: false });
-      if (d.cheat && d.cheat > 0) chips.push({ label: 'Triche', val: '-' + d.cheat + ' pts', color: false });
       if (d.timer && d.timer > 0) chips.push({ label: 'Temps / réponse', val: d.timer + 's', color: true });
       if (d.speed) chips.push({ label: 'Bonus vitesse', val: 'Activé', color: true });
       if (d.streak) chips.push({ label: 'Bonus série', val: 'Activé', color: true });
@@ -1244,20 +1543,22 @@
       return req;
     });
 
-    // Écouter les messages du canal Cast (urn:x-cast:com.qwizz.control)
-    ctx.addCustomMessageListener('urn:x-cast:com.qwizz.control', e => sync(e.data));
-
-    // Signal sender when it connects so CastManager can push full state immediately
-    ctx.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, function(event) {
-        setTimeout(function() {
-            try {
-                ctx.sendCustomMessage('urn:x-cast:com.qwizz.control', event.senderId, JSON.stringify({ type: 'ready' }));
-                console.log('QWIZZ: sent ready to sender', event.senderId);
-            } catch(e) { console.warn('QWIZZ: ready send failed', e); }
-        }, 300);
-    });
-
-    ctx.start({ disableIdleTimeout: true });
+    // start() en premier — certaines versions récentes du CAF SDK l'exigent avant addCustomMessageListener
+    // customNamespaces déclaré dans les options (obligatoire dans les versions récentes)
+    try {
+      var msgType = (cast.framework.system && cast.framework.system.MessageType)
+        ? cast.framework.system.MessageType.STRING
+        : 'string';
+      ctx.start({
+        disableIdleTimeout: true,
+        maxInactivity: 3600,
+        customNamespaces: { 'urn:x-cast:com.qwizz.control': msgType }
+      });
+      ctx.addCustomMessageListener('urn:x-cast:com.qwizz.control', function(e) { sync(e.data); });
+    } catch(e) {
+      console.error('QWIZZ receiver init error:', e);
+      document.body.innerHTML = '<div style="color:red;font-size:3vmin;padding:5vmin;font-family:monospace">ERREUR INIT:<br>' + e.message + '</div>';
+    }
 
     // Empêcher la TV de passer en veille via la Screen Wake Lock API
     async function keepAwake() {
