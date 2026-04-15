@@ -1284,7 +1284,7 @@
       isPaused: false, pauseMessage: '',
       endGame: false, currentTrackID: null, currentCoverKey: null,
       logoBase64: null, qrBase64: null, hasBase64Logo: false,
-      qcmDuration: 30
+      qcmDuration: 30, qcmCurrentQuestion: null
     };
     const _labels = ['A', 'B', 'C', 'D'];
 
@@ -1360,33 +1360,22 @@
           STATE.qcmImageURL = d.imageURL || null;
           
           var qText = d.question || document.getElementById('qcm-question').textContent || '';
-          document.getElementById('qcm-question').textContent = qText;
           
-          var sideImg = document.getElementById('qcm-side-image');
-          var mainEl = document.getElementById('qcm-main');
-          var summaryEl = document.getElementById('qcm-global-summary');
-          
-          sideImg.style.display = 'none';
-          mainEl.classList.remove('with-image');
-          if (summaryEl) summaryEl.classList.remove('visible');
-          
-          if (d.imageURL) {
-            sideImg.src = d.imageURL;
-            // Ne pas afficher tout de suite si c'est pas encore revealé
-            // Mais la logique de V5 disait: si imageURL alors on display block dans le reveal 
-            // C'est géré plus bas.
-          }
-
-          var choicesEl = document.getElementById('qcm-choices');
-          var rawChoices = d.choices || [];
-          if (rawChoices.length > 0) {
-            choicesEl.innerHTML = rawChoices.map((c, i) =>
-              '<div class="qcm-tv-btn" id="qcm-choice-' + i + '">'
-              + '<span class="label">' + (_labels[i] || (i + 1)) + '</span>'
-              + '<span>' + c + '</span>'
-              + '<span class="answer-count" id="qcm-count-' + i + '"></span>'
-              + '</div>'
-            ).join('');
+          if (STATE.qcmCurrentQuestion !== qText || d.type === 'qcm_question') {
+            STATE.qcmCurrentQuestion = qText;
+            document.getElementById('qcm-question').textContent = qText;
+            
+            var choicesEl = document.getElementById('qcm-choices');
+            var rawChoices = d.choices || [];
+            if (rawChoices.length > 0) {
+              choicesEl.innerHTML = rawChoices.map((c, i) =>
+                '<div class="qcm-tv-btn" id="qcm-choice-' + i + '">'
+                + '<span class="label">' + (_labels[i] || (i + 1)) + '</span>'
+                + '<span>' + c + '</span>'
+                + '<span class="answer-count" id="qcm-count-' + i + '"></span>'
+                + '</div>'
+              ).join('');
+            }
           }
           
           var bar = document.getElementById('qcm-timer-bar');
@@ -1395,7 +1384,8 @@
             bar.style.background = 'linear-gradient(90deg, #00A8FF, #8A2BE2)';
           } else if (d.remaining !== undefined) {
             var pct = Math.max(0, (d.remaining / STATE.qcmDuration) * 100);
-            bar.style.transition = 'none'; bar.style.width = pct + '%';
+            bar.style.transition = 'width 0.5s linear';
+            bar.style.width = pct + '%';
             if (pct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
             else if (pct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
             else bar.style.background = 'linear-gradient(90deg, #00A8FF, #8A2BE2)';
