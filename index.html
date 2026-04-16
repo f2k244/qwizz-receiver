@@ -1372,7 +1372,16 @@
         if (!window.poll) window.poll = setInterval(() => { fetch(STATE.serverURL + '/tv_state').then(r => r.json()).then(sync).catch(() => { }) }, 500);
       }
 
-      if (d.logoBase64) {
+      if (d.logoVersion !== undefined && d.logoVersion !== STATE.logoVersion) {
+          STATE.logoVersion = d.logoVersion;
+          STATE.serverURL = STATE.serverURL || (d.serverURL ? (d.serverURL.endsWith('/') ? d.serverURL.slice(0, -1) : d.serverURL) : null);
+          if (STATE.serverURL) {
+            ['logo-idle', 'logo-top'].forEach(id => {
+                var el = document.getElementById(id);
+                if (el) el.src = STATE.serverURL + '/tv_logo?v=' + STATE.logoVersion;
+            });
+          }
+      } else if (d.logoBase64) {
         if (d.logoBase64 !== STATE.logoBase64) {
           STATE.hasBase64Logo = true;
           STATE.logoBase64 = d.logoBase64;
@@ -1381,7 +1390,7 @@
               if (el) el.src = STATE.logoBase64;
           });
         }
-      } else if (!STATE.hasBase64Logo && STATE.serverURL) {
+      } else if (!STATE.hasBase64Logo && STATE.serverURL && !STATE.logoVersion) {
           STATE.hasBase64Logo = true;
           ['logo-idle', 'logo-top'].forEach(id => {
               var el = document.getElementById(id);
@@ -1553,6 +1562,10 @@
         STATE.showQR = (d.showQR === true || d.showQR === "true");
         if (d.qrBase64) STATE.qrBase64 = d.qrBase64;
         if (d.qrPosition) STATE.qrPos = d.qrPosition;
+        if (d.qrVersion !== undefined && d.qrVersion !== STATE.qrVersion) {
+            STATE.qrVersion = d.qrVersion;
+            // The QR code is usually base64 in d.qrBase64 or fetched via /qr
+        }
       }
 
       // ── UI CONFIG ───────────────────────────────────────────────────────────
