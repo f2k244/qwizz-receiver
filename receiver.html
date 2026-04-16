@@ -137,6 +137,12 @@
       width: 62vmin;
       height: 62vmin;
       flex-shrink: 0;
+      will-change: transform;
+      transform: translate3d(0,0,0);
+    }
+    .lb-row, .p-trophy, .p-name, .logo, #qr-overlay {
+        will-change: transform, opacity;
+        transform: translate3d(0,0,0);
     }
 
     .cover-card {
@@ -1325,7 +1331,7 @@
       isPaused: false, pauseMessage: '',
       endGame: false, currentTrackID: null, currentCoverKey: null,
       logoBase64: null, qrBase64: null, hasBase64Logo: false,
-      qcmDuration: 30, qcmCurrentQuestion: null
+      qcmDuration: 30, qcmCurrentQuestion: null, lastPlayersHash: null
     };
     const _labels = ['A', 'B', 'C', 'D'];
 
@@ -1563,6 +1569,16 @@
         if (d.qrPosition) STATE.qrPos = d.qrPosition;
         if (d.qrVersion !== undefined && d.qrVersion !== STATE.qrVersion) {
             STATE.qrVersion = d.qrVersion;
+        }
+      }
+
+      // ── LEADERBOARD ────────────────────────────────────────────────────────
+      if (d.players) {
+        if (d.playersHash !== undefined && d.playersHash !== STATE.lastPlayersHash) {
+            STATE.lastPlayersHash = d.playersHash;
+            renderLeaderboard(d.players);
+        } else if (d.playersHash === undefined) {
+            renderLeaderboard(d.players);
         }
       }
 

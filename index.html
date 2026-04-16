@@ -1325,7 +1325,7 @@
       isPaused: false, pauseMessage: '',
       endGame: false, currentTrackID: null, currentCoverKey: null,
       logoBase64: null, qrBase64: null, hasBase64Logo: false,
-      qcmDuration: 30, qcmCurrentQuestion: null
+      qcmDuration: 30, qcmCurrentQuestion: null, lastPlayersHash: null
     };
     const _labels = ['A', 'B', 'C', 'D'];
 
@@ -1564,7 +1564,16 @@
         if (d.qrPosition) STATE.qrPos = d.qrPosition;
         if (d.qrVersion !== undefined && d.qrVersion !== STATE.qrVersion) {
             STATE.qrVersion = d.qrVersion;
-            // The QR code is usually base64 in d.qrBase64 or fetched via /qr
+        }
+      }
+
+      // ── LEADERBOARD ────────────────────────────────────────────────────────
+      if (d.players) {
+        if (d.playersHash !== undefined && d.playersHash !== STATE.lastPlayersHash) {
+            STATE.lastPlayersHash = d.playersHash;
+            renderLeaderboard(d.players);
+        } else if (d.playersHash === undefined) {
+            renderLeaderboard(d.players);
         }
       }
 
