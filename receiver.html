@@ -562,18 +562,6 @@
     .rank-1 .p-name { font-size: 5.5vh; }
     .rank-1 .p-score { font-size: 8vh; }
 
-    .p-trophy {
-      font-size: 10rem;
-      margin-bottom: 3vmin;
-      filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.3));
-    }
-
-    .p-name {
-      font-size: 4.5rem;
-      font-weight: 900;
-      margin-top: auto;
-    }
-
     /* Utils */
     .pos-top-right {
       top: 4vmin;
@@ -1355,8 +1343,6 @@
       
       console.log("Receiver Sync:", d.type || "state_update", d);
 
-      // Throttle logic was completely flawed and artificially throttled to 8000ms. Removed.
-
       if (d.type === 'reload') {
         var toast = document.getElementById('reload-toast');
         toast.classList.add('show');
@@ -1386,7 +1372,6 @@
         if (!window.poll) window.poll = setInterval(() => { fetch(STATE.serverURL + '/tv_state').then(r => r.json()).then(sync).catch(() => { }) }, 500);
       }
 
-      // Handle Base64 Logo
       if (d.logoBase64) {
         if (d.logoBase64 !== STATE.logoBase64) {
           STATE.hasBase64Logo = true;
@@ -1397,7 +1382,6 @@
           });
         }
       } else if (!STATE.hasBase64Logo && STATE.serverURL) {
-          // Si le serveur n'envoie pas de d.logoBase64, on fetch l'image par défaut depuis tv_logo
           STATE.hasBase64Logo = true;
           ['logo-idle', 'logo-top'].forEach(id => {
               var el = document.getElementById(id);
@@ -1405,8 +1389,22 @@
           });
       }
 
-      // ── QCM ─────────────────────────────────────────────────────────────────
-      // Process QCM FIRST so the overlay is always rendered regardless of track state
+      // ── FUNDAMENTAL SETTINGS ────────────────────────────────────────────────
+      if (d.showScores !== undefined) STATE.showScores = (d.showScores === true || d.showScores === "true");
+      if (d.qrPosition && d.type !== 'show_qr') STATE.qrPos = d.qrPosition;
+      if (d.scoreAnimationMode) STATE.scoreMode = d.scoreAnimationMode;
+
+      // ── PRIORITY OVERLAYS (RANKING / TRANSITIONS) ───────────────────────────
+      if (d.type === 'category_transition') { transition(d); return; }
+      if (d.type === 'end_game') { podium(d.data); return; }
+      else if (d.podiumData && !STATE.endGame && !d.qcmActive) { podium(d.podiumData); return; }
+      else if (!d.podiumData && STATE.endGame) {
+          STATE.endGame = false;
+          document.getElementById('podium-wrap').style.display = 'none';
+          document.querySelectorAll('.premium-entry').forEach(el => el.classList.remove('animate-in'));
+      }
+
+      // ── QCM MODE logic ──────────────────────────────────────────────────────
       try {
         if (d.type === 'qcm_question' || (d.qcmActive && d.question && !d.isQCMRevealed)) {
           STATE.qcmDuration = d.duration || STATE.qcmDuration || 30;
@@ -1420,6 +1418,15 @@
             
             var choicesEl = document.getElementById('qcm-choices');
             var rawChoices = d.choices || [];
+            
+            // CLEANUP: Reset image and results state for new question
+            var sideImg = document.getElementById('qcm-side-image');
+            var mainEl = document.getElementById('qcm-main');
+            sideImg.src = '';
+            sideImg.style.display = 'none';
+            mainEl.classList.remove('with-image');
+            document.getElementById('qcm-global-summary').classList.remove('visible');
+
             if (rawChoices.length > 0) {
               choicesEl.innerHTML = rawChoices.map((c, i) =>
                 '<div class="qcm-tv-btn" id="qcm-choice-' + i + '">'
@@ -1443,7 +1450,7 @@
             if (bar.style.width === '' || bar.style.width === '100%') {
                 bar.style.transition = 'none';
                 bar.style.width = colorPct + '%';
-                bar.offsetHeight; // force reflow
+                bar.offsetHeight;
                 bar.style.transition = 'width ' + d.remaining + 's linear';
                 bar.style.width = '0%';
             }
@@ -1452,13 +1459,12 @@
             else bar.style.background = 'linear-gradient(90deg, #00A8FF, #8A2BE2)';
           }
           
-          // CRITICAL: Hide everything under the QCM
           document.getElementById('idle').classList.add('gone');
           document.getElementById('qcm-overlay').classList.add('visible');
           document.getElementById('rules-overlay').classList.remove('active');
           
           applyUI(d);
-          return; // Don't process track/reveal logic while QCM is active
+          return;
 
         } else if (d.type === 'qcm_timer') {
           var remaining = d.remaining;
@@ -1467,7 +1473,7 @@
           if (bar.style.width === '' || bar.style.width === '100%') {
               bar.style.transition = 'none';
               bar.style.width = colorPct + '%';
-              bar.offsetHeight; // force reflow
+              bar.offsetHeight;
               bar.style.transition = 'width ' + remaining + 's linear';
               bar.style.width = '0%';
           }
@@ -1485,24 +1491,17 @@
             var mainEl = document.getElementById('qcm-main');
             sideImg.src = imgURL;
             sideImg.style.display = 'block';
-            sideImg.style.animation = 'fadeIn 0.8s cubic-bezier(0.165, 0.84, 0.44, 1)';
             mainEl.classList.add('with-image');
           }
 
           var counts = {};
           var ansValues = Object.values(answers);
-          
-          var totalCorrect = 0;
-          var totalWrong = 0;
+          var totalCorrect = 0, totalWrong = 0;
 
           for (var k = 0; k < ansValues.length; k++) { 
             var idx = ansValues[k];
             counts[idx] = (counts[idx] || 0) + 1; 
-            if (idx === correct) {
-              totalCorrect++;
-            } else {
-              totalWrong++;
-            }
+            if (idx === correct) totalCorrect++; else totalWrong++;
           }
           
           document.querySelectorAll('.qcm-tv-btn').forEach(function(btn, i) {
@@ -1513,19 +1512,18 @@
             if (countEl) countEl.textContent = (counts[i] || 0) + '👤';
           });
 
-          // Afficher le résumé global
           var summaryEl = document.getElementById('qcm-global-summary');
           if (summaryEl) {
             document.getElementById('stat-correct-count').textContent = totalCorrect;
             document.getElementById('stat-wrong-count').textContent = totalWrong;
             summaryEl.classList.add('visible');
-          };
+          }
           
           document.getElementById('qcm-timer-bar').style.transition = 'none';
           document.getElementById('idle').classList.add('gone');
           document.getElementById('qcm-overlay').classList.add('visible');
           applyUI(d);
-          return; // Don't process track logic while in reveal
+          return;
 
         } else if (d.type === 'qcm_stop') {
           document.getElementById('qcm-overlay').classList.remove('visible');
@@ -1533,11 +1531,9 @@
           var si = document.getElementById('qcm-side-image');
           si.style.display = 'none'; si.src = '';
         }
-      } catch (err) {
-        console.error("QCM Process Error:", err);
-      }
+      } catch (err) { console.error("QCM Process Error:", err); }
 
-      // ── TRACK ────────────────────────────────────────────────────────────────
+      // ── TRACK ───────────────────────────────────────────────────────────────
       if (d.type === 'cover_update' && d.coverBase64) {
         if (d.trackID === STATE.currentTrackID || !STATE.currentTrackID) applyCover(d.coverBase64);
       }
@@ -1545,26 +1541,20 @@
       if (d.type === 'track_update' || d.trackID || (d.track && d.track.trackID)) render(d.track || d);
       if (d.type === 'reveal' || d.gameState === 'revealed' || d.reveal === true) doReveal();
 
-      // ── QR CODE ──────────────────────────────────────────────────────────────
-      // Direct canal command takes priority; polling fills in when not a direct command
+      // ── QR CODE ─────────────────────────────────────────────────────────────
       if (d.type === 'show_qr') {
-        STATE.showQR = d.show;  // trust direct show/hide command absolutely
+        STATE.showQR = d.show;
         if (d.url) STATE.qrURL = d.url;
         if (d.position) STATE.qrPos = d.position;
         if (d.dynamic !== undefined) STATE.qrDynamic = d.dynamic;
-        if (d.qrBase64) { STATE.qrBase64 = d.qrBase64; console.log("QR base64 received"); }
+        if (d.qrBase64) { STATE.qrBase64 = d.qrBase64; }
       } else if (d.showQR !== undefined) {
-        // From polling — sync state from server truth
         STATE.showQR = (d.showQR === true || d.showQR === "true");
         if (d.qrBase64) STATE.qrBase64 = d.qrBase64;
         if (d.qrPosition) STATE.qrPos = d.qrPosition;
       }
 
-      // ── UI CONFIG ────────────────────────────────────────────────────────────
-      if (d.showScores !== undefined) STATE.showScores = (d.showScores === true || d.showScores === "true");
-      if (d.qrPosition && d.type !== 'show_qr') STATE.qrPos = d.qrPosition;
-      if (d.scoreAnimationMode) STATE.scoreMode = d.scoreAnimationMode;
-
+      // ── UI CONFIG ───────────────────────────────────────────────────────────
       if (d.type === 'appearance' && d.data) {
         if (d.data.showScores !== undefined) STATE.showScores = (d.data.showScores === true || d.data.showScores === "true");
         if (d.data.qrPosition) STATE.qrPos = d.data.qrPosition;
@@ -1573,7 +1563,7 @@
         if (d.data.qrCodeDynamicPositioning !== undefined) STATE.qrDynamic = d.data.qrCodeDynamicPositioning;
       }
 
-      // ── PAUSE ────────────────────────────────────────────────────────────────
+      // ── PAUSE ───────────────────────────────────────────────────────────────
       if (d.type === 'isPaused') {
         STATE.isPaused = d.data;
         if (d.pauseMessage) STATE.pauseMessage = d.pauseMessage;
@@ -1584,28 +1574,18 @@
 
       applyUI(d);
 
-      // ── RULES ───────────────────────────────────────────────────────────────
+      // ── RULES ──────────────────────────────────────────────────────────────
       if (d.type === 'mode_switch') {
         showRules(d);
       } else if (d.type === 'hide_rules') {
         document.getElementById('rules-overlay').classList.remove('active');
       } else if (d.rulesVisible !== undefined) {
-        // Polling: sync rules visibility from server truth
         var rulesOverlay = document.getElementById('rules-overlay');
         if (d.rulesVisible && d.rules) {
           if (!rulesOverlay.classList.contains('active')) showRules(d);
         } else if (!d.rulesVisible) {
           rulesOverlay.classList.remove('active');
         }
-      }
-
-      if (d.type === 'category_transition') transition(d);
-      if (d.type === 'end_game') podium(d.data);
-      else if (d.podiumData && !STATE.endGame) podium(d.podiumData);
-      else if (!d.podiumData && STATE.endGame) {
-          STATE.endGame = false;
-          document.getElementById('podium-wrap').style.display = 'none';
-          document.querySelectorAll('.premium-entry').forEach(el => el.classList.remove('animate-in'));
       }
     }
 
