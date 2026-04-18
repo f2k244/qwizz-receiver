@@ -1327,6 +1327,7 @@
   <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="logo-top" style="width:25vmin" src="https://qwizz.app/assets/img/logo.png"></div>
   <div class="version-tag">V5.6.1-PREMIUM</div>
   <div id="reload-toast">⟳ &nbsp;Rechargement en cours...</div>
+  <div id="cast-debug-status" style="position:fixed; bottom:2vmin; right:2vmin; font-family:monospace; font-size:1.5vmin; color:rgba(255,255,255,0.3); z-index:99999; pointer-events:none">INIT</div>
   <cast-media-player></cast-media-player>
 
   <script>
@@ -1894,14 +1895,19 @@
         try {
           ctx.sendCustomMessage('urn:x-cast:com.qwizz.control', null, { type: 'ready' });
           console.log('QWIZZ: Handshake SENT (ready)');
+          document.getElementById('cast-debug-status').textContent = 'CONNECTED';
         } catch(e) { console.error('Handshake error:', e); }
       };
 
       ctx.addCustomMessageListener('urn:x-cast:com.qwizz.control', function(e) { sync(e.data); });
       
-      // Signal ready immediately and whenever a new sender connects
-      sendReady();
-      ctx.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, sendReady);
+      // Signal ready whenever a new sender connects
+      ctx.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, () => {
+          document.getElementById('cast-debug-status').textContent = 'SENDER CONNECTED';
+          sendReady();
+      });
+
+      document.getElementById('cast-debug-status').textContent = 'READY';
     } catch(e) {
       console.error('QWIZZ receiver init error:', e);
       document.body.innerHTML = '<div style="color:red;font-size:3vmin;padding:5vmin;font-family:monospace">ERREUR INIT:<br>' + e.message + '</div>';
