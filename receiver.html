@@ -1881,7 +1881,20 @@
         maxInactivity: 3600,
         customNamespaces: { 'urn:x-cast:com.qwizz.control': msgType }
       });
+      
+      // Handshake: Tell the sender we are ready
+      const sendReady = () => {
+        try {
+          ctx.sendCustomMessage('urn:x-cast:com.qwizz.control', null, { type: 'ready' });
+          console.log('QWIZZ: Handshake SENT (ready)');
+        } catch(e) { console.error('Handshake error:', e); }
+      };
+
       ctx.addCustomMessageListener('urn:x-cast:com.qwizz.control', function(e) { sync(e.data); });
+      
+      // Signal ready immediately and whenever a new sender connects
+      sendReady();
+      ctx.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, sendReady);
     } catch(e) {
       console.error('QWIZZ receiver init error:', e);
       document.body.innerHTML = '<div style="color:red;font-size:3vmin;padding:5vmin;font-family:monospace">ERREUR INIT:<br>' + e.message + '</div>';
