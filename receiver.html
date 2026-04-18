@@ -1377,7 +1377,17 @@
               if (el) el.src = STATE.serverURL + '/tv_logo?t=' + Date.now();
           });
         }
-        if (!window.poll) window.poll = setInterval(() => { fetch(STATE.serverURL + '/tv_state').then(r => r.json()).then(sync).catch(() => { }) }, 500);
+        if (!window.poll) {
+          window.isPolling = false;
+          window.poll = setInterval(() => { 
+            if (window.isPolling) return;
+            window.isPolling = true;
+            fetch(STATE.serverURL + '/tv_state')
+              .then(r => r.json())
+              .then(d => { window.isPolling = false; sync(d); })
+              .catch(() => { window.isPolling = false; });
+          }, 1000);
+        }
       }
 
       if (d.logoVersion !== undefined && d.logoVersion !== STATE.logoVersion) {
@@ -1473,9 +1483,12 @@
             bar.style.width = '0%';
             STATE.qcmEndTime = Date.now() + (d.remaining * 1000);
           }
-            if (colorPct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
-            else if (colorPct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
-            else bar.style.background = 'linear-gradient(90deg, #00A8FF, #8A2BE2)';
+          var colorPct = 100;
+          if (d.remaining !== undefined) colorPct = (d.remaining / STATE.qcmDuration) * 100;
+
+          if (colorPct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
+          else if (colorPct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
+          else bar.style.background = 'linear-gradient(90deg, #00A8FF, #8A2BE2)';
           
           document.getElementById('idle').classList.add('gone');
           document.getElementById('qcm-overlay').classList.add('visible');
