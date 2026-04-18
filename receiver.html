@@ -101,6 +101,8 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.4s;
+      transform: translateZ(0);
+      will-change: transform, opacity;
     }
 
     #reload-toast.show {
@@ -1455,24 +1457,25 @@
           
           var bar = document.getElementById('qcm-timer-bar');
           if (d.type === 'qcm_question') {
+            STATE.qcmEndTime = Date.now() + (STATE.qcmDuration * 1000);
             bar.style.transition = 'none'; bar.style.width = '100%';
             bar.style.background = 'linear-gradient(90deg, #00A8FF, #8A2BE2)';
             bar.offsetHeight; // force reflow
             bar.style.transition = 'width ' + STATE.qcmDuration + 's linear';
             bar.style.width = '0%';
           } else if (d.remaining !== undefined) {
+            STATE.qcmDuration = d.duration || STATE.qcmDuration || 30;
             var colorPct = (d.remaining / STATE.qcmDuration) * 100;
-            if (bar.style.width === '' || bar.style.width === '100%') {
-                bar.style.transition = 'none';
-                bar.style.width = colorPct + '%';
-                bar.offsetHeight;
-                bar.style.transition = 'width ' + d.remaining + 's linear';
-                bar.style.width = '0%';
-            }
+            bar.style.transition = 'none';
+            bar.style.width = colorPct + '%';
+            bar.offsetHeight;
+            bar.style.transition = 'width ' + d.remaining + 's linear';
+            bar.style.width = '0%';
+            STATE.qcmEndTime = Date.now() + (d.remaining * 1000);
+          }
             if (colorPct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
             else if (colorPct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
             else bar.style.background = 'linear-gradient(90deg, #00A8FF, #8A2BE2)';
-          }
           
           document.getElementById('idle').classList.add('gone');
           document.getElementById('qcm-overlay').classList.add('visible');
@@ -1483,15 +1486,30 @@
 
         } else if (d.type === 'qcm_timer') {
           var remaining = d.remaining;
+          var duration = d.duration || STATE.qcmDuration || 30;
+          STATE.qcmDuration = duration;
           var bar = document.getElementById('qcm-timer-bar');
-          var colorPct = (remaining / STATE.qcmDuration) * 100;
-          if (bar.style.width === '' || bar.style.width === '100%') {
+          
+          // THRESHOLD SYNC V3: Better edge case handling (Start/End)
+          var now = Date.now();
+          if (!STATE.qcmEndTime) STATE.qcmEndTime = now + (remaining * 1000);
+          var expected = (STATE.qcmEndTime - now) / 1000;
+          var diff = Math.abs(expected - remaining);
+          
+          var isAtStart = remaining >= (duration - 0.5);
+          var isAtEnd = remaining <= 0.5;
+          
+          if (diff > 1.2 || isAtStart || isAtEnd || bar.style.width === '100%' || bar.style.width === '') {
+              var colorPct = (remaining / duration) * 100;
               bar.style.transition = 'none';
               bar.style.width = colorPct + '%';
               bar.offsetHeight;
               bar.style.transition = 'width ' + remaining + 's linear';
               bar.style.width = '0%';
+              STATE.qcmEndTime = now + (remaining * 1000);
           }
+          
+          var colorPct = (remaining / duration) * 100;
           if (colorPct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
           else if (colorPct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
           return;
@@ -1687,6 +1705,20 @@
       if (STATE.track.isVideo) document.body.classList.add('video-active');
     }
 
+    function renderLeaderboard(players) {
+      if (!STATE.showScores) return;
+      var s = players.sort((a, b) => b.score - a.score).slice(0, 8);
+      var html = s.map((p, idx) => {
+        var delay = (idx * 0.15).toFixed(2) + 's';
+        var isWinner = idx === 0 && p.score > 0;
+        var rowClass = isWinner ? 'lb-row winner-row' : 'lb-row';
+        return `<div class="${rowClass}" style="animation-delay: ${delay}"><span class="lb-rank">${idx + 1}</span><span class="lb-name">${p.name}</span><span class="lb-score">${p.score} pts</span></div>`;
+      }).join('');
+      
+      var listEl = document.getElementById('lb-list');
+      if (listEl.innerHTML !== html) listEl.innerHTML = html;
+    }
+
     function applyUI(d) {
       // Classement — affiché/masqué selon showScores
       var lb = document.getElementById('leaderboard');
@@ -1696,16 +1728,7 @@
         if (lb.className !== newClassName) lb.className = newClassName;
         lb.style.display = STATE.scoreMode === 'full' ? 'flex' : 'block';
         
-        if (d && d.players) {
-          var s = d.players.sort((a, b) => b.score - a.score).slice(0, 8);
-          var html = s.map((p, idx) => {
-            var delay = (idx * 0.15).toFixed(2) + 's';
-            return `<div class="lb-row" style="animation-delay: ${delay}"><span class="lb-rank">${idx + 1}</span><span class="lb-name">${p.name}</span><span class="lb-score">${p.score} pts</span></div>`;
-          }).join('');
-          
-          var listEl = document.getElementById('lb-list');
-          if (listEl.innerHTML !== html) listEl.innerHTML = html; // Simple check to avoid flicker
-        }
+        if (d && d.players) renderLeaderboard(d.players);
       } else { 
         if (lb.style.display !== 'none') {
             lb.className = ''; 
