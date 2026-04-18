@@ -1328,6 +1328,7 @@
   <div class="version-tag">V5.6.1-PREMIUM</div>
   <div id="reload-toast">⟳ &nbsp;Rechargement en cours...</div>
   <div id="cast-debug-status" style="position:fixed; bottom:2vmin; right:2vmin; font-family:monospace; font-size:1.5vmin; color:rgba(255,255,255,0.3); z-index:99999; pointer-events:none">INIT</div>
+  <div id="cast-server-info" style="position:fixed; bottom:5vmin; right:2vmin; font-family:monospace; font-size:1.2vmin; color:rgba(255,255,255,0.2); z-index:99999; pointer-events:none">URL: --</div>
   <cast-media-player></cast-media-player>
 
   <script>
@@ -1377,6 +1378,12 @@
 
       if (d.serverURL) {
         STATE.serverURL = d.serverURL.endsWith('/') ? d.serverURL.slice(0, -1) : d.serverURL;
+        document.getElementById('cast-server-info').textContent = 'URL: ' + STATE.serverURL;
+        if (window.handshakeInterval) {
+            clearInterval(window.handshakeInterval);
+            window.handshakeInterval = null;
+            document.getElementById('cast-debug-status').textContent = 'CONNECTED';
+        }
         if (!STATE.hasBase64Logo) {
           ['logo-idle', 'logo-top'].forEach(id => {
               var el = document.getElementById(id);
@@ -1890,18 +1897,20 @@
         customNamespaces: { 'urn:x-cast:com.qwizz.control': msgType }
       });
       
-      // Handshake: Tell the sender we are ready
       const sendReady = () => {
         try {
           ctx.sendCustomMessage('urn:x-cast:com.qwizz.control', null, { type: 'ready' });
           console.log('QWIZZ: Handshake SENT (ready)');
-          document.getElementById('cast-debug-status').textContent = 'CONNECTED';
+          if (window.handshakeInterval) document.getElementById('cast-debug-status').textContent = 'READY (Pulsing)';
         } catch(e) { console.error('Handshake error:', e); }
       };
 
       ctx.addCustomMessageListener('urn:x-cast:com.qwizz.control', function(e) { sync(e.data); });
       
-      // Signal ready whenever a new sender connects
+      // Pulse Handshake until we get data
+      window.handshakeInterval = setInterval(sendReady, 2000);
+      sendReady();
+
       ctx.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, () => {
           document.getElementById('cast-debug-status').textContent = 'SENDER CONNECTED';
           sendReady();
