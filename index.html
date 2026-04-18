@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>QWIZZ Master V5.3.6-Premium</title>
+  <title>QWIZZ Master V5.6.1-PREMIUM</title>
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
@@ -90,7 +90,8 @@
       transform: translateX(-50%);
       background: rgba(0, 168, 255, 0.15);
       border: 1.5px solid var(--blue);
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(8px);
+      transform: translateZ(0);
       border-radius: 3vmin;
       padding: 2vmin 4vmin;
       font-size: 2rem;
@@ -158,7 +159,9 @@
       height: 100%;
       object-fit: contain;
       opacity: 0;
-      transition: opacity .8s cubic-bezier(0.19, 1, 0.22, 1);
+      transform: scale(1.1) translateZ(0);
+      transition: opacity .8s cubic-bezier(0.19, 1, 0.22, 1), transform 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+      will-change: opacity, transform;
     }
 
     #img-main {
@@ -167,7 +170,8 @@
 
     #img-blur {
       z-index: 1;
-      filter: blur(40px) brightness(0.7);
+      filter: blur(20px) brightness(0.7);
+      will-change: opacity;
     }
 
     .track-info {
@@ -198,7 +202,9 @@
       z-index: 1000;
       display: none;
       background: var(--glass);
-      backdrop-filter: blur(15px);
+      backdrop-filter: blur(5px);
+      transform: translateZ(0);
+      will-change: transform, opacity;
       border: 1px solid rgba(0, 168, 255, 0.3);
       border-radius: 5vmin;
       padding: 4vmin;
@@ -229,6 +235,8 @@
       border-radius: 3vmin;
       margin-bottom: 1.5vmin;
       border: 1px solid rgba(255, 255, 255, 0.1);
+      transform: translateZ(0);
+      will-change: transform, opacity;
     }
 
     .lb-rank {
@@ -263,7 +271,8 @@
       display: none;
       text-align: center;
       background: var(--glass);
-      backdrop-filter: blur(15px);
+      backdrop-filter: blur(8px);
+      transform: translateZ(0);
       padding: 3.5vmin;
       border-radius: 5vmin;
       border: 2.5px solid var(--blue);
@@ -316,7 +325,8 @@
       position: fixed;
       inset: 0;
       background: radial-gradient(circle at center, rgba(9, 7, 43, 0.95) 0%, var(--bg) 100%);
-      backdrop-filter: blur(25px);
+      backdrop-filter: blur(10px);
+      transform: translateZ(0);
       z-index: 55000;
       flex-direction: column;
       align-items: center;
@@ -418,7 +428,8 @@
       height: 100%;
       padding: 0 5vw;
       background: radial-gradient(circle at center, rgba(9, 7, 43, 0.85) 0%, rgba(9, 7, 43, 0.98) 100%);
-      backdrop-filter: blur(30px);
+      backdrop-filter: blur(10px);
+      transform: translateZ(0);
       z-index: 55000;
     }
 
@@ -450,7 +461,8 @@
 
     .podium-box {
       background: linear-gradient(160deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.01) 100%);
-      backdrop-filter: blur(25px);
+      backdrop-filter: blur(10px);
+      transform: translateZ(0);
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 4vh;
       padding: 5vh 3vw;
@@ -615,7 +627,8 @@
       overflow: hidden;
       background: rgba(0, 168, 255, 0.12);
       border-top: 1.5px solid rgba(0, 168, 255, 0.4);
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(8px);
+      transform: translateZ(0);
     }
 
     #qr-ticker.visible {
@@ -1312,12 +1325,12 @@
   </div>
 
   <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="logo-top" style="width:25vmin" src="https://qwizz.app/assets/img/logo.png"></div>
-  <div class="version-tag">V5.5.3</div>
+  <div class="version-tag">V5.6.1-PREMIUM</div>
   <div id="reload-toast">⟳ &nbsp;Rechargement en cours...</div>
   <cast-media-player></cast-media-player>
 
   <script>
-    // Master State V5.3.4 — base64 logo/QR + Mode QCM
+    // Master State V5.6.1-PREMIUM — base64 logo/QR + Mode QCM
     var STATE = {
       serverURL: '', track: null, revealed: false,
       showScores: false, scoreMode: 'br',
@@ -1449,21 +1462,22 @@
           
           var bar = document.getElementById('qcm-timer-bar');
           if (d.type === 'qcm_question') {
+            STATE.qcmEndTime = Date.now() + (STATE.qcmDuration * 1000);
             bar.style.transition = 'none'; bar.style.width = '100%';
             bar.style.background = 'linear-gradient(90deg, #00A8FF, #8A2BE2)';
             bar.offsetHeight; // force reflow
             bar.style.transition = 'width ' + STATE.qcmDuration + 's linear';
             bar.style.width = '0%';
           } else if (d.remaining !== undefined) {
+            STATE.qcmDuration = d.duration || STATE.qcmDuration || 30;
             var colorPct = (d.remaining / STATE.qcmDuration) * 100;
-            // Only restart transition if we are just starting or out of sync
-            if (bar.style.width === '' || bar.style.width === '100%') {
-                bar.style.transition = 'none';
-                bar.style.width = colorPct + '%';
-                bar.offsetHeight;
-                bar.style.transition = 'width ' + d.remaining + 's linear';
-                bar.style.width = '0%';
-            }
+            bar.style.transition = 'none';
+            bar.style.width = colorPct + '%';
+            bar.offsetHeight;
+            bar.style.transition = 'width ' + d.remaining + 's linear';
+            bar.style.width = '0%';
+            STATE.qcmEndTime = Date.now() + (d.remaining * 1000);
+          }
             if (colorPct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
             else if (colorPct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
             else bar.style.background = 'linear-gradient(90deg, #00A8FF, #8A2BE2)';
@@ -1478,15 +1492,30 @@
 
         } else if (d.type === 'qcm_timer') {
           var remaining = d.remaining;
+          var duration = d.duration || STATE.qcmDuration || 30;
+          STATE.qcmDuration = duration;
           var bar = document.getElementById('qcm-timer-bar');
-          var colorPct = (remaining / STATE.qcmDuration) * 100;
-          if (bar.style.width === '' || bar.style.width === '100%') {
+          
+          // THRESHOLD SYNC V3: Better edge case handling (Start/End)
+          var now = Date.now();
+          if (!STATE.qcmEndTime) STATE.qcmEndTime = now + (remaining * 1000);
+          var expected = (STATE.qcmEndTime - now) / 1000;
+          var diff = Math.abs(expected - remaining);
+          
+          var isAtStart = remaining >= (duration - 0.5);
+          var isAtEnd = remaining <= 0.5;
+          
+          if (diff > 1.2 || isAtStart || isAtEnd || bar.style.width === '100%' || bar.style.width === '') {
+              var colorPct = (remaining / duration) * 100;
               bar.style.transition = 'none';
               bar.style.width = colorPct + '%';
               bar.offsetHeight;
               bar.style.transition = 'width ' + remaining + 's linear';
               bar.style.width = '0%';
+              STATE.qcmEndTime = now + (remaining * 1000);
           }
+          
+          var colorPct = (remaining / duration) * 100;
           if (colorPct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
           else if (colorPct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
           return;
@@ -1682,6 +1711,20 @@
       if (STATE.track.isVideo) document.body.classList.add('video-active');
     }
 
+    function renderLeaderboard(players) {
+      if (!STATE.showScores) return;
+      var s = players.sort((a, b) => b.score - a.score).slice(0, 8);
+      var html = s.map((p, idx) => {
+        var delay = (idx * 0.15).toFixed(2) + 's';
+        var isWinner = idx === 0 && p.score > 0;
+        var rowClass = isWinner ? 'lb-row winner-row' : 'lb-row';
+        return `<div class="${rowClass}" style="animation-delay: ${delay}"><span class="lb-rank">${idx + 1}</span><span class="lb-name">${p.name}</span><span class="lb-score">${p.score} pts</span></div>`;
+      }).join('');
+      
+      var listEl = document.getElementById('lb-list');
+      if (listEl.innerHTML !== html) listEl.innerHTML = html;
+    }
+
     function applyUI(d) {
       // Classement — affiché/masqué selon showScores
       var lb = document.getElementById('leaderboard');
@@ -1691,16 +1734,8 @@
         if (lb.className !== newClassName) lb.className = newClassName;
         lb.style.display = STATE.scoreMode === 'full' ? 'flex' : 'block';
         
-        if (d && d.players) {
-          var s = d.players.sort((a, b) => b.score - a.score).slice(0, 8);
-          var html = s.map((p, idx) => {
-            var delay = (idx * 0.15).toFixed(2) + 's';
-            return `<div class="lb-row" style="animation-delay: ${delay}"><span class="lb-rank">${idx + 1}</span><span class="lb-name">${p.name}</span><span class="lb-score">${p.score} pts</span></div>`;
-          }).join('');
-          
-          var listEl = document.getElementById('lb-list');
-          if (listEl.innerHTML !== html) listEl.innerHTML = html; // Simple check to avoid flicker
-        }
+        if (d && d.players) renderLeaderboard(d.players);
+        // Leaderboard rendering moved to renderLeaderboard(d.players);
       } else { 
         if (lb.style.display !== 'none') {
             lb.className = ''; 
