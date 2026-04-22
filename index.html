@@ -1303,8 +1303,11 @@
   </div>
 
   <div id="qcm-overlay">
-    <div id="qcm-timer-bar-wrap">
-      <div id="qcm-timer-bar"></div>
+    <div id="qcm-timer-container" style="display: flex; align-items: center; gap: 3vmin; margin-bottom: 4vmin; width: 100%;">
+      <div id="qcm-timer-text" style="font-size: 6rem; font-weight: 900; color: #00A8FF; min-width: 15vmin; text-align: right; font-variant-numeric: tabular-nums;">30</div>
+      <div id="qcm-timer-bar-wrap" style="flex: 1; height: 3vmin; background: rgba(255, 255, 255, 0.1); border-radius: 1.5vmin; overflow: hidden; margin-bottom: 0;">
+        <div id="qcm-timer-bar" style="width: 100%; height: 100%; background: linear-gradient(90deg, #00A8FF, #8A2BE2); transform-origin: left; will-change: transform;"></div>
+      </div>
     </div>
     <div id="qcm-main">
       <img id="qcm-side-image" src="" alt="">
@@ -1346,6 +1349,29 @@
 
     const ctx = cast.framework.CastReceiverContext.getInstance();
     const pm = ctx.getPlayerManager();
+
+    let qcmRafId = null;
+    function updateQCMTimer() {
+        if (!STATE.qcmEndTime || !STATE.qcmDuration) return;
+        var now = Date.now();
+        var rem = Math.max(0, (STATE.qcmEndTime - now) / 1000);
+        var colorPct = (rem / STATE.qcmDuration) * 100;
+        
+        var textEl = document.getElementById('qcm-timer-text');
+        var barEl = document.getElementById('qcm-timer-bar');
+        
+        if (textEl) textEl.textContent = Math.ceil(rem);
+        if (barEl) {
+            barEl.style.transform = 'scaleX(' + Math.max(0, colorPct / 100) + ')';
+            if (colorPct < 30) barEl.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
+            else if (colorPct < 60) barEl.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
+            else barEl.style.background = 'linear-gradient(90deg, #00A8FF, #8A2BE2)';
+        }
+        
+        if (rem > 0) {
+            qcmRafId = requestAnimationFrame(updateQCMTimer);
+        }
+    }
 
     function sync(d) {
       if (!d) return;
@@ -1473,30 +1499,17 @@
             }
           }
           
-          var bar = document.getElementById('qcm-timer-bar');
           if (d.type === 'qcm_question') {
+            STATE.qcmDuration = d.duration || 30;
             STATE.qcmEndTime = Date.now() + (STATE.qcmDuration * 1000);
-            bar.style.transition = 'none'; bar.style.width = '100%';
-            bar.style.background = 'linear-gradient(90deg, #00A8FF, #8A2BE2)';
-            bar.offsetHeight; // force reflow
-            bar.style.transition = 'width ' + STATE.qcmDuration + 's linear';
-            bar.style.width = '0%';
+            if (qcmRafId) cancelAnimationFrame(qcmRafId);
+            updateQCMTimer();
           } else if (d.remaining !== undefined) {
             STATE.qcmDuration = d.duration || STATE.qcmDuration || 30;
-            var colorPct = (d.remaining / STATE.qcmDuration) * 100;
-            bar.style.transition = 'none';
-            bar.style.width = colorPct + '%';
-            bar.offsetHeight;
-            bar.style.transition = 'width ' + d.remaining + 's linear';
-            bar.style.width = '0%';
             STATE.qcmEndTime = Date.now() + (d.remaining * 1000);
+            if (qcmRafId) cancelAnimationFrame(qcmRafId);
+            updateQCMTimer();
           }
-          var colorPct = 100;
-          if (d.remaining !== undefined) colorPct = (d.remaining / STATE.qcmDuration) * 100;
-
-          if (colorPct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
-          else if (colorPct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
-          else bar.style.background = 'linear-gradient(90deg, #00A8FF, #8A2BE2)';
           
           document.getElementById('idle').classList.add('gone');
           document.getElementById('qcm-overlay').classList.add('visible');
@@ -1509,30 +1522,17 @@
           var remaining = d.remaining;
           var duration = d.duration || STATE.qcmDuration || 30;
           STATE.qcmDuration = duration;
-          var bar = document.getElementById('qcm-timer-bar');
           
-          // THRESHOLD SYNC V3: Better edge case handling (Start/End)
           var now = Date.now();
           if (!STATE.qcmEndTime) STATE.qcmEndTime = now + (remaining * 1000);
           var expected = (STATE.qcmEndTime - now) / 1000;
           var diff = Math.abs(expected - remaining);
           
-          var isAtStart = remaining >= (duration - 0.5);
-          var isAtEnd = remaining <= 0.5;
-          
-          if (diff > 1.2 || isAtStart || isAtEnd || bar.style.width === '100%' || bar.style.width === '') {
-              var colorPct = (remaining / duration) * 100;
-              bar.style.transition = 'none';
-              bar.style.width = colorPct + '%';
-              bar.offsetHeight;
-              bar.style.transition = 'width ' + remaining + 's linear';
-              bar.style.width = '0%';
+          if (diff > 1.2 || remaining >= (duration - 0.5) || remaining <= 0.5) {
               STATE.qcmEndTime = now + (remaining * 1000);
+              if (qcmRafId) cancelAnimationFrame(qcmRafId);
+              updateQCMTimer();
           }
-          
-          var colorPct = (remaining / duration) * 100;
-          if (colorPct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
-          else if (colorPct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
           return;
 
         } else if (d.type === 'qcm_reveal' || (d.qcmActive && d.isQCMRevealed)) {
