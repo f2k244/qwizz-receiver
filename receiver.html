@@ -1573,7 +1573,11 @@
             summaryEl.classList.add('visible');
           }
           
-          document.getElementById('qcm-timer-bar').style.transition = 'none';
+          if (qcmRafId) { cancelAnimationFrame(qcmRafId); qcmRafId = null; }
+          document.getElementById('qcm-timer-bar').style.transform = 'scaleX(0)';
+          var textEl = document.getElementById('qcm-timer-text');
+          if (textEl) textEl.textContent = "0";
+
           document.getElementById('idle').classList.add('gone');
           document.getElementById('qcm-overlay').classList.add('visible');
           applyUI(d);
