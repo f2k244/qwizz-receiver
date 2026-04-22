@@ -1886,27 +1886,27 @@
         : 'string';
       ctx.start({
         disableIdleTimeout: true,
-        maxInactivity: 3600,
         customNamespaces: { 'urn:x-cast:com.qwizz.control': msgType }
       });
+      ctx.setInactivityTimeout(3600);
       
       // Handshake: Tell the sender we are ready
       const sendReady = () => {
         try {
-          ctx.sendCustomMessage('urn:x-cast:com.qwizz.control', null, { type: 'ready' });
+          ctx.sendCustomMessage('urn:x-cast:com.qwizz.control', undefined, { type: 'ready' });
           console.log('QWIZZ: Handshake SENT (ready)');
           if (!window.handshakeInterval) document.getElementById('cast-debug-status').textContent = 'READY (Pulsing)';
         } catch(e) { console.error('Handshake error:', e); }
       };
 
       ctx.addCustomMessageListener('urn:x-cast:com.qwizz.control', function(e) { sync(e.data); });
-      
-      // Pulse Handshake until we get data
-      window.handshakeInterval = setInterval(sendReady, 2000);
-      sendReady();
 
       ctx.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, () => {
           document.getElementById('cast-debug-status').textContent = 'SENDER CONNECTED';
+          // Pulse Handshake until we get data ONLY after a sender is connected
+          if (!window.handshakeInterval) {
+              window.handshakeInterval = setInterval(sendReady, 2000);
+          }
           sendReady();
       });
 
