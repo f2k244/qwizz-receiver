@@ -1886,9 +1886,9 @@
         : 'string';
       ctx.start({
         disableIdleTimeout: true,
+        maxInactivity: 3600,
         customNamespaces: { 'urn:x-cast:com.qwizz.control': msgType }
       });
-      ctx.setInactivityTimeout(3600);
       
       // Handshake: Tell the sender we are ready
       const sendReady = () => {
