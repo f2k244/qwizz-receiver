@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>QWIZZ Master V5.6.1-PREMIUM</title>
+  <title>QWIZZ Master V5.6.2-Premium</title>
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
@@ -90,8 +90,7 @@
       transform: translateX(-50%);
       background: rgba(0, 168, 255, 0.15);
       border: 1.5px solid var(--blue);
-      backdrop-filter: blur(8px);
-      transform: translateZ(0);
+      backdrop-filter: blur(10px);
       border-radius: 3vmin;
       padding: 2vmin 4vmin;
       font-size: 2rem;
@@ -102,6 +101,8 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.4s;
+      transform: translateZ(0);
+      will-change: transform, opacity;
     }
 
     #reload-toast.show {
@@ -138,6 +139,12 @@
       width: 62vmin;
       height: 62vmin;
       flex-shrink: 0;
+      will-change: transform;
+      transform: translate3d(0,0,0);
+    }
+    .lb-row, .p-trophy, .p-name, .logo, #qr-overlay {
+        will-change: transform, opacity;
+        transform: translate3d(0,0,0);
     }
 
     .cover-card {
@@ -159,9 +166,7 @@
       height: 100%;
       object-fit: contain;
       opacity: 0;
-      transform: scale(1.1) translateZ(0);
-      transition: opacity .8s cubic-bezier(0.19, 1, 0.22, 1), transform 1.2s cubic-bezier(0.19, 1, 0.22, 1);
-      will-change: opacity, transform;
+      transition: opacity .8s cubic-bezier(0.19, 1, 0.22, 1);
     }
 
     #img-main {
@@ -170,8 +175,7 @@
 
     #img-blur {
       z-index: 1;
-      filter: blur(20px) brightness(0.7);
-      will-change: opacity;
+      filter: blur(40px) brightness(0.7);
     }
 
     .track-info {
@@ -202,9 +206,7 @@
       z-index: 1000;
       display: none;
       background: var(--glass);
-      backdrop-filter: blur(5px);
-      transform: translateZ(0);
-      will-change: transform, opacity;
+      backdrop-filter: blur(15px);
       border: 1px solid rgba(0, 168, 255, 0.3);
       border-radius: 5vmin;
       padding: 4vmin;
@@ -235,8 +237,6 @@
       border-radius: 3vmin;
       margin-bottom: 1.5vmin;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      transform: translateZ(0);
-      will-change: transform, opacity;
     }
 
     .lb-rank {
@@ -271,8 +271,7 @@
       display: none;
       text-align: center;
       background: var(--glass);
-      backdrop-filter: blur(8px);
-      transform: translateZ(0);
+      backdrop-filter: blur(15px);
       padding: 3.5vmin;
       border-radius: 5vmin;
       border: 2.5px solid var(--blue);
@@ -325,8 +324,7 @@
       position: fixed;
       inset: 0;
       background: radial-gradient(circle at center, rgba(9, 7, 43, 0.95) 0%, var(--bg) 100%);
-      backdrop-filter: blur(10px);
-      transform: translateZ(0);
+      backdrop-filter: blur(25px);
       z-index: 55000;
       flex-direction: column;
       align-items: center;
@@ -428,8 +426,7 @@
       height: 100%;
       padding: 0 5vw;
       background: radial-gradient(circle at center, rgba(9, 7, 43, 0.85) 0%, rgba(9, 7, 43, 0.98) 100%);
-      backdrop-filter: blur(10px);
-      transform: translateZ(0);
+      backdrop-filter: blur(30px);
       z-index: 55000;
     }
 
@@ -461,8 +458,7 @@
 
     .podium-box {
       background: linear-gradient(160deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.01) 100%);
-      backdrop-filter: blur(10px);
-      transform: translateZ(0);
+      backdrop-filter: blur(25px);
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 4vh;
       padding: 5vh 3vw;
@@ -627,8 +623,7 @@
       overflow: hidden;
       background: rgba(0, 168, 255, 0.12);
       border-top: 1.5px solid rgba(0, 168, 255, 0.4);
-      backdrop-filter: blur(8px);
-      transform: translateZ(0);
+      backdrop-filter: blur(10px);
     }
 
     #qr-ticker.visible {
@@ -1325,14 +1320,14 @@
   </div>
 
   <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="logo-top" style="width:25vmin" src="https://qwizz.app/assets/img/logo.png"></div>
-  <div class="version-tag">V5.6.1-PREMIUM</div>
+  <div class="version-tag">V5.6.2-PREMIUM</div>
   <div id="reload-toast">⟳ &nbsp;Rechargement en cours...</div>
   <div id="cast-debug-status" style="position:fixed; bottom:2vmin; right:2vmin; font-family:monospace; font-size:1.5vmin; color:rgba(255,255,255,0.3); z-index:99999; pointer-events:none">INIT</div>
   <div id="cast-server-info" style="position:fixed; bottom:5vmin; right:2vmin; font-family:monospace; font-size:1.2vmin; color:rgba(255,255,255,0.2); z-index:99999; pointer-events:none">URL: --</div>
   <cast-media-player></cast-media-player>
 
   <script>
-    // Master State V5.6.1-PREMIUM — base64 logo/QR + Mode QCM
+    // Master State V5.6.2-PREMIUM — base64 logo/QR + Mode QCM
     var STATE = {
       serverURL: '', track: null, revealed: false,
       showScores: false, scoreMode: 'br',
@@ -1502,7 +1497,6 @@
           if (colorPct < 30) bar.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
           else if (colorPct < 60) bar.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
           else bar.style.background = 'linear-gradient(90deg, #00A8FF, #8A2BE2)';
-          }
           
           document.getElementById('idle').classList.add('gone');
           document.getElementById('qcm-overlay').classList.add('visible');
@@ -1756,7 +1750,6 @@
         lb.style.display = STATE.scoreMode === 'full' ? 'flex' : 'block';
         
         if (d && d.players) renderLeaderboard(d.players);
-        // Leaderboard rendering moved to renderLeaderboard(d.players);
       } else { 
         if (lb.style.display !== 'none') {
             lb.className = ''; 
@@ -1897,22 +1890,23 @@
         customNamespaces: { 'urn:x-cast:com.qwizz.control': msgType }
       });
       
+      // Handshake: Tell the sender we are ready
       const sendReady = () => {
         try {
-          ctx.sendCustomMessage('urn:x-cast:com.qwizz.control', null, { type: 'ready' });
+          ctx.sendCustomMessage('urn:x-cast:com.qwizz.control', undefined, { type: 'ready' });
           console.log('QWIZZ: Handshake SENT (ready)');
-          if (window.handshakeInterval) document.getElementById('cast-debug-status').textContent = 'READY (Pulsing)';
+          if (!window.handshakeInterval) document.getElementById('cast-debug-status').textContent = 'READY (Pulsing)';
         } catch(e) { console.error('Handshake error:', e); }
       };
 
       ctx.addCustomMessageListener('urn:x-cast:com.qwizz.control', function(e) { sync(e.data); });
-      
-      // Pulse Handshake until we get data
-      window.handshakeInterval = setInterval(sendReady, 2000);
-      sendReady();
 
       ctx.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, () => {
           document.getElementById('cast-debug-status').textContent = 'SENDER CONNECTED';
+          // Pulse Handshake until we get data ONLY after a sender is connected
+          if (!window.handshakeInterval) {
+              window.handshakeInterval = setInterval(sendReady, 2000);
+          }
           sendReady();
       });
 
