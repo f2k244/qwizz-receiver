@@ -1802,6 +1802,13 @@
           };
           b.src = coverSrc; 
           i.src = coverSrc; if (STATE.revealed) { i.style.opacity = '1'; b.style.opacity = '0'; } else { i.style.opacity = '0'; }
+        } else {
+          b.src = '';
+          i.src = '';
+          b.style.opacity = '0';
+          i.style.opacity = '0';
+          var n = document.getElementById('nocover-container');
+          if (n) n.style.opacity = '1';
         }
       }
       
