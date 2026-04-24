@@ -1357,8 +1357,8 @@
   <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="logo-top" style="width:25vmin" src="https://qwizz.app/assets/img/logo.png"></div>
   <div class="version-tag">V5.6.4-PREMIUM</div>
   <div id="reload-toast">⟳ &nbsp;Rechargement en cours...</div>
-  <div id="cast-debug-status" style="position:fixed; bottom:2vmin; right:2vmin; font-family:monospace; font-size:1.5vmin; color:rgba(255,255,255,0.3); z-index:99999; pointer-events:none">INIT</div>
-  <div id="cast-server-info" style="position:fixed; bottom:5vmin; right:2vmin; font-family:monospace; font-size:1.2vmin; color:rgba(255,255,255,0.2); z-index:99999; pointer-events:none">URL: --</div>
+  <div id="cast-debug-status" style="display:none; position:fixed; bottom:2vmin; right:2vmin; font-family:monospace; font-size:1.5vmin; color:rgba(255,255,255,0.3); z-index:99999; pointer-events:none">INIT</div>
+  <div id="cast-server-info" style="display:none; position:fixed; bottom:5vmin; right:2vmin; font-family:monospace; font-size:1.2vmin; color:rgba(255,255,255,0.2); z-index:99999; pointer-events:none">URL: --</div>
   <cast-media-player></cast-media-player>
 
   <script>
@@ -1806,8 +1806,12 @@
     }
 
     function applyCover(base64) {
-      var i = document.getElementById('img-main'), b = document.getElementById('img-blur');
       if (!base64) return;
+      if (STATE.track) {
+          if (STATE.track.cover && STATE.track.cover.includes('no_cover')) return;
+          if (STATE.track.coverURL && STATE.track.coverURL.includes('no_cover')) return;
+      }
+      var i = document.getElementById('img-main'), b = document.getElementById('img-blur');
       
       if (i.getAttribute('src') !== base64) {
           i.src = base64;
