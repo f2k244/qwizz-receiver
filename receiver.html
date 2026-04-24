@@ -1243,7 +1243,7 @@
     <div class="main-grid">
       <div class="cover-side">
         <div class="cover-card">
-          <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:0">
+          <div id="nocover-container" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:0; transition: opacity .3s;">
             <img src="nocover.png" style="width:80%"></div>
           <img id="img-blur">
           <img id="img-main">
@@ -1709,21 +1709,27 @@
       if (STATE.endGame) return; 
       
       var isNewTrack = (t.trackID !== STATE.currentTrackID);
-      STATE.track = t;
-      STATE.currentTrackID = t.trackID;
-      STATE.revealed = (t.gameState === 'revealed' || t.reveal === true);
+      if (isNewTrack) {
+          STATE.track = t;
+      } else {
+          STATE.track = Object.assign(STATE.track || {}, t);
+      }
+      STATE.currentTrackID = STATE.track.trackID;
+      STATE.revealed = (STATE.track.gameState === 'revealed' || STATE.track.reveal === true);
 
       document.getElementById('idle').classList.add('gone');
       document.getElementById('player-scene').classList.add('visible');
       document.body.classList.remove('video-active');
 
-      document.getElementById('t-title').textContent = STATE.revealed ? (t.title || "") : "QUEL EST LE TITRE ?";
-      document.getElementById('t-artist').textContent = STATE.revealed ? (t.artist || "") : "???";
+      document.getElementById('t-title').textContent = STATE.revealed ? (STATE.track.title || "") : "QUEL EST LE TITRE ?";
+      document.getElementById('t-artist').textContent = STATE.revealed ? (STATE.track.artist || "") : "???";
 
       if (isNewTrack) {
         // Reset images for new track to avoid ghosting
         var i = document.getElementById('img-main'), b = document.getElementById('img-blur');
+        var n = document.getElementById('nocover-container');
         i.style.opacity = '0'; b.style.opacity = '0';
+        if (n) n.style.opacity = '1';
         i.removeAttribute('src'); b.removeAttribute('src');
         STATE.currentCoverKey = null;
       }
@@ -1741,7 +1747,10 @@
         STATE.currentCoverKey = coverKey;
         var i = document.getElementById('img-main'), b = document.getElementById('img-blur');
         if (coverSrc) {
-          b.src = coverSrc; b.onload = () => { if (STATE.track.shouldBlur && !STATE.revealed) b.style.opacity = '1'; };
+          b.src = coverSrc; b.onload = () => { 
+              var n = document.getElementById('nocover-container'); if(n) n.style.opacity = '0';
+              if (STATE.track.shouldBlur && !STATE.revealed) b.style.opacity = '1'; 
+          };
           i.src = coverSrc; if (STATE.revealed) { i.style.opacity = '1'; b.style.opacity = '0'; } else { i.style.opacity = '0'; }
         }
       }
@@ -1764,6 +1773,9 @@
       if (b.getAttribute('src') !== base64) {
           b.src = base64;
       }
+      
+      var n = document.getElementById('nocover-container');
+      if (n) n.style.opacity = '0';
 
       if (STATE.revealed) {
         i.style.opacity = '1';
