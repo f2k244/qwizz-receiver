@@ -1026,7 +1026,7 @@
       height: 100%;
       width: 100%;
       background: linear-gradient(90deg, #00A8FF, #8A2BE2);
-      transition: width 0.5s linear, background 0.5s;
+      transition: background 0.5s;
       box-shadow: 0 0 20px rgba(0, 168, 255, 0.6);
     }
 
@@ -1462,12 +1462,23 @@
 
       // ── PRIORITY OVERLAYS (RANKING / TRANSITIONS) ───────────────────────────
       if (d.type === 'category_transition') { transition(d); return; }
-      if (d.type === 'end_game') { podium(d.data); return; }
-      else if (d.podiumData && !STATE.endGame) { podium(d.podiumData); return; }
-      else if (!d.podiumData && STATE.endGame) {
-          STATE.endGame = false;
-          document.getElementById('podium-wrap').style.display = 'none';
-          document.querySelectorAll('.premium-entry').forEach(el => el.classList.remove('animate-in'));
+      
+      // Actively dismiss podium if a question or track starts
+      if (d.qcmActive || d.type === 'qcm_question' || d.type === 'track_update' || d.trackID || d.track) {
+          if (STATE.endGame) {
+              STATE.endGame = false;
+              document.getElementById('podium-wrap').style.display = 'none';
+              document.getElementById('overlay-layer').classList.remove('active');
+              document.querySelectorAll('.premium-entry').forEach(el => el.classList.remove('animate-in'));
+          }
+      } else {
+          if (d.type === 'end_game') { podium(d.data); return; }
+          else if (d.podiumData && !STATE.endGame) { podium(d.podiumData); return; }
+          else if (!d.podiumData && STATE.endGame) {
+              STATE.endGame = false;
+              document.getElementById('podium-wrap').style.display = 'none';
+              document.querySelectorAll('.premium-entry').forEach(el => el.classList.remove('animate-in'));
+          }
       }
 
       // ── QCM MODE logic ──────────────────────────────────────────────────────
@@ -1511,11 +1522,20 @@
             document.getElementById('qcm-timer-container').style.opacity = '1';
             updateQCMTimer();
           } else if (d.remaining !== undefined) {
-            STATE.qcmDuration = d.duration || STATE.qcmDuration || 30;
-            STATE.qcmEndTime = Date.now() + (d.remaining * 1000);
-            if (qcmRafId) cancelAnimationFrame(qcmRafId);
-            document.getElementById('qcm-timer-container').style.opacity = '1';
-            updateQCMTimer();
+            var duration = d.duration || STATE.qcmDuration || 30;
+            STATE.qcmDuration = duration;
+            var now = Date.now();
+            if (!STATE.qcmEndTime) STATE.qcmEndTime = now + (d.remaining * 1000);
+            var expected = (STATE.qcmEndTime - now) / 1000;
+            if (Math.abs(expected - d.remaining) > 1.2 || d.remaining >= (duration - 0.5) || d.remaining <= 0.5) {
+                STATE.qcmEndTime = now + (d.remaining * 1000);
+                if (qcmRafId) cancelAnimationFrame(qcmRafId);
+                document.getElementById('qcm-timer-container').style.opacity = '1';
+                updateQCMTimer();
+            } else if (!qcmRafId && d.remaining > 0) {
+                document.getElementById('qcm-timer-container').style.opacity = '1';
+                updateQCMTimer();
+            }
           }
           
           document.getElementById('idle').classList.add('gone');
