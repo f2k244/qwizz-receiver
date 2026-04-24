@@ -1327,14 +1327,31 @@
     </div>
   </div>
 
-  <div id="cheat-overlay" style="display:none; position:fixed; inset:0; background:rgba(255, 0, 0, 0.85); backdrop-filter:blur(20px); z-index:90000; flex-direction:column; align-items:center; justify-content:center; animation: flashRed 0.5s ease-in-out infinite alternate;">
+  <div id="cheat-overlay">
     <div style="font-size: 15rem; filter: drop-shadow(0 0 40px rgba(0,0,0,0.8));">🚨</div>
     <div style="font-size: 8rem; font-weight: 900; color: white; margin-top: 5vmin; text-shadow: 0 0 30px rgba(0,0,0,0.8); letter-spacing: 0.5vmin;">TRICHE DÉTECTÉE</div>
     <div id="cheat-name" style="font-size: 6rem; font-weight: 700; color: #fff; background: #000; padding: 2vmin 6vmin; border-radius: 4vmin; margin-top: 4vmin; border: 5px solid red; box-shadow: 0 0 50px rgba(255,0,0,0.8);">JOUEUR</div>
     <div id="cheat-penalty" style="font-size: 5rem; font-weight: 900; color: #ffeb3b; margin-top: 4vmin; text-shadow: 0 0 20px rgba(0,0,0,0.8);">PÉNALITÉ</div>
   </div>
   <style>
+    #cheat-overlay {
+      display:none; position:fixed; inset:0; backdrop-filter:blur(20px); z-index:90000; 
+      flex-direction:column; align-items:center; justify-content:center;
+    }
+    
+    /* STYLE: FLASH (Red siren) */
     @keyframes flashRed { 0% { background: rgba(255,0,0,0.6); } 100% { background: rgba(255,0,0,0.95); } }
+    #cheat-overlay.style-flash { background: rgba(255,0,0,0.85); animation: flashRed 0.5s ease-in-out infinite alternate; }
+    
+    /* STYLE: IMPACT (Aggressive pop) */
+    @keyframes popImpact { 0% { transform: scale(0.5); opacity:0; } 50% { transform: scale(1.1); opacity:1; } 100% { transform: scale(1); opacity:1; } }
+    @keyframes shakeImpact { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+    #cheat-overlay.style-impact { background: rgba(20,0,0,0.95); }
+    #cheat-overlay.style-impact > div { animation: popImpact 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both, shakeImpact 0.2s 0.4s infinite; }
+    
+    /* STYLE: CINÉMA (Elegant dramatic zoom) */
+    @keyframes cinemaZoom { 0% { transform: scale(1.2); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    #cheat-overlay.style-cinema { background: linear-gradient(135deg, rgba(138,43,226,0.9) 0%, rgba(255,0,0,0.9) 100%); animation: cinemaZoom 1.2s cubic-bezier(0.165, 0.84, 0.44, 1) both; }
   </style>
 
   <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="logo-top" style="width:25vmin" src="https://qwizz.app/assets/img/logo.png"></div>
@@ -1402,8 +1419,15 @@
           var over = document.getElementById('cheat-overlay');
           document.getElementById('cheat-name').textContent = (d.playerName || d.name || "UN JOUEUR").toUpperCase();
           document.getElementById('cheat-penalty').textContent = (d.penalty || d.cheatingPenalty) ? "-" + (d.penalty || d.cheatingPenalty) + " PTS" : "PÉNALITÉ !";
+          
+          over.className = '';
+          var style = (d.style || "Flash").toLowerCase();
+          if (style === 'impact') over.classList.add('style-impact');
+          else if (style === 'cinéma' || style === 'cinema') over.classList.add('style-cinema');
+          else over.classList.add('style-flash');
+          
           over.style.display = 'flex';
-          setTimeout(() => { over.style.display = 'none'; }, 6000);
+          setTimeout(() => { over.style.display = 'none'; over.className = ''; }, 6000);
           return;
       }
 
