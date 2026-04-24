@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>QWIZZ Master V5.6.3-Premium</title>
+  <title>QWIZZ Master V5.6.4-Premium</title>
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
@@ -203,7 +203,7 @@
     /* Floating UI Elements */
     #leaderboard {
       position: fixed;
-      z-index: 52000;
+      z-index: 76000;
       display: none;
       background: var(--glass);
       backdrop-filter: blur(15px);
@@ -267,7 +267,7 @@
 
     #qr-float {
       position: fixed;
-      z-index: 2000;
+      z-index: 70000;
       display: none;
       text-align: center;
       background: var(--glass);
@@ -305,7 +305,7 @@
     #overlay-layer {
       position: fixed;
       inset: 0;
-      z-index: 50000;
+      z-index: 75000;
       display: none;
       background: var(--bg);
       flex-direction: column;
@@ -325,7 +325,7 @@
       inset: 0;
       background: radial-gradient(circle at center, rgba(9, 7, 43, 0.95) 0%, var(--bg) 100%);
       backdrop-filter: blur(25px);
-      z-index: 55000;
+      z-index: 77000;
       flex-direction: column;
       align-items: center;
       justify-content: center;
@@ -616,7 +616,7 @@
       bottom: 0;
       left: 0;
       right: 0;
-      z-index: 2000;
+      z-index: 70000;
       height: 9vmin;
       display: none;
       align-items: center;
@@ -689,7 +689,7 @@
     #rules-overlay {
       position: fixed;
       inset: 0;
-      z-index: 60000;
+      z-index: 77000;
       background: rgba(9, 7, 43, 0.85); /* Slightly darker backdrop */
       backdrop-filter: blur(15px);
       display: flex;
@@ -746,7 +746,7 @@
     #pause-overlay {
       position: fixed;
       inset: 0;
-      z-index: 65000;
+      z-index: 78000;
       background: rgba(9, 7, 43, 0.95);
       backdrop-filter: blur(15px);
       display: flex;
@@ -998,7 +998,7 @@
       inset: 0;
       background: radial-gradient(circle at center, rgba(9, 7, 43, 0.9) 0%, var(--bg) 100%);
       backdrop-filter: blur(20px);
-      z-index: 66000;
+      z-index: 40000;
       flex-direction: column;
       align-items: center;
       justify-content: center;
@@ -1324,14 +1324,14 @@
   </div>
 
   <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="logo-top" style="width:25vmin" src="https://qwizz.app/assets/img/logo.png"></div>
-  <div class="version-tag">V5.6.3-PREMIUM</div>
+  <div class="version-tag">V5.6.4-PREMIUM</div>
   <div id="reload-toast">⟳ &nbsp;Rechargement en cours...</div>
   <div id="cast-debug-status" style="position:fixed; bottom:2vmin; right:2vmin; font-family:monospace; font-size:1.5vmin; color:rgba(255,255,255,0.3); z-index:99999; pointer-events:none">INIT</div>
   <div id="cast-server-info" style="position:fixed; bottom:5vmin; right:2vmin; font-family:monospace; font-size:1.2vmin; color:rgba(255,255,255,0.2); z-index:99999; pointer-events:none">URL: --</div>
   <cast-media-player></cast-media-player>
 
   <script>
-    // Master State V5.6.3-PREMIUM — base64 logo/QR + Mode QCM
+    // Master State V5.6.4-PREMIUM — base64 logo/QR + Mode QCM
     var STATE = {
       serverURL: '', track: null, revealed: false,
       showScores: false, scoreMode: 'br',
@@ -1696,7 +1696,7 @@
         var i = document.getElementById('img-main'), b = document.getElementById('img-blur');
         if (coverSrc) {
           b.src = coverSrc; b.onload = () => { if (STATE.track.shouldBlur && !STATE.revealed) b.style.opacity = '1'; };
-          i.src = coverSrc; if (STATE.revealed) { i.style.opacity = '1'; b.style.opacity = '0'; }
+          i.src = coverSrc; if (STATE.revealed) { i.style.opacity = '1'; b.style.opacity = '0'; } else { i.style.opacity = '0'; }
         }
       }
       
@@ -1711,10 +1711,19 @@
     function applyCover(base64) {
       var i = document.getElementById('img-main'), b = document.getElementById('img-blur');
       if (!base64) return;
-      if (STATE.track && STATE.track.shouldBlur && !STATE.revealed) {
-        b.src = base64; b.style.opacity = '1';
+      
+      i.src = base64;
+      b.src = base64;
+
+      if (STATE.revealed) {
+        i.style.opacity = '1';
+        b.style.opacity = '0';
+      } else if (STATE.track && STATE.track.shouldBlur) {
+        i.style.opacity = '0';
+        b.style.opacity = '1';
       } else {
-        i.src = base64; i.style.opacity = '1'; b.style.opacity = '0';
+        i.style.opacity = '0';
+        b.style.opacity = '0';
       }
     }
 
