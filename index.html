@@ -1483,7 +1483,7 @@
           STATE.logoVersion = d.logoVersion;
           STATE.serverURL = STATE.serverURL || (d.serverURL ? (d.serverURL.endsWith('/') ? d.serverURL.slice(0, -1) : d.serverURL) : null);
           if (STATE.serverURL) {
-            ['logo-idle', 'logo-top', 'nocover-logo'].forEach(id => {
+            ['logo-idle', 'logo-top'].forEach(id => {
                 var el = document.getElementById(id);
                 if (el) el.src = STATE.serverURL + '/tv_logo?v=' + STATE.logoVersion;
             });
@@ -1492,14 +1492,14 @@
         if (d.logoBase64 !== STATE.logoBase64) {
           STATE.hasBase64Logo = true;
           STATE.logoBase64 = d.logoBase64;
-          ['logo-idle', 'logo-top', 'nocover-logo'].forEach(id => {
+          ['logo-idle', 'logo-top'].forEach(id => {
               var el = document.getElementById(id);
               if (el) el.src = STATE.logoBase64;
           });
         }
       } else if (!STATE.hasBase64Logo && STATE.serverURL && !STATE.logoVersion) {
           STATE.hasBase64Logo = true;
-          ['logo-idle', 'logo-top', 'nocover-logo'].forEach(id => {
+          ['logo-idle', 'logo-top'].forEach(id => {
               var el = document.getElementById(id);
               if (el) el.src = STATE.serverURL + '/tv_logo?t=' + Date.now();
           });
@@ -1558,13 +1558,14 @@
             document.getElementById('qcm-timer-container').style.display = 'flex';
 
             if (STATE.qcmImageURL) {
+                mainEl.classList.add('with-image'); // Prepare layout immediately to avoid snapping
+                
                 var preloadUrl = STATE.qcmImageURL;
                 if (preloadUrl.startsWith('/')) preloadUrl = STATE.serverURL + preloadUrl;
                 var tempImg = new Image();
                 tempImg.onload = function() {
                     sideImg.src = preloadUrl;
                     sideImg.setAttribute('data-loaded-src', preloadUrl);
-                    mainEl.classList.add('with-image');
                     sideImg.classList.add('visible');
                 };
                 tempImg.onerror = function() {
@@ -1642,18 +1643,16 @@
             var sideImg = document.getElementById('qcm-side-image');
             var mainEl = document.getElementById('qcm-main');
             
+            mainEl.classList.add('with-image'); // Prepare layout immediately
+            
             if (sideImg.getAttribute('data-loaded-src') !== imgURL) {
                 var tempImg = new Image();
                 tempImg.onload = function() {
                     sideImg.src = imgURL;
                     sideImg.setAttribute('data-loaded-src', imgURL);
-                    mainEl.classList.add('with-image');
                     sideImg.classList.add('visible');
                 };
                 tempImg.src = imgURL;
-            } else if (!mainEl.classList.contains('with-image')) {
-                mainEl.classList.add('with-image');
-                sideImg.classList.add('visible');
             } else {
                 sideImg.classList.add('visible');
             }
@@ -1822,9 +1821,13 @@
           i.style.opacity = '0';
           var n = document.getElementById('nocover-container');
           if (n) n.style.opacity = '1';
-          if (t.coverBase64) {
-              var nl = document.getElementById('nocover-logo');
-              if (nl) nl.src = t.coverBase64;
+          var nl = document.getElementById('nocover-logo');
+          if (nl) {
+              if (t.coverBase64) {
+                  nl.src = t.coverBase64;
+              } else if (STATE.serverURL) {
+                  nl.src = STATE.serverURL + '/no_cover?t=' + Date.now();
+              }
           }
         }
       }
