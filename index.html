@@ -1028,31 +1028,38 @@
 
     #qcm-main {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       width: 100%;
       flex: 1;
       justify-content: center;
-      align-items: stretch;
-      gap: 5vmin;
+      align-items: center;
+      gap: 0;
       padding-top: 3vmin;
+      transition: gap 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    /* Condition: with image -> flex-row */
     #qcm-main.with-image {
-      flex-direction: row;
-      align-items: center;
+      gap: 5vmin;
     }
 
     #qcm-side-image {
-      display: none;
-      width: 42vw;
+      width: 0;
+      opacity: 0;
       max-height: 60vh;
       object-fit: cover;
       border-radius: 4vmin;
       box-shadow: 0 30px 80px rgba(0,0,0,0.8), 0 0 40px rgba(0, 168, 255, 0.15);
-      border: 3px solid rgba(255,255,255,0.15);
+      border: 0px solid rgba(255,255,255,0.15);
       flex-shrink: 0;
-      animation: revealPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease, border-width 0.4s ease;
+      overflow: hidden;
+      margin: 0;
+    }
+    
+    #qcm-main.with-image #qcm-side-image {
+      width: 42vw;
+      opacity: 1;
+      border-width: 3px;
     }
     
     #qcm-content {
@@ -1244,7 +1251,7 @@
       <div class="cover-side">
         <div class="cover-card">
           <div id="nocover-container" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:0; transition: opacity .3s;">
-            <img src="nocover.png" style="width:100%; height:100%; object-fit:contain; opacity: 0.5;"></div>
+            <img src="nocover.png" style="width:80%; height:auto; object-fit:contain; opacity: 1;"></div>
           <img id="img-blur">
           <img id="img-main">
         </div>
@@ -1320,6 +1327,16 @@
     </div>
   </div>
 
+  <div id="cheat-overlay" style="display:none; position:fixed; inset:0; background:rgba(255, 0, 0, 0.85); backdrop-filter:blur(20px); z-index:90000; flex-direction:column; align-items:center; justify-content:center; animation: flashRed 0.5s ease-in-out infinite alternate;">
+    <div style="font-size: 15rem; filter: drop-shadow(0 0 40px rgba(0,0,0,0.8));">🚨</div>
+    <div style="font-size: 8rem; font-weight: 900; color: white; margin-top: 5vmin; text-shadow: 0 0 30px rgba(0,0,0,0.8); letter-spacing: 0.5vmin;">TRICHE DÉTECTÉE</div>
+    <div id="cheat-name" style="font-size: 6rem; font-weight: 700; color: #fff; background: #000; padding: 2vmin 6vmin; border-radius: 4vmin; margin-top: 4vmin; border: 5px solid red; box-shadow: 0 0 50px rgba(255,0,0,0.8);">JOUEUR</div>
+    <div id="cheat-penalty" style="font-size: 5rem; font-weight: 900; color: #ffeb3b; margin-top: 4vmin; text-shadow: 0 0 20px rgba(0,0,0,0.8);">PÉNALITÉ</div>
+  </div>
+  <style>
+    @keyframes flashRed { 0% { background: rgba(255,0,0,0.6); } 100% { background: rgba(255,0,0,0.95); } }
+  </style>
+
   <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="logo-top" style="width:25vmin" src="https://qwizz.app/assets/img/logo.png"></div>
   <div class="version-tag">V5.6.4-PREMIUM</div>
   <div id="reload-toast">⟳ &nbsp;Rechargement en cours...</div>
@@ -1380,6 +1397,15 @@
       if (typeof d === 'string') { try { d = JSON.parse(d); } catch (e) { return; } }
       
       console.log("Receiver Sync:", d.type || "state_update", d);
+
+      if (d.type === 'cheater_alert') {
+          var over = document.getElementById('cheat-overlay');
+          document.getElementById('cheat-name').textContent = (d.playerName || d.name || "UN JOUEUR").toUpperCase();
+          document.getElementById('cheat-penalty').textContent = (d.penalty || d.cheatingPenalty) ? "-" + (d.penalty || d.cheatingPenalty) + " PTS" : "PÉNALITÉ !";
+          over.style.display = 'flex';
+          setTimeout(() => { over.style.display = 'none'; }, 6000);
+          return;
+      }
 
       if (d.type === 'reload') {
         var toast = document.getElementById('reload-toast');
@@ -1503,7 +1529,6 @@
             var mainEl = document.getElementById('qcm-main');
             sideImg.removeAttribute('data-loaded-src');
             sideImg.src = '';
-            sideImg.style.display = 'none';
             mainEl.classList.remove('with-image');
             document.getElementById('qcm-global-summary').classList.remove('visible');
             document.getElementById('qcm-timer-container').style.display = 'flex';
@@ -1581,19 +1606,11 @@
                 tempImg.onload = function() {
                     sideImg.src = imgURL;
                     sideImg.setAttribute('data-loaded-src', imgURL);
-                    sideImg.style.display = 'block';
                     mainEl.classList.add('with-image');
-                    sideImg.style.animation = 'none';
-                    sideImg.offsetHeight; /* force reflow */
-                    sideImg.style.animation = 'revealPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both';
                 };
                 tempImg.src = imgURL;
             } else if (!mainEl.classList.contains('with-image')) {
-                sideImg.style.display = 'block';
                 mainEl.classList.add('with-image');
-                sideImg.style.animation = 'none';
-                sideImg.offsetHeight;
-                sideImg.style.animation = 'revealPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both';
             }
           }
 
