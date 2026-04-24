@@ -1726,6 +1726,7 @@
         i.style.opacity = '0'; b.style.opacity = '0';
         i.removeAttribute('src'); b.removeAttribute('src');
         STATE.currentCoverKey = null;
+        STATE.currentCoverBase64 = null;
       }
 
       // Résoudre la source cover
@@ -1758,8 +1759,11 @@
       var i = document.getElementById('img-main'), b = document.getElementById('img-blur');
       if (!base64) return;
       
-      i.src = base64;
-      b.src = base64;
+      if (STATE.currentCoverBase64 !== base64) {
+          STATE.currentCoverBase64 = base64;
+          i.src = base64;
+          b.src = base64;
+      }
 
       if (STATE.revealed) {
         i.style.opacity = '1';
