@@ -1539,8 +1539,10 @@
           
           if (isNewQuestion || (d.type === 'qcm_question' && !d.isFromPoll)) {
             if (STATE.qcmImageURL) {
+                var preloadUrl = STATE.qcmImageURL;
+                if (preloadUrl.startsWith('/')) preloadUrl = STATE.serverURL + preloadUrl;
                 var preloader = new Image();
-                preloader.src = STATE.qcmImageURL;
+                preloader.src = preloadUrl;
             }
             STATE.qcmCurrentQuestion = qText;
             document.getElementById('qcm-question').textContent = qText;
@@ -1553,6 +1555,7 @@
             var mainEl = document.getElementById('qcm-main');
             sideImg.removeAttribute('data-loaded-src');
             sideImg.src = '';
+            sideImg.classList.remove('visible');
             mainEl.classList.remove('with-image');
             document.getElementById('qcm-global-summary').classList.remove('visible');
             document.getElementById('qcm-timer-container').style.display = 'flex';
@@ -1622,6 +1625,7 @@
           var imgURL = d.imageURL || STATE.qcmImageURL;
           
           if (imgURL) {
+            if (imgURL.startsWith('/')) imgURL = STATE.serverURL + imgURL;
             var sideImg = document.getElementById('qcm-side-image');
             var mainEl = document.getElementById('qcm-main');
             
@@ -1631,10 +1635,14 @@
                     sideImg.src = imgURL;
                     sideImg.setAttribute('data-loaded-src', imgURL);
                     mainEl.classList.add('with-image');
+                    sideImg.classList.add('visible');
                 };
                 tempImg.src = imgURL;
             } else if (!mainEl.classList.contains('with-image')) {
                 mainEl.classList.add('with-image');
+                sideImg.classList.add('visible');
+            } else {
+                sideImg.classList.add('visible');
             }
           }
 
