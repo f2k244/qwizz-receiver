@@ -1244,7 +1244,7 @@
       <div class="cover-side">
         <div class="cover-card">
           <div id="nocover-container" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:0; transition: opacity .3s;">
-            <img src="nocover.png" style="width:80%"></div>
+            <img src="nocover.png" style="width:100%; height:100%; object-fit:contain; opacity: 0.5;"></div>
           <img id="img-blur">
           <img id="img-main">
         </div>
@@ -1747,10 +1747,11 @@
         STATE.currentCoverKey = coverKey;
         var i = document.getElementById('img-main'), b = document.getElementById('img-blur');
         if (coverSrc) {
-          b.src = coverSrc; b.onload = () => { 
+          b.onload = () => { 
               var n = document.getElementById('nocover-container'); if(n) n.style.opacity = '0';
               if (STATE.track.shouldBlur && !STATE.revealed) b.style.opacity = '1'; 
           };
+          b.src = coverSrc; 
           i.src = coverSrc; if (STATE.revealed) { i.style.opacity = '1'; b.style.opacity = '0'; } else { i.style.opacity = '0'; }
         }
       }
