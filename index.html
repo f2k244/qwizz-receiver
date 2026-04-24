@@ -1252,7 +1252,7 @@
         <div class="cover-card">
           <div id="nocover-container" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:0; transition: opacity .3s;">
             <div class="nocover-pulse" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; animation: pulseRedBg 2s infinite alternate;">
-              <img id="nocover-logo" src="https://qwizz.app/assets/img/logo.png" style="width:60%; height:auto; object-fit:contain; opacity: 1; filter: drop-shadow(0 0 4vmin rgba(0,168,255,0.8));">
+              <img id="nocover-logo" src="nocover.png" style="width:60%; height:auto; object-fit:contain; opacity: 1; filter: drop-shadow(0 0 4vmin rgba(0,168,255,0.8));">
             </div>
           </div>
           <img id="img-blur">
@@ -1821,14 +1821,6 @@
           i.style.opacity = '0';
           var n = document.getElementById('nocover-container');
           if (n) n.style.opacity = '1';
-          var nl = document.getElementById('nocover-logo');
-          if (nl) {
-              if (t.coverBase64) {
-                  nl.src = t.coverBase64;
-              } else if (STATE.serverURL) {
-                  nl.src = STATE.serverURL + '/no_cover?t=' + Date.now();
-              }
-          }
         }
       }
       
