@@ -1541,18 +1541,12 @@
           var isNewQuestion = (STATE.qcmCurrentQuestion !== qText);
           
           if (isNewQuestion || (d.type === 'qcm_question' && !d.isFromPoll)) {
-            if (STATE.qcmImageURL) {
-                var preloadUrl = STATE.qcmImageURL;
-                if (preloadUrl.startsWith('/')) preloadUrl = STATE.serverURL + preloadUrl;
-                var preloader = new Image();
-                preloader.src = preloadUrl;
-            }
             STATE.qcmCurrentQuestion = qText;
             document.getElementById('qcm-question').textContent = qText;
             
             var choicesEl = document.getElementById('qcm-choices');
             var rawChoices = d.choices || [];
-            
+
             // CLEANUP: Reset image and results state for new question
             var sideImg = document.getElementById('qcm-side-image');
             var mainEl = document.getElementById('qcm-main');
@@ -1562,6 +1556,22 @@
             mainEl.classList.remove('with-image');
             document.getElementById('qcm-global-summary').classList.remove('visible');
             document.getElementById('qcm-timer-container').style.display = 'flex';
+
+            if (STATE.qcmImageURL) {
+                var preloadUrl = STATE.qcmImageURL;
+                if (preloadUrl.startsWith('/')) preloadUrl = STATE.serverURL + preloadUrl;
+                var tempImg = new Image();
+                tempImg.onload = function() {
+                    sideImg.src = preloadUrl;
+                    sideImg.setAttribute('data-loaded-src', preloadUrl);
+                    mainEl.classList.add('with-image');
+                    sideImg.classList.add('visible');
+                };
+                tempImg.onerror = function() {
+                    console.error("Erreur chargement image QCM :", preloadUrl);
+                };
+                tempImg.src = preloadUrl;
+            }
 
             if (rawChoices.length > 0) {
               choicesEl.innerHTML = rawChoices.map((c, i) =>
@@ -1812,6 +1822,10 @@
           i.style.opacity = '0';
           var n = document.getElementById('nocover-container');
           if (n) n.style.opacity = '1';
+          if (t.coverBase64) {
+              var nl = document.getElementById('nocover-logo');
+              if (nl) nl.src = t.coverBase64;
+          }
         }
       }
       
