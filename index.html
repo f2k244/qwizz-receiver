@@ -1501,6 +1501,7 @@
             // CLEANUP: Reset image and results state for new question
             var sideImg = document.getElementById('qcm-side-image');
             var mainEl = document.getElementById('qcm-main');
+            sideImg.removeAttribute('data-loaded-src');
             sideImg.src = '';
             sideImg.style.display = 'none';
             mainEl.classList.remove('with-image');
@@ -1526,16 +1527,19 @@
             updateQCMTimer();
           } else if (d.remaining !== undefined) {
             var duration = d.duration || STATE.qcmDuration || 30;
+            var durationChanged = (STATE.qcmDuration !== duration);
             STATE.qcmDuration = duration;
             var now = Date.now();
             if (!STATE.qcmEndTime) STATE.qcmEndTime = now + (d.remaining * 1000);
             var expected = (STATE.qcmEndTime - now) / 1000;
-            if (Math.abs(expected - d.remaining) > 1.2 || d.remaining >= (duration - 0.5) || d.remaining <= 0.5) {
+            if (durationChanged || Math.abs(expected - d.remaining) > 1.2 || d.remaining >= (duration - 0.5) || d.remaining <= 0.5) {
                 STATE.qcmEndTime = now + (d.remaining * 1000);
                 if (qcmRafId) cancelAnimationFrame(qcmRafId);
+                document.getElementById('qcm-timer-container').style.display = 'flex';
                 document.getElementById('qcm-timer-container').style.opacity = '1';
                 updateQCMTimer();
             } else if (!qcmRafId && d.remaining > 0) {
+                document.getElementById('qcm-timer-container').style.display = 'flex';
                 document.getElementById('qcm-timer-container').style.opacity = '1';
                 updateQCMTimer();
             }
@@ -1548,6 +1552,7 @@
         } else if (d.type === 'qcm_timer') {
           var remaining = d.remaining;
           var duration = d.duration || STATE.qcmDuration || 30;
+          var durationChanged = (STATE.qcmDuration !== duration);
           STATE.qcmDuration = duration;
           
           var now = Date.now();
@@ -1555,9 +1560,10 @@
           var expected = (STATE.qcmEndTime - now) / 1000;
           var diff = Math.abs(expected - remaining);
           
-          if (diff > 1.2 || remaining >= (duration - 0.5) || remaining <= 0.5) {
+          if (durationChanged || diff > 1.2 || remaining >= (duration - 0.5) || remaining <= 0.5) {
               STATE.qcmEndTime = now + (remaining * 1000);
               if (qcmRafId) cancelAnimationFrame(qcmRafId);
+              document.getElementById('qcm-timer-container').style.display = 'flex';
               document.getElementById('qcm-timer-container').style.opacity = '1';
               updateQCMTimer();
           }
@@ -1569,9 +1575,26 @@
           if (imgURL) {
             var sideImg = document.getElementById('qcm-side-image');
             var mainEl = document.getElementById('qcm-main');
-            sideImg.src = imgURL;
-            sideImg.style.display = 'block';
-            mainEl.classList.add('with-image');
+            
+            if (sideImg.getAttribute('data-loaded-src') !== imgURL) {
+                var tempImg = new Image();
+                tempImg.onload = function() {
+                    sideImg.src = imgURL;
+                    sideImg.setAttribute('data-loaded-src', imgURL);
+                    sideImg.style.display = 'block';
+                    mainEl.classList.add('with-image');
+                    sideImg.style.animation = 'none';
+                    sideImg.offsetHeight; /* force reflow */
+                    sideImg.style.animation = 'revealPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both';
+                };
+                tempImg.src = imgURL;
+            } else {
+                sideImg.style.display = 'block';
+                mainEl.classList.add('with-image');
+                sideImg.style.animation = 'none';
+                sideImg.offsetHeight;
+                sideImg.style.animation = 'revealPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both';
+            }
           }
 
           var counts = {};
