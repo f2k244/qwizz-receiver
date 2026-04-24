@@ -1002,7 +1002,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 6vmin;
+      padding: 8vmin 6vmin;
       box-sizing: border-box;
       gap: 5vmin;
     }
@@ -1419,7 +1419,7 @@
             window.isPolling = true;
             fetch(STATE.serverURL + '/tv_state')
               .then(r => r.json())
-              .then(d => { window.isPolling = false; sync(d); })
+              .then(d => { window.isPolling = false; d.isFromPoll = true; sync(d); })
               .catch(() => { window.isPolling = false; });
           }, 1000);
         }
@@ -1484,8 +1484,9 @@
           STATE.qcmImageURL = d.imageURL || null;
           
           var qText = d.question || document.getElementById('qcm-question').textContent || '';
+          var isNewQuestion = (STATE.qcmCurrentQuestion !== qText);
           
-          if (STATE.qcmCurrentQuestion !== qText || d.type === 'qcm_question') {
+          if (isNewQuestion || (d.type === 'qcm_question' && !d.isFromPoll)) {
             STATE.qcmCurrentQuestion = qText;
             document.getElementById('qcm-question').textContent = qText;
             
@@ -1499,6 +1500,7 @@
             sideImg.style.display = 'none';
             mainEl.classList.remove('with-image');
             document.getElementById('qcm-global-summary').classList.remove('visible');
+            document.getElementById('qcm-timer-container').style.display = 'flex';
 
             if (rawChoices.length > 0) {
               choicesEl.innerHTML = rawChoices.map((c, i) =>
@@ -1511,7 +1513,7 @@
             }
           }
           
-          if (d.type === 'qcm_question') {
+          if (isNewQuestion || (d.type === 'qcm_question' && !d.isFromPoll)) {
             STATE.qcmDuration = d.duration || 30;
             STATE.qcmEndTime = Date.now() + (STATE.qcmDuration * 1000);
             if (qcmRafId) cancelAnimationFrame(qcmRafId);
@@ -1593,7 +1595,7 @@
           }
           
           if (qcmRafId) { cancelAnimationFrame(qcmRafId); qcmRafId = null; }
-          document.getElementById('qcm-timer-container').style.opacity = '0';
+          document.getElementById('qcm-timer-container').style.display = 'none';
 
           document.getElementById('idle').classList.add('gone');
           document.getElementById('qcm-overlay').classList.add('visible');
