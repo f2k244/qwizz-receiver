@@ -1251,7 +1251,10 @@
       <div class="cover-side">
         <div class="cover-card">
           <div id="nocover-container" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:0; transition: opacity .3s;">
-            <img src="nocover.png" style="width:80%; height:auto; object-fit:contain; opacity: 1;"></div>
+            <div class="nocover-pulse" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; animation: pulseRedBg 2s infinite alternate;">
+              <img id="nocover-logo" src="https://qwizz.app/assets/img/logo.png" style="width:60%; height:auto; object-fit:contain; opacity: 1; filter: drop-shadow(0 0 4vmin rgba(0,168,255,0.8));">
+            </div>
+          </div>
           <img id="img-blur">
           <img id="img-main">
         </div>
@@ -1480,7 +1483,7 @@
           STATE.logoVersion = d.logoVersion;
           STATE.serverURL = STATE.serverURL || (d.serverURL ? (d.serverURL.endsWith('/') ? d.serverURL.slice(0, -1) : d.serverURL) : null);
           if (STATE.serverURL) {
-            ['logo-idle', 'logo-top'].forEach(id => {
+            ['logo-idle', 'logo-top', 'nocover-logo'].forEach(id => {
                 var el = document.getElementById(id);
                 if (el) el.src = STATE.serverURL + '/tv_logo?v=' + STATE.logoVersion;
             });
@@ -1489,14 +1492,14 @@
         if (d.logoBase64 !== STATE.logoBase64) {
           STATE.hasBase64Logo = true;
           STATE.logoBase64 = d.logoBase64;
-          ['logo-idle', 'logo-top'].forEach(id => {
+          ['logo-idle', 'logo-top', 'nocover-logo'].forEach(id => {
               var el = document.getElementById(id);
               if (el) el.src = STATE.logoBase64;
           });
         }
       } else if (!STATE.hasBase64Logo && STATE.serverURL && !STATE.logoVersion) {
           STATE.hasBase64Logo = true;
-          ['logo-idle', 'logo-top'].forEach(id => {
+          ['logo-idle', 'logo-top', 'nocover-logo'].forEach(id => {
               var el = document.getElementById(id);
               if (el) el.src = STATE.serverURL + '/tv_logo?t=' + Date.now();
           });
