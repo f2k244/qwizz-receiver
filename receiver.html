@@ -73,7 +73,7 @@
 
     .idle-logo {
       width: 75vmin;
-      filter: drop-shadow(0 0 50px rgba(0, 168, 255, 0.7));
+      /* drop-shadow retiré - surcharge GPU Chromecast */
       animation: pulseLogo 4s ease-in-out infinite;
     }
 
@@ -181,7 +181,7 @@
 
     #img-blur {
       z-index: 1;
-      filter: blur(20px) brightness(0.65); opacity: 0.75;
+      filter: blur(12px) brightness(0.6); opacity: 0.6;
     }
 
     .track-info {
@@ -1250,7 +1250,7 @@
         <div class="cover-card">
           <div id="nocover-container" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:0; transition: opacity .3s;">
             <div class="nocover-pulse" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; animation: pulseRedBg 2s infinite alternate;">
-              <img id="nocover-logo" src="https://qwizz.app/assets/img/logo.png" style="width:60%; height:auto; object-fit:contain; opacity: 1; filter: drop-shadow(0 0 4vmin rgba(0,168,255,0.8));">
+              <img id="nocover-logo" src="https://qwizz.app/assets/img/logo.png" style="width:60%; height:auto; object-fit:contain; opacity: 1;">
             </div>
           </div>
           <img id="img-blur">
@@ -1477,7 +1477,7 @@
             window.isPolling = true;
             fetch(STATE.serverURL + '/tv_state')
               .then(r => r.json())
-              .then(d => { window.isPolling = false; d.isFromPoll = true; sync(d); })
+              .then(d => { window.isPolling = false; d.isFromPoll = true; try { sync(d); } catch(err) { console.error('Poll sync error:', err); } })
               .catch(() => { window.isPolling = false; });
           }, 800);
         }
@@ -2016,7 +2016,7 @@
 
     // Intercepter le chargement média pour récupérer l'URL du serveur
     pm.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, req => {
-      if (req.media && req.media.customData) sync(req.media.customData);
+      try { if (req.media && req.media.customData) sync(req.media.customData); } catch(e) { console.error('LOAD sync error:', e); }
       // Sortir de l'écran idle dès qu'un média est chargé, même sans trackID complet
       document.getElementById('idle').classList.add('gone');
       document.getElementById('player-scene').classList.add('visible');
@@ -2044,7 +2044,7 @@
         } catch(e) { console.error('Handshake error:', e); }
       };
 
-      ctx.addCustomMessageListener('urn:x-cast:com.qwizz.control', function(e) { sync(e.data); });
+      ctx.addCustomMessageListener('urn:x-cast:com.qwizz.control', function(e) { try { sync(e.data); } catch(err) { console.error('CustomMessage sync error:', err); } });
 
       ctx.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, () => {
           document.getElementById('cast-debug-status').textContent = 'SENDER CONNECTED';
