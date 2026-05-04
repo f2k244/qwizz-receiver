@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>QWIZZ Receiver v7.0.1-LOGOFIX</title>
+<title>QWIZZ Receiver v7.0.2-BUGFIX</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 <style>
@@ -653,7 +653,7 @@ var STATE = {
   isPaused: false, pauseMessage: '',
   endGame: false,
   currentTrackID: null,
-  qcmDuration: 30, qcmEndTime: null, qcmCurrentQuestion: null,
+  qcmActive: false, qcmDuration: 30, qcmEndTime: null, qcmCurrentQuestion: null,
   players: [],
   logoBase64: null, hasBase64Logo: false,
   view: 'idle'
@@ -749,6 +749,9 @@ function renderBlindTest(d) {
     $('bt-cover-overlay').style.display = 'none';
     $('bt-title').textContent = track.title || '';
     $('bt-artist').textContent = track.artist || '';
+    // Ensure images are visible if already loaded
+    if ($('bt-img-main').src && $('bt-img-main').src !== window.location.href) $('bt-img-main').style.display = '';
+    if ($('bt-img-blur').src && $('bt-img-blur').src !== window.location.href) $('bt-img-blur').style.display = '';
   } else {
     $('bt-cover-overlay').style.display = 'flex';
     $('bt-title').textContent = 'Quel est le titre ?';
@@ -831,6 +834,7 @@ function renderQCMQuestion(d) {
   renderQCMFooter(d.responders || []);
 
   // Timer
+  if (qcmRaf) cancelAnimationFrame(qcmRaf);
   STATE.qcmEndTime = Date.now() + (STATE.qcmDuration * 1000);
   updateQCMTimer();
 }
@@ -1069,6 +1073,7 @@ function sync(d) {
         return;
 
       case 'qcm_question':
+        STATE.qcmActive = true;
         renderQCMQuestion(d);
         return;
 
@@ -1077,6 +1082,7 @@ function sync(d) {
         return;
 
       case 'qcm_stop':
+        STATE.qcmActive = false;
         STATE.qcmCurrentQuestion = null; STATE.qcmEndTime = null;
         if (qcmRaf) { cancelAnimationFrame(qcmRaf); qcmRaf = null; }
         if (STATE.view === 'qcm') renderIdle();
@@ -1084,8 +1090,10 @@ function sync(d) {
 
       case 'qcm_timer':
         if (d.remaining !== undefined) {
+          STATE.qcmActive = true;
           STATE.qcmDuration = d.duration || STATE.qcmDuration || 30;
           STATE.qcmEndTime = Date.now() + (d.remaining * 1000);
+          if (qcmRaf) cancelAnimationFrame(qcmRaf);
           updateQCMTimer();
         }
         return;
@@ -1144,13 +1152,15 @@ function sync(d) {
     if (d.podiumData && !STATE.endGame) { renderPodium(d.podiumData); return; }
 
     // View routing
-    if (d.qcmActive && d.question && !d.isQCMRevealed) {
+    if (d.qcmActive !== undefined) STATE.qcmActive = d.qcmActive;
+
+    if (STATE.qcmActive && d.question && !d.isQCMRevealed) {
       renderQCMQuestion(d);
-    } else if (d.qcmActive && d.isQCMRevealed) {
+    } else if (STATE.qcmActive && d.isQCMRevealed) {
       renderQCMReveal(d);
-    } else if (d.track || d.trackID || STATE.track) {
+    } else if (!STATE.qcmActive && (d.track || d.trackID || STATE.track)) {
       renderBlindTest(d);
-    } else if (!STATE.endGame) {
+    } else if (!STATE.endGame && !STATE.qcmActive) {
       renderIdle();
     }
 
