@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>QWIZZ Receiver v7.0.0-REBUILD</title>
+<title>QWIZZ Receiver v7.0.1-LOGOFIX</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 <style>
@@ -498,8 +498,9 @@
 <!-- ===== TOPBAR ===== -->
 <div id="topbar">
   <div class="tb-left">
-    <div class="tb-logo-q">Q</div>
-    <span class="tb-logo-text">QWIZZ</span>
+    <div class="tb-logo-q" id="tb-logo-fallback">Q</div>
+    <img id="logo-top" style="display:none;height:4.5vmin;width:auto;object-fit:contain;">
+    <span class="tb-logo-text" id="tb-logo-text">QWIZZ</span>
     <div class="tb-divider"></div>
     <span class="tb-title" id="tb-title">En attente</span>
   </div>
@@ -517,7 +518,8 @@
 <!-- IDLE -->
 <div class="view" id="view-idle">
   <div class="idle-logo-wrap">
-    <div class="idle-logo-q">Q</div>
+    <div class="idle-logo-q" id="idle-logo-fallback">Q</div>
+    <img id="logo-idle" style="display:none;width:20vmin;height:auto;object-fit:contain;margin-bottom:2vmin;">
     <div class="idle-logo-text">QWIZZ</div>
   </div>
   <div class="idle-status">Prêt à qwizzer ?</div>
@@ -701,6 +703,17 @@ function avatarGradient(seed) {
 function initials(name) {
   if (!name) return '?';
   return name.split(/[\s_\-.]+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function setLogoImage(url) {
+  ['logo-idle', 'logo-top'].forEach(id => {
+    var el = $(id); var fb = $(id + '-fallback'); var txt = $('tb-logo-text');
+    if (el) {
+      el.src = url; el.style.display = '';
+      if (fb) fb.style.display = 'none';
+      if (txt && id === 'logo-top') txt.style.display = 'none';
+    }
+  });
 }
 
 /* ===== RENDERERS ===== */
@@ -1004,18 +1017,15 @@ function sync(d) {
       $('cast-debug-status').textContent = 'CONNECTED';
       if (!window.poll) startPolling();
       if (!STATE.hasBase64Logo) {
-        ['logo-idle','logo-top'].forEach(id => {
-          var el = $(id); if (el) el.src = STATE.serverURL + '/tv_logo?t=' + Date.now();
-        });
+        var logoUrl = STATE.serverURL + '/tv_logo?t=' + Date.now();
+        setLogoImage(logoUrl);
       }
     }
 
     // Logo
     if (d.logoBase64 && d.logoBase64 !== STATE.logoBase64) {
       STATE.hasBase64Logo = true; STATE.logoBase64 = d.logoBase64;
-      ['logo-idle','logo-top','nocover-logo'].forEach(id => {
-        var el = $(id); if (el) el.src = d.logoBase64;
-      });
+      setLogoImage(d.logoBase64);
     }
 
     // Settings
