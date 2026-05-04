@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>QWIZZ Receiver v7.0.4-CACHEBUST</title>
+<title>QWIZZ Receiver v7.0.5-IDLEFIX</title>
 <link href="https://fonts.googleapis.com/css2?family=Exo 2:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 <style>
@@ -57,17 +57,7 @@
     pointer-events: none;
   }
   .tb-left, .tb-center, .tb-right { display: flex; align-items: center; gap: 1.5vmin; }
-  .tb-logo-q {
-    width: 4.5vmin; height: 4.5vmin; border-radius: 1.2vmin;
-    background: var(--grad-ps);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 2.2vmin; font-weight: 900; color: #fff;
-    box-shadow: 0 0 2vmin rgba(255,45,168,0.25);
-    flex-shrink: 0;
-  }
-  .tb-logo-text { font-size: 2.2vmin; font-weight: 900; color: #fff; letter-spacing: 0.5px; }
-  .tb-divider { width: 1px; height: 3vmin; background: var(--border); margin: 0 0.5vmin; }
-  .tb-title { font-size: 2vmin; font-weight: 700; color: var(--text-sec); text-transform: uppercase; letter-spacing: 1px; }
+  .tb-title { font-size: 2.2vmin; font-weight: 700; color: var(--text-sec); text-transform: uppercase; letter-spacing: 1px; }
   .tb-pill {
     display: inline-flex; align-items: center; gap: 1vmin;
     background: rgba(255,45,168,0.10); border: 1px solid rgba(255,45,168,0.20);
@@ -98,22 +88,15 @@
   .idle-logo-wrap {
     display: flex; flex-direction: column; align-items: center; gap: 2vmin;
   }
-  .idle-logo-q {
-    width: 20vmin; height: 20vmin; border-radius: 5vmin;
-    background: var(--grad-ps);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 10vmin; font-weight: 900; color: #fff;
-    box-shadow: 0 0 8vmin rgba(255,45,168,0.30);
-    animation: idlePulse 3s ease-in-out infinite;
-  }
-  .idle-logo-text { font-size: 5vmin; font-weight: 900; color: #fff; letter-spacing: 1vmin; }
+  #view-idle { gap: 4vmin; }
+  #view-idle #logo-idle { width: 35vmin; height: auto; }
   .idle-status {
-    font-size: 2.5vmin; font-weight: 700; color: var(--text-sec);
-    text-transform: uppercase; letter-spacing: 1.5vmin; margin-top: 2vmin;
+    font-size: 4.5vmin; font-weight: 900; color: #fff;
+    text-transform: uppercase; letter-spacing: 1.5vmin;
   }
   .idle-hint {
-    font-size: 1.6vmin; font-weight: 600; color: var(--text-muted);
-    margin-top: 4vmin; text-align: center; max-width: 60vmin; line-height: 1.5;
+    font-size: 2.4vmin; font-weight: 600; color: var(--text-muted);
+    text-align: center; max-width: 60vmin; line-height: 1.5;
   }
 
   /* --- BLIND TEST --- */
@@ -498,10 +481,7 @@
 <!-- ===== TOPBAR ===== -->
 <div id="topbar">
   <div class="tb-left">
-    <div class="tb-logo-q" id="tb-logo-fallback">Q</div>
-    <img id="logo-top" style="display:none;height:4.5vmin;width:auto;object-fit:contain;">
-    <span class="tb-logo-text" id="tb-logo-text">QWIZZ</span>
-    <div class="tb-divider"></div>
+    <img id="logo-top" style="display:none;height:5vmin;width:auto;object-fit:contain;margin-right:2vmin;">
     <span class="tb-title" id="tb-title">En attente</span>
   </div>
   <div class="tb-center">
@@ -517,11 +497,7 @@
 
 <!-- IDLE -->
 <div class="view" id="view-idle">
-  <div class="idle-logo-wrap">
-    <div class="idle-logo-q" id="idle-logo-fallback">Q</div>
-    <img id="logo-idle" style="display:none;width:20vmin;height:auto;object-fit:contain;margin-bottom:2vmin;">
-    <div class="idle-logo-text">QWIZZ</div>
-  </div>
+  <img id="logo-idle" style="display:none;width:35vmin;height:auto;object-fit:contain;margin-bottom:3vmin;">
   <div class="idle-status">Prêt à qwizzer ?</div>
   <div class="idle-hint">Ouvrez l'application et connectez-vous à cette TV pour commencer une partie</div>
 </div>
@@ -708,12 +684,8 @@ function initials(name) {
 
 function setLogoImage(url) {
   ['logo-idle', 'logo-top'].forEach(id => {
-    var el = $(id); var fb = $(id + '-fallback'); var txt = $('tb-logo-text');
-    if (el) {
-      el.src = url; el.style.display = '';
-      if (fb) fb.style.display = 'none';
-      if (txt && id === 'logo-top') txt.style.display = 'none';
-    }
+    var el = $(id);
+    if (el) { el.src = url; el.style.display = ''; }
   });
 }
 
@@ -991,8 +963,9 @@ function renderRules(d) {
 
 function renderQR() {
   var el = $('qr-float');
-  if (!STATE.showQR) { el.classList.remove('visible'); return; }
-  el.className = 'pos-' + STATE.qrPos;
+  if (!STATE.showQR || STATE.view === 'idle') { el.classList.remove('visible'); return; }
+  var pos = STATE.view === 'idle' ? 'tr' : STATE.qrPos;
+  el.className = 'pos-' + pos;
   el.classList.add('visible');
   if (STATE.qrBase64) {
     $('qr-img').src = STATE.qrBase64;
