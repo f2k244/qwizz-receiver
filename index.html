@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>QWIZZ Receiver v8.0.2-QRFIX</title>
+<title>QWIZZ Receiver v8.0.3-REVEAL</title>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,600;0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 <style>
@@ -648,6 +648,7 @@ var STATE = {
   isPaused: false, pauseMessage: '',
   endGame: false,
   currentTrackID: null,
+  blurCover: true,
   qcmActive: false, qcmDuration: 30, qcmEndTime: null, qcmCurrentQuestion: null,
   players: [],
   logoBase64: null, hasBase64Logo: false,
@@ -733,12 +734,16 @@ function renderBlindTest(d) {
   var track = d.track || STATE.track;
   var revealed = d.revealed || STATE.revealed;
 
+  if (d.blurCover !== undefined) STATE.blurCover = d.blurCover;
+
   var hasCover = track && track.coverURL;
   if (hasCover) {
     var coverUrl = track.coverURL;
     if (coverUrl.startsWith('/')) coverUrl = STATE.serverURL + coverUrl;
     $('bt-img-blur').src = coverUrl;
     $('bt-img-main').src = coverUrl;
+    $('bt-img-main').style.display = '';
+    $('bt-img-blur').style.display = STATE.blurCover ? '' : 'none';
   }
 
   if (revealed && track) {
@@ -1117,8 +1122,19 @@ function sync(d) {
     }
 
     if (d.track || d.trackID) {
-      STATE.track = d.track || d;
-      STATE.currentTrackID = STATE.track.trackID || STATE.track.id;
+      var newTrack = d.track || d;
+      var newId = newTrack.trackID || newTrack.id;
+      if (newId !== STATE.currentTrackID) {
+        STATE.track = newTrack;
+        STATE.currentTrackID = newId;
+      } else if (STATE.track) {
+        // Merge: update only provided fields to avoid poll overwriting title/artist/cover
+        for (var key in newTrack) {
+          if (newTrack[key] !== undefined && newTrack[key] !== null) {
+            STATE.track[key] = newTrack[key];
+          }
+        }
+      }
     }
     if (d.revealed !== undefined) STATE.revealed = d.revealed;
     if (d.players) STATE.players = d.players;
