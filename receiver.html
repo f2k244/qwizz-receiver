@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>QWIZZ Receiver v8.0.4-LEADER</title>
+<title>QWIZZ Receiver v8.0.5-CACHE</title>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,600;0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 <style>
@@ -631,11 +631,13 @@
 
 /* ===== CACHE BUST ===== */
 (function() {
-  if (sessionStorage.getItem('rcv_loaded')) return;
-  sessionStorage.setItem('rcv_loaded', '1');
+  var last = parseInt(localStorage.getItem('rcv_loaded') || '0');
+  var now = Date.now();
+  if (now - last < 300000) return; // 5 min
+  localStorage.setItem('rcv_loaded', now.toString());
   var url = new URL(window.location.href);
-  url.searchParams.set('_cv', '8.0.0');
-  url.searchParams.set('_t', Date.now());
+  url.searchParams.set('_cv', '8.0.5');
+  url.searchParams.set('_t', now);
   window.location.replace(url.toString());
 })();
 
