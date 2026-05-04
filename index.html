@@ -116,16 +116,10 @@
     align-items: center; justify-content: center; gap: 4vmin;
     padding-top: 0;
   }
-  .idle-logo, .idle-logo-fallback {
-    width: 45vmin; height: auto; object-fit: contain;
+  .idle-logo {
+    width: 45vmin; height: auto;
     filter: drop-shadow(0 0 6vmin rgba(255,45,168,0.30));
     animation: idleFloat 4s ease-in-out infinite;
-  }
-  .idle-logo-fallback {
-    display: none; align-items: center; justify-content: center;
-    width: 20vmin; height: 20vmin; border-radius: 5vmin;
-    background: var(--grad-violet-rose);
-    font-size: 10vmin; font-weight: 900; color: #fff;
   }
   .idle-status {
     font-size: 4.5vmin; font-weight: 900; font-style: italic;
@@ -494,7 +488,15 @@
 <!-- ===== TOPBAR ===== -->
 <div id="topbar">
   <div class="tb-left">
-    <img id="logo-top" alt="QWIZZ">
+    <svg id="logo-top" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg" style="height:5vmin;width:auto;">
+      <defs><linearGradient id="qgrad2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#7B2DFF"/><stop offset="100%" style="stop-color:#FF2DA8"/></linearGradient></defs>
+      <circle cx="35" cy="40" r="30" fill="url(#qgrad2)"/>
+      <polygon points="28,25 28,55 50,40" fill="#fff"/>
+      <rect x="72" y="18" width="6" height="44" rx="3" fill="#7B2DFF"/>
+      <rect x="84" y="12" width="6" height="56" rx="3" fill="#FF2DA8"/>
+      <rect x="96" y="22" width="6" height="36" rx="3" fill="#FF8A00"/>
+      <text x="115" y="55" font-family="Exo 2, sans-serif" font-size="42" font-weight="900" font-style="italic" fill="#fff">QWiZZ</text>
+    </svg>
     <span class="tb-title" id="tb-title">En attente</span>
   </div>
   <div class="tb-right">
@@ -507,8 +509,20 @@
 
 <!-- IDLE -->
 <div class="view" id="view-idle">
-  <div class="idle-logo-fallback" id="idle-logo-fallback">Q</div>
-  <img class="idle-logo" id="logo-idle" alt="QWIZZ" style="display:none;">
+  <svg class="idle-logo" id="logo-idle" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="qgrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#7B2DFF"/>
+        <stop offset="100%" style="stop-color:#FF2DA8"/>
+      </linearGradient>
+    </defs>
+    <circle cx="35" cy="40" r="30" fill="url(#qgrad)"/>
+    <polygon points="28,25 28,55 50,40" fill="#fff"/>
+    <rect x="72" y="18" width="6" height="44" rx="3" fill="#7B2DFF"/>
+    <rect x="84" y="12" width="6" height="56" rx="3" fill="#FF2DA8"/>
+    <rect x="96" y="22" width="6" height="36" rx="3" fill="#FF8A00"/>
+    <text x="115" y="55" font-family="Exo 2, sans-serif" font-size="42" font-weight="900" font-style="italic" fill="#fff">QWiZZ</text>
+  </svg>
   <div class="idle-status">Prêt à qwizzer ?</div>
   <div class="idle-hint">Ouvrez l'application et connectez-vous à cette TV pour commencer une partie</div>
 </div>
@@ -715,21 +729,12 @@ function initials(name) {
 }
 
 function setLogoImage(url) {
-  ['logo-idle', 'logo-top'].forEach(id => {
-    var el = $(id);
-    if (el) {
-      el.onerror = function() {
-        console.error('Logo failed to load:', url);
-        this.style.display = 'none';
-        if (id === 'logo-idle') $('idle-logo-fallback').style.display = 'flex';
-      };
-      el.onload = function() {
-        this.style.display = '';
-        if (id === 'logo-idle') $('idle-logo-fallback').style.display = 'none';
-      };
-      el.src = url;
-    }
-  });
+  // Only update img elements (skip SVG logos)
+  var top = $('logo-top');
+  if (top && top.tagName === 'IMG') {
+    top.onerror = function() { console.error('Logo failed:', url); };
+    top.src = url;
+  }
 }
 
 /* ===== RENDERERS ===== */
