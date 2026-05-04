@@ -116,10 +116,16 @@
     align-items: center; justify-content: center; gap: 4vmin;
     padding-top: 0;
   }
-  .idle-logo {
+  .idle-logo, .idle-logo-fallback {
     width: 45vmin; height: auto; object-fit: contain;
     filter: drop-shadow(0 0 6vmin rgba(255,45,168,0.30));
     animation: idleFloat 4s ease-in-out infinite;
+  }
+  .idle-logo-fallback {
+    display: none; align-items: center; justify-content: center;
+    width: 20vmin; height: 20vmin; border-radius: 5vmin;
+    background: var(--grad-violet-rose);
+    font-size: 10vmin; font-weight: 900; color: #fff;
   }
   .idle-status {
     font-size: 4.5vmin; font-weight: 900; font-style: italic;
@@ -501,7 +507,8 @@
 
 <!-- IDLE -->
 <div class="view" id="view-idle">
-  <img class="idle-logo" id="logo-idle" alt="QWIZZ">
+  <div class="idle-logo-fallback" id="idle-logo-fallback">Q</div>
+  <img class="idle-logo" id="logo-idle" alt="QWIZZ" style="display:none;">
   <div class="idle-status">Prêt à qwizzer ?</div>
   <div class="idle-hint">Ouvrez l'application et connectez-vous à cette TV pour commencer une partie</div>
 </div>
@@ -710,7 +717,18 @@ function initials(name) {
 function setLogoImage(url) {
   ['logo-idle', 'logo-top'].forEach(id => {
     var el = $(id);
-    if (el) { el.src = url; el.style.display = ''; }
+    if (el) {
+      el.onerror = function() {
+        console.error('Logo failed to load:', url);
+        this.style.display = 'none';
+        if (id === 'logo-idle') $('idle-logo-fallback').style.display = 'flex';
+      };
+      el.onload = function() {
+        this.style.display = '';
+        if (id === 'logo-idle') $('idle-logo-fallback').style.display = 'none';
+      };
+      el.src = url;
+    }
   });
 }
 
@@ -725,11 +743,16 @@ function renderIdle() {
 function renderIdleQR() {
   var el = $('idle-qr');
   if (!STATE.showQR || STATE.view !== 'idle') { el.classList.remove('visible'); return; }
-  el.classList.add('visible');
-  if (STATE.qrBase64) {
-    $('idle-qr-img').src = STATE.qrBase64;
+  var img = $('idle-qr-img');
+  if (STATE.qrBase64 && STATE.qrBase64.length > 100) {
+    img.src = STATE.qrBase64;
+    el.classList.add('visible');
   } else if (STATE.qrURL) {
-    $('idle-qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(STATE.qrURL);
+    img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(STATE.qrURL);
+    el.classList.add('visible');
+  } else {
+    console.warn('QR: no base64 or URL available');
+    el.classList.remove('visible');
   }
 }
 
@@ -1091,10 +1114,12 @@ function sync(d) {
         return;
 
       case 'show_qr':
-        STATE.showQR = d.show;
+        STATE.showQR = (d.show === true || d.show === 'true');
         if (d.url) STATE.qrURL = d.url;
+        if (d.qrURL) STATE.qrURL = d.qrURL;
         if (d.position) STATE.qrPos = d.position;
         if (d.qrBase64) STATE.qrBase64 = d.qrBase64;
+        console.log('QR show=', STATE.showQR, 'url=', STATE.qrURL, 'base64_len=', (STATE.qrBase64||'').length);
         renderQR(); renderIdleQR();
         return;
 
