@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>QWIZZ Receiver v7.0.5-IDLEFIX</title>
+<title>QWIZZ Receiver v7.0.6-FLASHY</title>
 <link href="https://fonts.googleapis.com/css2?family=Exo 2:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 <style>
@@ -20,10 +20,10 @@
     --text: #FFFFFF;
     --text-sec: rgba(255,255,255,0.55);
     --text-muted: rgba(255,255,255,0.35);
-    --panel: rgba(255,255,255,0.05);
-    --panel-hover: rgba(255,255,255,0.08);
-    --border: rgba(255,255,255,0.09);
-    --border-light: rgba(255,255,255,0.06);
+    --panel: rgba(255,255,255,0.10);
+    --panel-hover: rgba(255,255,255,0.14);
+    --border: rgba(255,255,255,0.18);
+    --border-light: rgba(255,255,255,0.10);
     --font: 'Exo 2', sans-serif;
     --grad-ps: linear-gradient(135deg, #FF2DA8, #7B2DFF);
     --grad-so: linear-gradient(135deg, #FF8A00, #FFD600);
@@ -44,8 +44,8 @@
   #ambient {
     position: fixed; inset: 0; pointer-events: none; z-index: 0;
     background:
-      radial-gradient(ellipse 60% 40% at 20% 20%, rgba(255,45,168,0.08) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 50% at 80% 80%, rgba(123,45,255,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 20% 20%, rgba(255,45,168,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 80% 80%, rgba(123,45,255,0.12) 0%, transparent 60%),
       var(--bg);
   }
 
@@ -89,7 +89,7 @@
     display: flex; flex-direction: column; align-items: center; gap: 2vmin;
   }
   #view-idle { gap: 4vmin; }
-  #view-idle #logo-idle { width: 35vmin; height: auto; }
+  #view-idle #logo-idle { width: 45vmin; height: auto; }
   .idle-status {
     font-size: 4.5vmin; font-weight: 900; color: #fff;
     text-transform: uppercase; letter-spacing: 1.5vmin;
@@ -408,10 +408,10 @@
   /* --- QR CODE --- */
   #qr-float {
     position: fixed; z-index: 150;
-    display: none; flex-direction: column; align-items: center; gap: 1.5vmin;
+    display: none; flex-direction: column; align-items: center; gap: 2vmin;
     background: var(--panel); border: 1px solid var(--border); border-radius: 2.5vmin;
-    padding: 2.5vmin; box-shadow: 0 2vmin 6vmin rgba(0,0,0,0.4);
-    max-width: 22vmin;
+    padding: 3vmin; box-shadow: 0 2vmin 6vmin rgba(0,0,0,0.4);
+    max-width: 32vmin;
   }
   #qr-float.visible { display: flex; }
   #qr-float.pos-tr { top: 10vmin; right: 3vmin; }
@@ -419,7 +419,7 @@
   #qr-float.pos-br { bottom: 3vmin; right: 3vmin; }
   #qr-float.pos-bl { bottom: 3vmin; left: 3vmin; }
   .qr-title { font-size: 1.4vmin; font-weight: 900; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; text-align: center; }
-  #qr-img { width: 16vmin; height: 16vmin; border-radius: 1vmin; }
+  #qr-img { width: 24vmin; height: 24vmin; border-radius: 1.5vmin; }
   .qr-url { font-size: 1.2vmin; font-weight: 600; color: var(--text-muted); word-break: break-all; text-align: center; max-width: 18vmin; }
 
   /* --- VERSION TAG --- */
@@ -963,8 +963,8 @@ function renderRules(d) {
 
 function renderQR() {
   var el = $('qr-float');
-  if (!STATE.showQR || STATE.view === 'idle') { el.classList.remove('visible'); return; }
-  var pos = STATE.view === 'idle' ? 'tr' : STATE.qrPos;
+  if (!STATE.showQR) { el.classList.remove('visible'); return; }
+  var pos = STATE.view === 'idle' ? 'br' : STATE.qrPos;
   el.className = 'pos-' + pos;
   el.classList.add('visible');
   if (STATE.qrBase64) {
@@ -1110,8 +1110,8 @@ function sync(d) {
 
       case 'cover_update':
         if (d.coverBase64 && STATE.currentTrackID && d.trackID === STATE.currentTrackID) {
-          $('bt-img-blur').src = d.coverBase64;
-          $('bt-img-main').src = d.coverBase64;
+          $('bt-img-blur').src = d.coverBase64; $('bt-img-blur').style.display = '';
+          $('bt-img-main').src = d.coverBase64; $('bt-img-main').style.display = '';
         }
         return;
     }
