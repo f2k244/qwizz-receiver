@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>QWIZZ Receiver v7.0.3-ROSEVIOLET</title>
+<title>QWIZZ Receiver v7.0.4-CACHEBUST</title>
 <link href="https://fonts.googleapis.com/css2?family=Exo 2:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 <style>
@@ -636,12 +636,13 @@
 <script>
 /* ===== CACHE BUST ===== */
 (function() {
+  // Force reload on every fresh session (Chromecast power cycle clears sessionStorage)
+  if (sessionStorage.getItem('rcv_loaded')) return;
+  sessionStorage.setItem('rcv_loaded', '1');
   var url = new URL(window.location.href);
-  if (!url.searchParams.has('_cv')) {
-    url.searchParams.set('_cv', '7.0.0');
-    url.searchParams.set('_t', Date.now());
-    window.location.replace(url.toString());
-  }
+  url.searchParams.set('_cv', '7.0.4');
+  url.searchParams.set('_t', Date.now());
+  window.location.replace(url.toString());
 })();
 
 /* ===== STATE ===== */
