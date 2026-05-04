@@ -605,7 +605,7 @@
 </div>
 
 <!-- ===== UI CHROME ===== -->
-<div class="version-tag" id="version-tag">v8.0.5-CACHE</div>
+<div class="version-tag" id="version-tag">--</div>
 <div id="reload-toast">⟳ Rechargement...</div>
 <div id="cast-debug-status">INIT</div>
 <cast-media-player></cast-media-player>
@@ -629,6 +629,9 @@
   }
 })();
 
+/* ===== VERSION (single source of truth) ===== */
+var RECEIVER_VERSION = '8.0.6';
+
 /* ===== CACHE BUST ===== */
 (function() {
   var last = parseInt(localStorage.getItem('rcv_loaded') || '0');
@@ -636,10 +639,13 @@
   if (now - last < 300000) return; // 5 min
   localStorage.setItem('rcv_loaded', now.toString());
   var url = new URL(window.location.href);
-  url.searchParams.set('_cv', '8.0.5');
+  url.searchParams.set('_cv', RECEIVER_VERSION);
   url.searchParams.set('_t', now);
   window.location.replace(url.toString());
 })();
+
+/* ===== UI INIT ===== */
+document.getElementById('version-tag').textContent = 'v' + RECEIVER_VERSION;
 
 /* ===== STATE ===== */
 var STATE = {
