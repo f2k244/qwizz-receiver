@@ -3,16 +3,18 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>QWIZZ Master V5.6.4-Premium</title>
+  <title>QWIZZ Master V6.0.0-PREMIUM</title>
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,300;0,400;0,700;0,900;1,900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #09072B;
-      --blue: #00A8FF;
-      --purple: #8A2BE2;
-      --glass: rgba(26, 26, 58, 0.85);
-      --font: 'Outfit', sans-serif;
+      --bg: #0a0e28;
+      --rose: #FF2DA8;
+      --violet: #7B2DFF;
+      --orange: #FF8A00;
+      --jaune: #FFD600;
+      --glass: rgba(14, 18, 48, 0.85);
+      --font: 'Exo 2', sans-serif;
     }
 
     * {
@@ -43,8 +45,8 @@
       inset: 0;
       z-index: 0;
       background:
-        radial-gradient(circle at 15% 15%, rgba(0, 168, 255, 0.1) 0%, transparent 40%),
-        radial-gradient(circle at 85% 85%, rgba(138, 43, 226, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 15% 15%, rgba(255, 45, 168, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(123, 45, 255, 0.08) 0%, transparent 40%),
         var(--bg);
     }
 
@@ -68,7 +70,7 @@
 
     .idle-logo {
       width: 75vmin;
-      filter: drop-shadow(0 0 50px rgba(0, 168, 255, 0.7));
+      filter: drop-shadow(0 0 50px rgba(255, 45, 168, 0.7));
       animation: pulseLogo 4s ease-in-out infinite;
     }
 
@@ -76,7 +78,7 @@
       font-size: 2.5rem;
       font-weight: 700;
       letter-spacing: 1.5vmin;
-      color: var(--blue);
+      color: var(--rose);
       margin-top: 4vmin;
       text-transform: uppercase;
       opacity: 0.6;
@@ -88,14 +90,14 @@
       bottom: 6vmin;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0, 168, 255, 0.15);
-      border: 1.5px solid var(--blue);
+      background: rgba(255, 45, 168, 0.15);
+      border: 1.5px solid var(--rose);
       backdrop-filter: blur(10px);
       border-radius: 3vmin;
       padding: 2vmin 4vmin;
       font-size: 2rem;
       font-weight: 700;
-      color: var(--blue);
+      color: var(--rose);
       letter-spacing: 0.3vmin;
       z-index: 99999;
       opacity: 0;
@@ -155,7 +157,7 @@
       overflow: hidden;
       box-shadow: 0 40px 120px rgba(0, 0, 0, 0.9);
       border: 2.5px solid rgba(255, 255, 255, 0.15);
-      background: linear-gradient(135deg, #1A1A3A 0%, #09072B 100%);
+      background: linear-gradient(135deg, #0d1030 0%, #0a0e28 100%);
     }
 
     #img-main,
@@ -207,7 +209,7 @@
       display: none;
       background: var(--glass);
       backdrop-filter: blur(15px);
-      border: 1px solid rgba(0, 168, 255, 0.3);
+      border: 1px solid rgba(255, 45, 168, 0.3);
       border-radius: 5vmin;
       padding: 4vmin;
       box-shadow: 0 40px 130px rgba(0, 0, 0, 0.9);
@@ -243,7 +245,7 @@
       width: 6vmin;
       font-weight: 900;
       font-size: 3rem;
-      color: var(--blue);
+      color: var(--rose);
       opacity: 0.5;
     }
 
@@ -260,7 +262,8 @@
     .lb-score {
       font-weight: 900;
       font-size: 3.2rem;
-      color: var(--blue);
+      color: var(--jaune);
+      text-shadow: 0 0 4vh rgba(255, 214, 0, 0.4);
       min-width: 15vmin;
       text-align: right;
     }
@@ -274,7 +277,7 @@
       backdrop-filter: blur(15px);
       padding: 3.5vmin;
       border-radius: 5vmin;
-      border: 2.5px solid var(--blue);
+      border: 2.5px solid var(--rose);
       box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
     }
 
@@ -287,7 +290,7 @@
       font-size: 2.4rem;
       font-weight: 900;
       margin-bottom: 2vmin;
-      color: var(--blue);
+      color: var(--rose);
       text-transform: uppercase;
       letter-spacing: 0.3vmin;
     }
@@ -323,7 +326,7 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: radial-gradient(circle at center, rgba(9, 7, 43, 0.95) 0%, var(--bg) 100%);
+      background: radial-gradient(circle at center, rgba(10, 14, 40, 0.95) 0%, var(--bg) 100%);
       backdrop-filter: blur(25px);
       z-index: 77000;
       flex-direction: column;
@@ -345,7 +348,7 @@
     .rules-card {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 30px 80px rgba(0,0,0,0.8), inset 0 0 40px rgba(0, 168, 255, 0.05);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.8), inset 0 0 40px rgba(255, 45, 168, 0.05);
       border-radius: 5vmin;
       padding: 8vmin 10vmin;
       width: 100%;
@@ -359,14 +362,14 @@
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0; height: 1vmin;
-      background: linear-gradient(90deg, #00A8FF, #8A2BE2);
+      background: linear-gradient(90deg, #FF2DA8, #7B2DFF);
     }
 
     .rules-mode-badge {
       display: inline-block;
-      background: rgba(0, 168, 255, 0.15);
-      color: #00A8FF;
-      border: 1px solid rgba(0, 168, 255, 0.3);
+      background: rgba(255, 45, 168, 0.15);
+      color: #FF2DA8;
+      border: 1px solid rgba(255, 45, 168, 0.3);
       padding: 1.5vmin 4vmin;
       border-radius: 4vmin;
       font-size: 3rem;
@@ -374,7 +377,7 @@
       letter-spacing: 0.5vmin;
       text-transform: uppercase;
       margin-bottom: 5vmin;
-      box-shadow: 0 0 30px rgba(0, 168, 255, 0.2);
+      box-shadow: 0 0 30px rgba(255, 45, 168, 0.2);
     }
 
     .rules-title {
@@ -425,15 +428,15 @@
       width: 100%;
       height: 100%;
       padding: 0 5vw;
-      background: radial-gradient(circle at center, rgba(9, 7, 43, 0.85) 0%, rgba(9, 7, 43, 0.98) 100%);
+      background: radial-gradient(circle at center, rgba(10, 14, 40, 0.85) 0%, rgba(10, 14, 40, 0.98) 100%);
       backdrop-filter: blur(30px);
       z-index: 55000;
     }
 
     #podium-wrap h1 {
       font-size: 8vh !important;
-      text-shadow: 0 1vh 3vh rgba(0,0,0,0.8), 0 0 5vh rgba(0, 168, 255, 0.4);
-      background: linear-gradient(135deg, #fff 0%, #00A8FF 100%);
+      text-shadow: 0 1vh 3vh rgba(0,0,0,0.8), 0 0 5vh rgba(255, 45, 168, 0.4);
+      background: linear-gradient(135deg, #fff 0%, #FF2DA8 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       margin-bottom: 2vh !important;
@@ -488,16 +491,16 @@
 
     .rank-1 {
       height: 65vh;
-      background: linear-gradient(160deg, rgba(0, 168, 255, 0.15) 0%, rgba(138, 43, 226, 0.15) 100%);
-      border: 2px solid rgba(0, 168, 255, 0.6);
+      background: linear-gradient(160deg, rgba(255, 45, 168, 0.15) 0%, rgba(123, 45, 255, 0.15) 100%);
+      border: 2px solid rgba(255, 45, 168, 0.6);
       z-index: 10;
-      box-shadow: 0 10vh 35vh rgba(0, 168, 255, 0.4), inset 0 0 8vh rgba(0, 168, 255, 0.2);
+      box-shadow: 0 10vh 35vh rgba(255, 45, 168, 0.4), inset 0 0 8vh rgba(255, 45, 168, 0.2);
       order: 2;
     }
 
     .rank-1::before {
-      background: linear-gradient(90deg, #00A8FF, #8A2BE2);
-      box-shadow: 0 0 4vh #00A8FF;
+      background: linear-gradient(90deg, #FF2DA8, #7B2DFF);
+      box-shadow: 0 0 4vh #FF2DA8;
     }
 
     .rank-2 { height: 50vh; order: 1; border-top-color: #C0C0C0; }
@@ -541,20 +544,20 @@
     .p-score {
       font-size: 7vh;
       font-weight: 900;
-      color: var(--blue);
-      text-shadow: 0 0 4vh rgba(0, 168, 255, 0.6);
+      color: var(--jaune);
+      text-shadow: 0 0 4vh rgba(255, 214, 0, 0.6);
       margin-top: auto;
       background: rgba(0, 0, 0, 0.3);
       padding: 1vh 3vw;
       border-radius: 2vh;
-      border: 1px solid rgba(0, 168, 255, 0.2);
+      border: 1px solid rgba(255, 214, 0, 0.2);
     }
 
     .p-glow {
       position: absolute;
       top: 50%; left: 50%; transform: translate(-50%, -50%);
       width: 150%; height: 150%;
-      background: radial-gradient(circle, rgba(0, 168, 255, 0.25) 0%, transparent 60%);
+      background: radial-gradient(circle, rgba(255, 45, 168, 0.25) 0%, transparent 60%);
       z-index: -1;
       opacity: 0;
       transition: opacity 1.5s ease;
@@ -621,8 +624,8 @@
       display: none;
       align-items: center;
       overflow: hidden;
-      background: rgba(0, 168, 255, 0.12);
-      border-top: 1.5px solid rgba(0, 168, 255, 0.4);
+      background: rgba(255, 45, 168, 0.12);
+      border-top: 1.5px solid rgba(255, 45, 168, 0.4);
       backdrop-filter: blur(10px);
     }
 
@@ -656,12 +659,12 @@
     .ticker-text {
       font-size: 2.6rem;
       font-weight: 700;
-      color: var(--blue);
+      color: var(--rose);
       letter-spacing: 0.15vmin;
     }
 
     .ticker-sep {
-      color: rgba(0, 168, 255, 0.4);
+      color: rgba(255, 45, 168, 0.4);
       font-size: 2rem;
       margin: 0 2vmin;
     }
@@ -690,7 +693,7 @@
       position: fixed;
       inset: 0;
       z-index: 77000;
-      background: rgba(9, 7, 43, 0.85); /* Slightly darker backdrop */
+      background: rgba(10, 14, 40, 0.85); /* Slightly darker backdrop */
       backdrop-filter: blur(15px);
       display: flex;
       flex-direction: column;
@@ -709,7 +712,7 @@
     }
 
     .rules-card {
-      background: linear-gradient(145deg, rgba(26, 26, 58, 0.95), rgba(9, 7, 43, 0.95));
+      background: linear-gradient(145deg, rgba(14, 18, 48, 0.95), rgba(10, 14, 40, 0.95));
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 4vh;
       padding: 5vh 8vh;
@@ -722,7 +725,7 @@
       justify-content: center;
       box-shadow: 
         0 6vh 15vh rgba(0, 0, 0, 0.95),
-        inset 0 0 10vh rgba(0, 168, 255, 0.05);
+        inset 0 0 10vh rgba(255, 45, 168, 0.05);
       text-align: center;
       position: relative;
       overflow: hidden;
@@ -734,8 +737,8 @@
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0; height: 1vh;
-      background: linear-gradient(90deg, var(--blue), var(--purple));
-      box-shadow: 0 0 3vh rgba(0, 168, 255, 0.8);
+      background: linear-gradient(90deg, var(--rose), var(--violet));
+      box-shadow: 0 0 3vh rgba(255, 45, 168, 0.8);
     }
 
     #rules-overlay.active .rules-card {
@@ -747,7 +750,7 @@
       position: fixed;
       inset: 0;
       z-index: 78000;
-      background: rgba(9, 7, 43, 0.95);
+      background: rgba(10, 14, 40, 0.95);
       backdrop-filter: blur(15px);
       display: flex;
       flex-direction: column;
@@ -767,7 +770,7 @@
 
     .pause-card {
       background: var(--glass);
-      border: 2px solid rgba(138, 43, 226, 0.4);
+      border: 2px solid rgba(123, 45, 255, 0.4);
       border-radius: 4vh;
       padding: 6vh 8vh;
       max-width: 80vw;
@@ -800,8 +803,8 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 168, 255, 0.15);
-      border: 1.5px solid rgba(0, 168, 255, 0.4);
+      background: rgba(255, 45, 168, 0.15);
+      border: 1.5px solid rgba(255, 45, 168, 0.4);
       border-radius: 4vh;
       padding: 1.2vh 4vh;
       font-size: 3vh;
@@ -810,7 +813,7 @@
       letter-spacing: 0.5vh;
       text-transform: uppercase;
       margin-bottom: 3vh;
-      box-shadow: 0 0 4vh rgba(0, 168, 255, 0.2);
+      box-shadow: 0 0 4vh rgba(255, 45, 168, 0.2);
     }
 
     .rules-title {
@@ -818,7 +821,7 @@
       font-weight: 900;
       line-height: 1.1;
       margin-bottom: 2vh;
-      background: linear-gradient(135deg, #fff 30%, var(--blue));
+      background: linear-gradient(135deg, #fff 30%, var(--rose));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       filter: drop-shadow(0 1vh 2vh rgba(0, 0, 0, 0.5));
@@ -869,7 +872,7 @@
       position: absolute;
       top: 0; left: 0; width: 100%; height: 0.6vh;
     }
-    .rules-chip.chip-positive::before { background: var(--blue); box-shadow: 0 0 2vh var(--blue); }
+    .rules-chip.chip-positive::before { background: var(--rose); box-shadow: 0 0 2vh var(--rose); }
     .rules-chip.chip-negative::before { background: #FF3B30; box-shadow: 0 0 2vh #FF3B30; }
 
     .chip-label {
@@ -888,8 +891,8 @@
     }
     
     .chip-positive .chip-val {
-      color: var(--blue);
-      text-shadow: 0 0 3vh rgba(0, 168, 255, 0.4);
+      color: var(--rose);
+      text-shadow: 0 0 3vh rgba(255, 45, 168, 0.4);
     }
     .chip-negative .chip-val {
       color: #FF3B30;
@@ -907,7 +910,7 @@
 
     .rules-countdown-bar {
       height: 100%;
-      background: var(--blue);
+      background: var(--rose);
       border-radius: 1vmin;
       animation: rulesCountdown var(--rules-duration, 8s) linear forwards;
     }
@@ -927,12 +930,12 @@
       0%,
       100% {
         transform: scale(1);
-        filter: drop-shadow(0 0 50px rgba(0, 168, 255, 0.7));
+        filter: drop-shadow(0 0 50px rgba(255, 45, 168, 0.7));
       }
 
       50% {
         transform: scale(1.05);
-        filter: drop-shadow(0 0 80px rgba(0, 168, 255, 0.9));
+        filter: drop-shadow(0 0 80px rgba(255, 45, 168, 0.9));
       }
     }
 
@@ -996,7 +999,7 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: radial-gradient(circle at center, rgba(9, 7, 43, 0.9) 0%, var(--bg) 100%);
+      background: radial-gradient(circle at center, rgba(10, 14, 40, 0.9) 0%, var(--bg) 100%);
       backdrop-filter: blur(20px);
       z-index: 40000;
       flex-direction: column;
@@ -1022,8 +1025,8 @@
     #qcm-timer-bar {
       height: 100%;
       width: 100%;
-      background: linear-gradient(90deg, #00A8FF, #8A2BE2);
-      box-shadow: 0 0 20px rgba(0, 168, 255, 0.6);
+      background: linear-gradient(90deg, #FF2DA8, #7B2DFF);
+      box-shadow: 0 0 20px rgba(255, 45, 168, 0.6);
     }
 
     #qcm-main {
@@ -1048,7 +1051,7 @@
       max-height: 60vh;
       object-fit: cover;
       border-radius: 4vmin;
-      box-shadow: 0 30px 80px rgba(0,0,0,0.8), 0 0 40px rgba(0, 168, 255, 0.15);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.8), 0 0 40px rgba(255, 45, 168, 0.15);
       border: 0px solid rgba(255,255,255,0.15);
       flex-shrink: 0;
       transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease, border-width 0.4s ease;
@@ -1112,7 +1115,7 @@
 
     .qcm-tv-btn {
       background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01));
-      border: 2px solid rgba(0, 168, 255, 0.15);
+      border: 2px solid rgba(255, 45, 168, 0.15);
       border-radius: 2.5vmin;
       padding: 2.5vmin 3.5vmin;
       font-size: 3.2rem;
@@ -1135,8 +1138,6 @@
     .qcm-tv-btn .label {
       font-size: 2.8rem;
       font-weight: 900;
-      color: #00A8FF;
-      background: rgba(0, 168, 255, 0.1);
       width: 6vmin;
       height: 6vmin;
       display: flex;
@@ -1157,7 +1158,7 @@
     
     .qcm-tv-btn.correct .label {
         background: #2ed573;
-        color: #09072B;
+        color: #0a0e28;
     }
 
     .qcm-tv-btn.wrong {
@@ -1170,7 +1171,7 @@
       margin-left: auto;
       font-size: 2.5rem;
       font-weight: 900;
-      color: #09072B;
+      color: #0a0e28;
       background: #fff;
       padding: 1vmin 2vmin;
       border-radius: 1.5vmin;
@@ -1230,7 +1231,7 @@
         left: 3vmin;
         font-size: 1.6rem;
         font-weight: 900;
-        color: rgba(0, 168, 255, 0.2);
+        color: rgba(255, 45, 168, 0.2);
         z-index: 100000;
         letter-spacing: 0.2vmin;
         text-transform: uppercase;
@@ -1252,7 +1253,7 @@
         <div class="cover-card">
           <div id="nocover-container" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:0; transition: opacity .3s;">
             <div class="nocover-pulse" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; animation: pulseRedBg 2s infinite alternate;">
-              <img id="nocover-logo" src="nocover.png" style="width:60%; height:auto; object-fit:contain; opacity: 1; filter: drop-shadow(0 0 4vmin rgba(0,168,255,0.8));">
+              <img id="nocover-logo" src="https://qwizz.app/assets/img/logo.png" style="width:60%; height:auto; object-fit:contain; opacity: 1; filter: drop-shadow(0 0 4vmin rgba(255,45,168,0.8));">
             </div>
           </div>
           <img id="img-blur">
@@ -1267,7 +1268,7 @@
   </div>
 
   <div id="leaderboard">
-    <div style="font-size:3.5rem; font-weight:900; color:var(--blue); letter-spacing:1vmin; margin-bottom:4vmin">🏆
+    <div style="font-size:3.5rem; font-weight:900; color:var(--rose); letter-spacing:1vmin; margin-bottom:4vmin">🏆
       CLASSEMENT</div>
     <div id="lb-list" style="width:100%"></div>
   </div>
@@ -1284,11 +1285,11 @@
   <div id="overlay-layer">
     <div id="cat-wrap" style="display:none; flex-direction:column; align-items:center">
       <h1 id="cat-name"
-        style="font-size:12rem; font-weight:900; letter-spacing:6vmin; text-transform:uppercase; filter: drop-shadow(0 0 50px var(--blue))">
+        style="font-size:12rem; font-weight:900; letter-spacing:6vmin; text-transform:uppercase; filter: drop-shadow(0 0 50px var(--rose))">
         CATEGORY</h1>
     </div>
     <div id="podium-wrap" style="display:none; flex-direction:column; align-items:center; width:100%">
-      <h1 style="font-size:6rem; font-weight:900; color:var(--blue); text-transform:uppercase; margin-bottom:5vmin">CLASSEMENT FINAL</h1>
+      <h1 style="font-size:6rem; font-weight:900; color:var(--rose); text-transform:uppercase; margin-bottom:5vmin">CLASSEMENT FINAL</h1>
       <div id="podium-items" class="podium-stage"></div>
     </div>
   </div>
@@ -1312,9 +1313,9 @@
 
   <div id="qcm-overlay">
     <div id="qcm-timer-container" style="display: flex; align-items: center; gap: 3vmin; margin-bottom: 4vmin; width: 100%; transition: opacity 0.5s ease;">
-      <div id="qcm-timer-text" style="font-size: 6rem; font-weight: 900; color: #00A8FF; min-width: 15vmin; text-align: right; font-variant-numeric: tabular-nums;">30</div>
+      <div id="qcm-timer-text" style="font-size: 6rem; font-weight: 900; color: #FF2DA8; min-width: 15vmin; text-align: right; font-variant-numeric: tabular-nums;">30</div>
       <div id="qcm-timer-bar-wrap" style="flex: 1; height: 3vmin; background: rgba(255, 255, 255, 0.1); border-radius: 1.5vmin; overflow: hidden; margin-bottom: 0;">
-        <div id="qcm-timer-bar" style="width: 100%; height: 100%; background: linear-gradient(90deg, #00A8FF, #8A2BE2); transform-origin: left; will-change: transform;"></div>
+        <div id="qcm-timer-bar" style="width: 100%; height: 100%; background: linear-gradient(90deg, #FF2DA8, #7B2DFF); transform-origin: left; will-change: transform;"></div>
       </div>
     </div>
     <div id="qcm-main">
@@ -1354,7 +1355,7 @@
     
     /* STYLE: CINÉMA (Elegant dramatic zoom) */
     @keyframes cinemaZoom { 0% { transform: scale(1.2); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-    #cheat-overlay.style-cinema { background: linear-gradient(135deg, rgba(138,43,226,0.9) 0%, rgba(255,0,0,0.9) 100%); animation: cinemaZoom 1.2s cubic-bezier(0.165, 0.84, 0.44, 1) both; }
+    #cheat-overlay.style-cinema { background: linear-gradient(135deg, rgba(123,45,255,0.9) 0%, rgba(255,0,0,0.9) 100%); animation: cinemaZoom 1.2s cubic-bezier(0.165, 0.84, 0.44, 1) both; }
   </style>
 
   <div style="position:fixed; top:4vmin; right:6vmin; z-index:9999"><img id="logo-top" style="width:25vmin" src="https://qwizz.app/assets/img/logo.png"></div>
@@ -1376,6 +1377,8 @@
       qcmDuration: 30, qcmCurrentQuestion: null, lastPlayersHash: null
     };
     const _labels = ['A', 'B', 'C', 'D'];
+    const _labelColors = ['#FF8A00', '#FF2DA8', '#7B2DFF', '#FFD600'];
+    const _labelBgs = ['rgba(255,138,0,0.12)', 'rgba(255,45,168,0.12)', 'rgba(123,45,255,0.12)', 'rgba(255,214,0,0.12)'];
 
     if (typeof cast === 'undefined' || !cast.framework) {
       document.body.innerHTML = '<div style="color:red;font-size:4vmin;padding:5vmin">ERREUR: Cast SDK non chargé</div>';
@@ -1401,9 +1404,9 @@
             var stage = colorPct < 30 ? 1 : (colorPct < 60 ? 2 : 3);
             if (barEl.dataset.stage != stage) {
                 barEl.dataset.stage = stage;
-                if (stage === 1) barEl.style.background = 'linear-gradient(90deg,#ff1744,#ff6d00)';
-                else if (stage === 2) barEl.style.background = 'linear-gradient(90deg,#ff6d00,#ffea00)';
-                else barEl.style.background = 'linear-gradient(90deg, #00A8FF, #8A2BE2)';
+                if (stage === 1) barEl.style.background = 'linear-gradient(90deg,#ff1744,#FF8A00)';
+                else if (stage === 2) barEl.style.background = 'linear-gradient(90deg,#FF8A00,#FFD600)';
+                else barEl.style.background = 'linear-gradient(90deg, #7B2DFF, #FF2DA8)';
             }
         }
         
@@ -1483,7 +1486,7 @@
           STATE.logoVersion = d.logoVersion;
           STATE.serverURL = STATE.serverURL || (d.serverURL ? (d.serverURL.endsWith('/') ? d.serverURL.slice(0, -1) : d.serverURL) : null);
           if (STATE.serverURL) {
-            ['logo-idle', 'logo-top'].forEach(id => {
+            ['logo-idle', 'logo-top', 'nocover-logo'].forEach(id => {
                 var el = document.getElementById(id);
                 if (el) el.src = STATE.serverURL + '/tv_logo?v=' + STATE.logoVersion;
             });
@@ -1492,14 +1495,14 @@
         if (d.logoBase64 !== STATE.logoBase64) {
           STATE.hasBase64Logo = true;
           STATE.logoBase64 = d.logoBase64;
-          ['logo-idle', 'logo-top'].forEach(id => {
+          ['logo-idle', 'logo-top', 'nocover-logo'].forEach(id => {
               var el = document.getElementById(id);
               if (el) el.src = STATE.logoBase64;
           });
         }
       } else if (!STATE.hasBase64Logo && STATE.serverURL && !STATE.logoVersion) {
           STATE.hasBase64Logo = true;
-          ['logo-idle', 'logo-top'].forEach(id => {
+          ['logo-idle', 'logo-top', 'nocover-logo'].forEach(id => {
               var el = document.getElementById(id);
               if (el) el.src = STATE.serverURL + '/tv_logo?t=' + Date.now();
           });
@@ -1541,12 +1544,18 @@
           var isNewQuestion = (STATE.qcmCurrentQuestion !== qText);
           
           if (isNewQuestion || (d.type === 'qcm_question' && !d.isFromPoll)) {
+            if (STATE.qcmImageURL) {
+                var preloadUrl = STATE.qcmImageURL;
+                if (preloadUrl.startsWith('/')) preloadUrl = STATE.serverURL + preloadUrl;
+                var preloader = new Image();
+                preloader.src = preloadUrl;
+            }
             STATE.qcmCurrentQuestion = qText;
             document.getElementById('qcm-question').textContent = qText;
             
             var choicesEl = document.getElementById('qcm-choices');
             var rawChoices = d.choices || [];
-
+            
             // CLEANUP: Reset image and results state for new question
             var sideImg = document.getElementById('qcm-side-image');
             var mainEl = document.getElementById('qcm-main');
@@ -1557,27 +1566,10 @@
             document.getElementById('qcm-global-summary').classList.remove('visible');
             document.getElementById('qcm-timer-container').style.display = 'flex';
 
-            if (STATE.qcmImageURL) {
-                mainEl.classList.add('with-image'); // Prepare layout immediately to avoid snapping
-                
-                var preloadUrl = STATE.qcmImageURL;
-                if (preloadUrl.startsWith('/')) preloadUrl = STATE.serverURL + preloadUrl;
-                var tempImg = new Image();
-                tempImg.onload = function() {
-                    sideImg.src = preloadUrl;
-                    sideImg.setAttribute('data-loaded-src', preloadUrl);
-                    sideImg.classList.add('visible');
-                };
-                tempImg.onerror = function() {
-                    console.error("Erreur chargement image QCM :", preloadUrl);
-                };
-                tempImg.src = preloadUrl;
-            }
-
             if (rawChoices.length > 0) {
               choicesEl.innerHTML = rawChoices.map((c, i) =>
                 '<div class="qcm-tv-btn" id="qcm-choice-' + i + '">'
-                + '<span class="label">' + (_labels[i] || (i + 1)) + '</span>'
+                + '<span class="label" style="color:' + _labelColors[i] + ';background:' + _labelBgs[i] + '">' + (_labels[i] || (i + 1)) + '</span>'
                 + '<span>' + c + '</span>'
                 + '<span class="answer-count" id="qcm-count-' + i + '"></span>'
                 + '</div>'
@@ -1643,16 +1635,18 @@
             var sideImg = document.getElementById('qcm-side-image');
             var mainEl = document.getElementById('qcm-main');
             
-            mainEl.classList.add('with-image'); // Prepare layout immediately
-            
             if (sideImg.getAttribute('data-loaded-src') !== imgURL) {
                 var tempImg = new Image();
                 tempImg.onload = function() {
                     sideImg.src = imgURL;
                     sideImg.setAttribute('data-loaded-src', imgURL);
+                    mainEl.classList.add('with-image');
                     sideImg.classList.add('visible');
                 };
                 tempImg.src = imgURL;
+            } else if (!mainEl.classList.contains('with-image')) {
+                mainEl.classList.add('with-image');
+                sideImg.classList.add('visible');
             } else {
                 sideImg.classList.add('visible');
             }
