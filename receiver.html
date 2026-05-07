@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>QWIZZ Receiver v8.0.9-FIX</title>
+<title>QWIZZ Receiver v8.1.0</title>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,600;0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 <style>
@@ -636,7 +636,7 @@
 })();
 
 /* ===== VERSION (single source of truth) ===== */
-var RECEIVER_VERSION = '8.0.9';
+var RECEIVER_VERSION = '8.1.0';
 
 /* ===== CACHE BUST ===== */
 (function() {
@@ -753,6 +753,13 @@ function renderIdleQR() {
   }
 }
 
+function resolveCoverUrl(url) {
+  if (!url) return url;
+  if (url === '/no_cover' || url.includes('/no_cover?')) return './nocover.png';
+  if (url.startsWith('/')) return STATE.serverURL + url;
+  return url;
+}
+
 function renderBlindTest(d) {
   showView('blindtest');
   setTopbar({ title: 'Blind Test', category: d.category || '', live: true });
@@ -767,8 +774,7 @@ function renderBlindTest(d) {
 
   var hasCover = track && (track.coverURL || track.cover);
   if (hasCover) {
-    var coverUrl = track.coverURL || track.cover;
-    if (coverUrl.startsWith('/')) coverUrl = STATE.serverURL + coverUrl;
+    var coverUrl = resolveCoverUrl(track.coverURL || track.cover);
     $('bt-img-main').src = coverUrl;
     $('bt-img-blur').src = coverUrl;
   }
@@ -1176,6 +1182,15 @@ function sync(d) {
             $('bt-img-main').style.display = 'none';
           } else if (STATE.revealed) {
             $('bt-img-main').src = d.coverBase64; $('bt-img-main').style.display = '';
+            $('bt-img-blur').style.display = 'none';
+          }
+        }
+        return;
+      case 'cover_clear_update':
+        if (d.coverClearURL && STATE.currentTrackID && d.trackID === STATE.currentTrackID) {
+          var url = resolveCoverUrl(d.coverClearURL);
+          if (STATE.revealed) {
+            $('bt-img-main').src = url; $('bt-img-main').style.display = '';
             $('bt-img-blur').style.display = 'none';
           }
         }
