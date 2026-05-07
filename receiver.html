@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>QWIZZ Receiver v8.0.8-FIX</title>
+<title>QWIZZ Receiver v8.0.9-FIX</title>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,600;0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 <style>
@@ -636,15 +636,17 @@
 })();
 
 /* ===== VERSION (single source of truth) ===== */
-var RECEIVER_VERSION = '8.0.8';
+var RECEIVER_VERSION = '8.0.9';
 
 /* ===== CACHE BUST ===== */
 (function() {
   var last = parseInt(localStorage.getItem('rcv_loaded') || '0');
   var now = Date.now();
-  if (now - last < 300000) return; // 5 min
-  localStorage.setItem('rcv_loaded', now.toString());
   var url = new URL(window.location.href);
+  var currentVersion = url.searchParams.get('_cv') || '0';
+  var needsReload = (now - last > 300000) || (currentVersion !== RECEIVER_VERSION);
+  if (!needsReload) return;
+  localStorage.setItem('rcv_loaded', now.toString());
   url.searchParams.set('_cv', RECEIVER_VERSION);
   url.searchParams.set('_t', now);
   window.location.replace(url.toString());
