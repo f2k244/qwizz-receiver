@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>QWIZZ Receiver v8.0.7-LOGO</title>
+<title>QWIZZ Receiver v8.0.8-FIX</title>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,600;0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 <style>
@@ -169,6 +169,11 @@
     display: flex; align-items: center; justify-content: center;
     background: rgba(10,10,26,0.5);
     backdrop-filter: blur(4px);
+    transition: background 0.3s;
+  }
+  .bt-cover-card .cover-overlay.opaque {
+    background: rgba(10,10,26,0.92);
+    backdrop-filter: none;
   }
   .bt-cover-card .cover-overlay .qmark {
     font-size: 18vmin; font-weight: 900; font-style: italic;
@@ -631,7 +636,7 @@
 })();
 
 /* ===== VERSION (single source of truth) ===== */
-var RECEIVER_VERSION = '8.0.7';
+var RECEIVER_VERSION = '8.0.8';
 
 /* ===== CACHE BUST ===== */
 (function() {
@@ -753,7 +758,7 @@ function renderBlindTest(d) {
   renderQR();
 
   var track = d.track || STATE.track;
-  var revealed = d.revealed || STATE.revealed;
+  var revealed = d.revealed !== undefined ? d.revealed : STATE.revealed;
 
   if (d.blurCover !== undefined) STATE.blurCover = d.blurCover;
   if (d.shouldBlur !== undefined) STATE.blurCover = d.shouldBlur;
@@ -762,18 +767,28 @@ function renderBlindTest(d) {
   if (hasCover) {
     var coverUrl = track.coverURL || track.cover;
     if (coverUrl.startsWith('/')) coverUrl = STATE.serverURL + coverUrl;
-    $('bt-img-blur').src = coverUrl;
     $('bt-img-main').src = coverUrl;
-    $('bt-img-main').style.display = '';
-    $('bt-img-blur').style.display = STATE.blurCover ? '' : 'none';
+    $('bt-img-blur').src = coverUrl;
   }
 
   if (revealed && track) {
     $('bt-cover-overlay').style.display = 'none';
+    $('bt-cover-overlay').classList.remove('opaque');
+    $('bt-img-main').style.display = '';
+    $('bt-img-blur').style.display = 'none';
     $('bt-title').textContent = track.title || '';
     $('bt-artist').textContent = track.artist || '';
   } else {
     $('bt-cover-overlay').style.display = 'flex';
+    if (STATE.blurCover) {
+      $('bt-cover-overlay').classList.remove('opaque');
+      $('bt-img-main').style.display = 'none';
+      $('bt-img-blur').style.display = '';
+    } else {
+      $('bt-cover-overlay').classList.add('opaque');
+      $('bt-img-main').style.display = 'none';
+      $('bt-img-blur').style.display = 'none';
+    }
     $('bt-title').textContent = 'Quel est le titre ?';
     $('bt-artist').textContent = '???';
   }
@@ -798,8 +813,13 @@ function renderBlindTest(d) {
 function renderBTPlayers(players) {
   if (!players || !players.length) {
     $('bt-players').innerHTML = '<div class="bt-players-header">Joueurs</div>';
+    STATE._lastBTPlayersKey = null;
     return;
   }
+  var playersKey = JSON.stringify(players.map(p => ({n:p.name, s:p.score, b:!!p.buzzed, l:!!p.locked})));
+  if (STATE._lastBTPlayersKey === playersKey) return;
+  STATE._lastBTPlayersKey = playersKey;
+
   var html = '<div class="bt-players-header">Joueurs — ' + players.length + ' connecté' + (players.length > 1 ? 's' : '') + '</div>';
   players.sort((a,b) => (b.score||0) - (a.score||0));
   players.forEach((p, i) => {
@@ -958,10 +978,14 @@ function renderPodium(data) {
 }
 
 function renderLeaderboard(players) {
-  if (!STATE.showScores) { $('overlay-leaderboard').classList.remove('active'); return; }
+  if (!STATE.showScores) { $('overlay-leaderboard').classList.remove('active'); STATE._lastLBKey = null; return; }
   var sorted = (players || []).slice().sort((a,b) => (b.score||0) - (a.score||0));
   if (!sorted.length) return;
   var max = sorted[0].score || 1;
+
+  var playersKey = JSON.stringify(sorted.map(p => ({n:p.name, s:p.score})));
+  if (STATE._lastLBKey === playersKey) { $('overlay-leaderboard').classList.add('active'); return; }
+  STATE._lastLBKey = playersKey;
 
   var html = '';
   sorted.forEach((p, i) => {
@@ -1145,8 +1169,13 @@ function sync(d) {
 
       case 'cover_update':
         if (d.coverBase64 && STATE.currentTrackID && d.trackID === STATE.currentTrackID) {
-          $('bt-img-blur').src = d.coverBase64; $('bt-img-blur').style.display = '';
-          $('bt-img-main').src = d.coverBase64; $('bt-img-main').style.display = '';
+          if (STATE.blurCover && !STATE.revealed) {
+            $('bt-img-blur').src = d.coverBase64; $('bt-img-blur').style.display = '';
+            $('bt-img-main').style.display = 'none';
+          } else if (STATE.revealed) {
+            $('bt-img-main').src = d.coverBase64; $('bt-img-main').style.display = '';
+            $('bt-img-blur').style.display = 'none';
+          }
         }
         return;
     }
