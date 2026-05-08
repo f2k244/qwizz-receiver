@@ -244,7 +244,9 @@
   .qcm-timer-wrap { display: flex; align-items: center; gap: 2vmin; }
   .qcm-timer-num { font-size: 5.5vmin; font-weight: 900; font-style: italic; color: #fff; min-width: 7vmin; text-align: right; }
   .qcm-timer-bar-wrap { width: 22vmin; height: 1vmin; background: rgba(255,255,255,0.08); border-radius: 0.5vmin; overflow: hidden; }
-  .qcm-timer-fill { height: 100%; width: 100%; background: var(--grad-violet-rose); border-radius: 0.5vmin; transform-origin: left; transition: width 0.3s linear; }
+  .qcm-timer-fill { height: 100%; width: 100%; background: var(--grad-violet-rose); border-radius: 0.5vmin; transform-origin: left; transition: transform 0.3s linear; }
+  .qcm-timer-fill.urgent { background: linear-gradient(90deg, #FF453A, #FF8A00); }
+  .qcm-timer-fill.warning { background: linear-gradient(90deg, #FF8A00, #FFD600); }
   .qcm-answered { font-size: 1.5vmin; font-weight: 700; color: var(--text-muted); }
 
   .qcm-question-card {
@@ -639,7 +641,7 @@
 })();
 
 /* ===== VERSION (single source of truth) ===== */
-var RECEIVER_VERSION = '8.1.2';
+var RECEIVER_VERSION = '8.1.3';
 
 /* ===== CACHE BUST ===== */
 (function() {
@@ -692,14 +694,20 @@ const _gradients = [
 function $(id) { return document.getElementById(id); }
 
 function showView(name) {
+  if (STATE.view === name) return;
   var prev = STATE.view;
   STATE.view = name;
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   var v = $('view-' + name);
   if (v) v.classList.add('active');
-  // Cleanup fixed elements from blind test when leaving
+  // Aggressive cleanup of blind test elements when leaving
   if (prev === 'blindtest' && name !== 'blindtest') {
     $('bt-progress').style.display = 'none';
+    $('bt-img-main').src = ''; $('bt-img-main').style.display = 'none';
+    $('bt-img-blur').src = ''; $('bt-img-blur').style.display = 'none';
+    $('bt-cover-overlay').style.display = 'none';
+    $('bt-title').textContent = '';
+    $('bt-artist').textContent = '';
   }
 }
 
@@ -866,27 +874,34 @@ function renderBTPlayers(players) {
 }
 
 function renderQCMQuestion(d) {
-  showView('qcm');
-  setTopbar({ title: 'QCM', live: true });
-  renderIdleQR();
-  renderQR();
-  // Hide any active overlays when switching to QCM
-  $('overlay-rules').classList.remove('active');
+  var isNew = (STATE.qcmCurrentQuestion !== (d.question || ''));
+  var justSwitched = (STATE.view !== 'qcm');
+
+  // Only switch view/set topbar on first entry or new question
+  if (justSwitched || isNew) {
+    showView('qcm');
+    setTopbar({ title: 'QCM', live: true });
+    renderIdleQR();
+    renderQR();
+    $('overlay-rules').classList.remove('active');
+  }
 
   STATE.qcmDuration = d.duration || STATE.qcmDuration || 30;
-  var qText = d.question || STATE.qcmCurrentQuestion || '';
-  var isNew = (STATE.qcmCurrentQuestion !== qText);
-  STATE.qcmCurrentQuestion = qText;
+  STATE.qcmCurrentQuestion = d.question || STATE.qcmCurrentQuestion || '';
 
-  $('qcm-qnum').textContent = d.questionNum ? 'Question ' + d.questionNum : '';
-  $('qcm-cat').textContent = d.category || 'QCM';
-  $('qcm-question').textContent = qText;
-  $('qcm-pts').textContent = d.points ? (d.points + ' pts') : '';
+  if (justSwitched || isNew) {
+    $('qcm-qnum').textContent = d.questionNum ? 'Question ' + d.questionNum : '';
+    $('qcm-cat').textContent = d.category || 'QCM';
+    $('qcm-question').textContent = STATE.qcmCurrentQuestion;
+    $('qcm-pts').textContent = d.points ? (d.points + ' pts') : '';
+  }
 
   // Image (hidden during question, shown only on reveal)
   var imgEl = $('qcm-image');
-  imgEl.innerHTML = '';
-  imgEl.style.display = 'none';
+  if (justSwitched || isNew) {
+    imgEl.innerHTML = '';
+    imgEl.style.display = 'none';
+  }
 
   var choices = d.choices || [];
   var choicesKey = choices.join('|');
@@ -910,15 +925,22 @@ function renderQCMQuestion(d) {
 
   renderQCMFooter(d.responders || []);
 
-  // Only reset timer if it's a new question or timer is not running
+  // Timer handling: sync with server remaining time if provided, else keep local RAF
   if (isNew || !STATE.qcmEndTime) {
     if (qcmRaf) cancelAnimationFrame(qcmRaf);
     $('qcm-timer-text').textContent = STATE.qcmDuration;
-    $('qcm-timer-bar').style.width = '100%';
-    $('qcm-timer-bar').style.background = 'var(--grad-violet-rose)';
+    $('qcm-timer-bar').style.transform = 'scaleX(1)';
+    $('qcm-timer-bar').className = 'qcm-timer-fill normal';
     $('qcm-answered').textContent = '';
     STATE.qcmEndTime = Date.now() + (STATE.qcmDuration * 1000);
     updateQCMTimer();
+  } else if (d.remaining !== undefined && d.remaining >= 0) {
+    // Poll sync: adjust local timer to match server without full reset
+    var newEnd = Date.now() + (d.remaining * 1000);
+    var drift = Math.abs(newEnd - STATE.qcmEndTime);
+    if (drift > 500) { // only adjust if drift > 500ms
+      STATE.qcmEndTime = newEnd;
+    }
   }
 }
 
@@ -981,11 +1003,12 @@ function updateQCMTimer() {
   var pct = Math.min(100, Math.max(0, (rem / STATE.qcmDuration) * 100));
 
   $('qcm-timer-text').textContent = Math.ceil(rem);
-  $('qcm-timer-bar').style.width = pct + '%';
+  $('qcm-timer-bar').style.transform = 'scaleX(' + (pct / 100) + ')';
 
-  if (pct < 30) $('qcm-timer-bar').style.background = 'linear-gradient(90deg, #FF453A, #FF8A00)';
-  else if (pct < 60) $('qcm-timer-bar').style.background = 'linear-gradient(90deg, #FF8A00, #FFD600)';
-  else $('qcm-timer-bar').style.background = 'var(--grad-violet-rose)';
+  var bar = $('qcm-timer-bar');
+  if (pct < 30 && !bar.classList.contains('urgent')) bar.className = 'qcm-timer-fill urgent';
+  else if (pct >= 30 && pct < 60 && !bar.classList.contains('warning')) bar.className = 'qcm-timer-fill warning';
+  else if (pct >= 60 && !bar.classList.contains('normal')) bar.className = 'qcm-timer-fill normal';
 
   if (rem > 0) qcmRaf = requestAnimationFrame(updateQCMTimer);
 }
