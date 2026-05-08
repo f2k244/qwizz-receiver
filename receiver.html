@@ -261,6 +261,8 @@
   }
   .qcm-question-text { font-size: 3.8vmin; font-weight: 900; font-style: italic; color: #fff; line-height: 1.3; }
   .qcm-pts { position: absolute; top: 3vmin; right: 4vmin; font-size: 2.8vmin; font-weight: 900; font-style: italic; color: var(--jaune); }
+  .qcm-image { margin: 2vmin 0; max-height: 22vmin; display: flex; align-items: center; justify-content: center; }
+  .qcm-image img { max-height: 22vmin; max-width: 100%; border-radius: 1.5vmin; box-shadow: 0 1vmin 3vmin rgba(0,0,0,0.3); }
 
   .qcm-answers-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 2vmin;
@@ -494,7 +496,7 @@
 <!-- ===== TOPBAR ===== -->
 <div id="topbar">
   <div class="tb-left">
-    <img id="logo-top" class="logo-real" style="height:5vmin;width:auto;display:block;" src="" alt="QWIZZ">
+    <img id="logo-top" class="logo-real" style="height:5vmin;width:auto;display:block;" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 40'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' stop-color='%23FF2DA8'/%3E%3Cstop offset='50%25' stop-color='%23FF8A00'/%3E%3Cstop offset='100%25' stop-color='%23FFD600'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Exo 2,sans-serif' font-size='32' font-weight='900' font-style='italic' fill='url(%23g)'%3EQWIZZ%3C/text%3E%3C/svg%3E" alt="QWIZZ">
     <span class="tb-title" id="tb-title">En attente</span>
   </div>
   <div class="tb-right">
@@ -507,7 +509,7 @@
 
 <!-- IDLE -->
 <div class="view" id="view-idle">
-  <img class="idle-logo logo-real" id="logo-idle" style="width:45vmin;height:auto;" src="" alt="QWIZZ">
+  <img class="idle-logo logo-real" id="logo-idle" style="width:45vmin;height:auto;" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 40'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' stop-color='%23FF2DA8'/%3E%3Cstop offset='50%25' stop-color='%23FF8A00'/%3E%3Cstop offset='100%25' stop-color='%23FFD600'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Exo 2,sans-serif' font-size='32' font-weight='900' font-style='italic' fill='url(%23g)'%3EQWIZZ%3C/text%3E%3C/svg%3E" alt="QWIZZ">
   <div class="idle-status">Prêt à qwizzer ?</div>
   <div class="idle-hint">Ouvrez l'application et connectez-vous à cette TV pour commencer une partie</div>
 </div>
@@ -560,6 +562,7 @@
   <div class="qcm-question-card">
     <div class="qcm-cat-badge" id="qcm-cat">Catégorie</div>
     <div class="qcm-question-text" id="qcm-question">Question</div>
+    <div class="qcm-image" id="qcm-image" style="display:none"></div>
     <div class="qcm-pts" id="qcm-pts">200 pts</div>
   </div>
   <div class="qcm-answers-grid" id="qcm-answers"></div>
@@ -636,7 +639,7 @@
 })();
 
 /* ===== VERSION (single source of truth) ===== */
-var RECEIVER_VERSION = '8.1.1';
+var RECEIVER_VERSION = '8.1.2';
 
 /* ===== CACHE BUST ===== */
 (function() {
@@ -689,10 +692,15 @@ const _gradients = [
 function $(id) { return document.getElementById(id); }
 
 function showView(name) {
+  var prev = STATE.view;
   STATE.view = name;
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   var v = $('view-' + name);
   if (v) v.classList.add('active');
+  // Cleanup fixed elements from blind test when leaving
+  if (prev === 'blindtest' && name !== 'blindtest') {
+    $('bt-progress').style.display = 'none';
+  }
 }
 
 function setTopbar(opts) {
@@ -769,30 +777,42 @@ function renderBlindTest(d) {
   var track = d.track || STATE.track;
   var revealed = d.revealed !== undefined ? d.revealed : STATE.revealed;
 
+  // Update blur state only if explicitly provided, otherwise keep current (polling will provide it)
+  if (d.blurCoversOnTV !== undefined) STATE.blurCover = d.blurCoversOnTV;
   if (d.blurCover !== undefined) STATE.blurCover = d.blurCover;
   if (d.shouldBlur !== undefined) STATE.blurCover = d.shouldBlur;
 
-  var hasCover = track && (track.coverURL || track.cover);
+  var coverUrlRaw = track && (track.coverURL || track.cover);
+  var isRealCover = coverUrlRaw && !coverUrlRaw.includes('/no_cover');
+  var hasCover = !!isRealCover;
+
   if (hasCover) {
-    var coverUrl = resolveCoverUrl(track.coverURL || track.cover);
+    var coverUrl = resolveCoverUrl(coverUrlRaw);
     $('bt-img-main').src = coverUrl;
     $('bt-img-blur').src = coverUrl;
+  } else {
+    $('bt-img-main').src = '';
+    $('bt-img-blur').src = '';
   }
 
   if (revealed && track) {
     $('bt-cover-overlay').style.display = 'none';
     $('bt-cover-overlay').classList.remove('opaque');
+    if (!hasCover) {
+      $('bt-img-main').src = './nocover.png';
+    }
     $('bt-img-main').style.display = '';
     $('bt-img-blur').style.display = 'none';
     $('bt-title').textContent = track.title || '';
     $('bt-artist').textContent = track.artist || '';
   } else {
     $('bt-cover-overlay').style.display = 'flex';
-    if (STATE.blurCover) {
+    if (STATE.blurCover && hasCover) {
       $('bt-cover-overlay').classList.remove('opaque');
       $('bt-img-main').style.display = 'none';
       $('bt-img-blur').style.display = '';
     } else {
+      // No blur OR no cover: show opaque overlay with question mark
       $('bt-cover-overlay').classList.add('opaque');
       $('bt-img-main').style.display = 'none';
       $('bt-img-blur').style.display = 'none';
@@ -850,6 +870,8 @@ function renderQCMQuestion(d) {
   setTopbar({ title: 'QCM', live: true });
   renderIdleQR();
   renderQR();
+  // Hide any active overlays when switching to QCM
+  $('overlay-rules').classList.remove('active');
 
   STATE.qcmDuration = d.duration || STATE.qcmDuration || 30;
   var qText = d.question || STATE.qcmCurrentQuestion || '';
@@ -861,31 +883,55 @@ function renderQCMQuestion(d) {
   $('qcm-question').textContent = qText;
   $('qcm-pts').textContent = (d.points || 200) + ' pts';
 
-  document.querySelectorAll('.qcm-answer').forEach(el => { el.className = 'qcm-answer'; });
-  $('qcm-timer-text').textContent = STATE.qcmDuration;
-  $('qcm-timer-bar').style.width = '100%';
-  $('qcm-timer-bar').style.background = 'var(--grad-violet-rose)';
+  // Image
+  var imgEl = $('qcm-image');
+  if (d.imageURL && d.imageURL.length > 0) {
+    imgEl.innerHTML = '<img src="' + d.imageURL + '" alt="" style="max-height:22vmin;">';
+    imgEl.style.display = 'flex';
+  } else {
+    imgEl.innerHTML = '';
+    imgEl.style.display = 'none';
+  }
 
   var choices = d.choices || [];
-  var ansHTML = '';
-  choices.forEach((c, i) => {
-    ansHTML += '<div class="qcm-answer" id="qcm-ans-' + i + '">' +
-      '<div class="ans-letter ' + _labels[i].toLowerCase() + '">' + _labels[i] + '</div>' +
-      '<span class="ans-text">' + c + '</span>' +
-      '<span class="ans-count" id="qcm-count-' + i + '"></span>' +
-    '</div>';
-  });
-  $('qcm-answers').innerHTML = ansHTML;
+  var choicesKey = choices.join('|');
+  // Only rebuild answers DOM if choices changed (prevents flashing on poll resync)
+  if (STATE._lastQCMChoicesKey !== choicesKey) {
+    STATE._lastQCMChoicesKey = choicesKey;
+    var ansHTML = '';
+    choices.forEach((c, i) => {
+      ansHTML += '<div class="qcm-answer" id="qcm-ans-' + i + '">' +
+        '<div class="ans-letter ' + _labels[i].toLowerCase() + '">' + _labels[i] + '</div>' +
+        '<span class="ans-text">' + c + '</span>' +
+        '<span class="ans-count" id="qcm-count-' + i + '"></span>' +
+      '</div>';
+    });
+    $('qcm-answers').innerHTML = ansHTML;
+  }
+  // Reset answer styles on every new question
+  if (isNew) {
+    document.querySelectorAll('.qcm-answer').forEach(el => { el.className = 'qcm-answer'; });
+  }
 
   renderQCMFooter(d.responders || []);
 
-  if (qcmRaf) cancelAnimationFrame(qcmRaf);
-  STATE.qcmEndTime = Date.now() + (STATE.qcmDuration * 1000);
-  updateQCMTimer();
+  // Only reset timer if it's a new question or timer is not running
+  if (isNew || !STATE.qcmEndTime) {
+    if (qcmRaf) cancelAnimationFrame(qcmRaf);
+    $('qcm-timer-text').textContent = STATE.qcmDuration;
+    $('qcm-timer-bar').style.width = '100%';
+    $('qcm-timer-bar').style.background = 'var(--grad-violet-rose)';
+    $('qcm-answered').textContent = '';
+    STATE.qcmEndTime = Date.now() + (STATE.qcmDuration * 1000);
+    updateQCMTimer();
+  }
 }
 
 function renderQCMReveal(d) {
   showView('qcm');
+  // Hide rules overlay on reveal
+  $('overlay-rules').classList.remove('active');
+
   var correct = d.correctIndex;
   var answers = d.answers || {};
   var total = Object.keys(answers).length;
@@ -909,6 +955,13 @@ function renderQCMReveal(d) {
   $('qcm-answered').textContent = total + ' réponse' + (total > 1 ? 's' : '');
   renderQCMFooter(d.responders || []);
   STATE.qcmEndTime = null;
+
+  // Show answer image if provided
+  var imgEl = $('qcm-image');
+  if (d.imageURL && d.imageURL.length > 0) {
+    imgEl.innerHTML = '<img src="' + d.imageURL + '" alt="" style="max-height:22vmin;">';
+    imgEl.style.display = 'flex';
+  }
 }
 
 function renderQCMFooter(responders) {
@@ -1093,6 +1146,7 @@ function sync(d) {
         STATE.track = null; STATE.revealed = false; STATE.endGame = false;
         STATE.showQR = false; STATE.isPaused = false;
         STATE.qcmCurrentQuestion = null; STATE.qcmEndTime = null;
+        STATE._lastQCMChoicesKey = null;
         if (qcmRaf) { cancelAnimationFrame(qcmRaf); qcmRaf = null; }
         $('overlay-leaderboard').classList.remove('active');
         $('overlay-rules').classList.remove('active');
@@ -1112,6 +1166,7 @@ function sync(d) {
 
       case 'qcm_question':
         STATE.qcmActive = true;
+        // Pass imageURL through if present in payload
         renderQCMQuestion(d);
         return;
 
@@ -1122,6 +1177,8 @@ function sync(d) {
       case 'qcm_stop':
         STATE.qcmActive = false;
         STATE.qcmCurrentQuestion = null; STATE.qcmEndTime = null;
+        STATE._lastQCMChoicesKey = null;
+        $('qcm-image').innerHTML = ''; $('qcm-image').style.display = 'none';
         if (qcmRaf) { cancelAnimationFrame(qcmRaf); qcmRaf = null; }
         if (STATE.view === 'qcm') renderIdle();
         return;
@@ -1147,6 +1204,7 @@ function sync(d) {
         return;
 
       case 'rules':
+      case 'mode_switch':
         renderRules(d);
         return;
 
@@ -1167,6 +1225,7 @@ function sync(d) {
         STATE.revealed = (d.gameState === 'revealed');
         STATE.qcmActive = false;
         STATE.currentTrackID = STATE.track.trackID || STATE.track.id;
+        $('overlay-rules').classList.remove('active');
         renderBlindTest(d);
         return;
 
