@@ -881,17 +881,12 @@ function renderQCMQuestion(d) {
   $('qcm-qnum').textContent = d.questionNum ? 'Question ' + d.questionNum : '';
   $('qcm-cat').textContent = d.category || 'QCM';
   $('qcm-question').textContent = qText;
-  $('qcm-pts').textContent = (d.points || 200) + ' pts';
+  $('qcm-pts').textContent = d.points ? (d.points + ' pts') : '';
 
-  // Image
+  // Image (hidden during question, shown only on reveal)
   var imgEl = $('qcm-image');
-  if (d.imageURL && d.imageURL.length > 0) {
-    imgEl.innerHTML = '<img src="' + d.imageURL + '" alt="" style="max-height:22vmin;">';
-    imgEl.style.display = 'flex';
-  } else {
-    imgEl.innerHTML = '';
-    imgEl.style.display = 'none';
-  }
+  imgEl.innerHTML = '';
+  imgEl.style.display = 'none';
 
   var choices = d.choices || [];
   var choicesKey = choices.join('|');
