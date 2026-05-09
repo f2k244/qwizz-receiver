@@ -641,7 +641,7 @@
 })();
 
 /* ===== VERSION (single source of truth) ===== */
-var RECEIVER_VERSION = '8.1.3';
+var RECEIVER_VERSION = '8.1.4';
 
 /* ===== CACHE BUST ===== */
 (function() {
@@ -866,7 +866,7 @@ function renderBTPlayers(players) {
       '<div class="bt-pl-ava" style="background:' + avatarGradient(p.name) + ';">' + initials(p.name) + '</div>' +
       '<div class="bt-pl-info">' +
         '<div class="bt-pl-name">' + (p.name || 'Joueur') + '</div>' +
-        '<div class="bt-pl-score">' + (p.score || 0) + ' pts</div>' +
+        <!-- score masqué sur la sidebar -->
       '</div>' + state +
     '</div>';
   });
