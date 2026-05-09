@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>QWIZZ Receiver v8.1.1</title>
+<title>QWIZZ Receiver v8.0.7-LOGO</title>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,600;0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 <style>
@@ -75,7 +75,7 @@
   .card-rose { border-color: var(--border-rose); }
   .card-violet { border-color: var(--border-violet); }
   .card-orange { border-color: var(--border-orange); }
-  .logo-real { filter: none; }
+  .logo-real { filter: invert(1); }
 
   .pill {
     display: inline-flex; align-items: center; gap: 0.8vmin;
@@ -169,11 +169,6 @@
     display: flex; align-items: center; justify-content: center;
     background: rgba(10,10,26,0.5);
     backdrop-filter: blur(4px);
-    transition: background 0.3s;
-  }
-  .bt-cover-card .cover-overlay.opaque {
-    background: rgba(10,10,26,0.92);
-    backdrop-filter: none;
   }
   .bt-cover-card .cover-overlay .qmark {
     font-size: 18vmin; font-weight: 900; font-style: italic;
@@ -244,9 +239,7 @@
   .qcm-timer-wrap { display: flex; align-items: center; gap: 2vmin; }
   .qcm-timer-num { font-size: 5.5vmin; font-weight: 900; font-style: italic; color: #fff; min-width: 7vmin; text-align: right; }
   .qcm-timer-bar-wrap { width: 22vmin; height: 1vmin; background: rgba(255,255,255,0.08); border-radius: 0.5vmin; overflow: hidden; }
-  .qcm-timer-fill { height: 100%; width: 100%; background: var(--grad-violet-rose); border-radius: 0.5vmin; transform-origin: left; transition: transform 0.3s linear; }
-  .qcm-timer-fill.urgent { background: linear-gradient(90deg, #FF453A, #FF8A00); }
-  .qcm-timer-fill.warning { background: linear-gradient(90deg, #FF8A00, #FFD600); }
+  .qcm-timer-fill { height: 100%; width: 100%; background: var(--grad-violet-rose); border-radius: 0.5vmin; transform-origin: left; transition: width 0.3s linear; }
   .qcm-answered { font-size: 1.5vmin; font-weight: 700; color: var(--text-muted); }
 
   .qcm-question-card {
@@ -263,8 +256,6 @@
   }
   .qcm-question-text { font-size: 3.8vmin; font-weight: 900; font-style: italic; color: #fff; line-height: 1.3; }
   .qcm-pts { position: absolute; top: 3vmin; right: 4vmin; font-size: 2.8vmin; font-weight: 900; font-style: italic; color: var(--jaune); }
-  .qcm-image { margin: 2vmin 0; max-height: 22vmin; display: flex; align-items: center; justify-content: center; }
-  .qcm-image img { max-height: 22vmin; max-width: 100%; border-radius: 1.5vmin; box-shadow: 0 1vmin 3vmin rgba(0,0,0,0.3); }
 
   .qcm-answers-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 2vmin;
@@ -395,18 +386,17 @@
   .lb-bar-wrap { width: 12vmin; height: 0.6vmin; background: rgba(255,255,255,0.08); border-radius: 0.3vmin; overflow: hidden; }
   .lb-bar-fill { height: 100%; background: var(--grad-violet-rose); border-radius: 0.3vmin; }
 
-  #overlay-rules .overlay-panel { width: 60vw; max-width: 95vmin; padding: 6vmin 8vmin; }
-  .rules-mode { font-size: 5.5vmin; font-weight: 900; font-style: italic; color: var(--rose); text-transform: uppercase; letter-spacing: 0.3vmin; margin-bottom: 3.5vmin; }
-  .rules-text { font-size: 3.2vmin; font-weight: 600; color: var(--text-sec); line-height: 1.5; margin-bottom: 4vmin; white-space: pre-wrap; }
-  .rules-chips { display: flex; gap: 2.5vmin; flex-wrap: wrap; }
+  .rules-mode { font-size: 3.8vmin; font-weight: 900; font-style: italic; color: var(--rose); text-transform: uppercase; letter-spacing: 0.3vmin; margin-bottom: 2.5vmin; }
+  .rules-text { font-size: 2.4vmin; font-weight: 600; color: var(--text-sec); line-height: 1.5; margin-bottom: 3vmin; white-space: pre-wrap; }
+  .rules-chips { display: flex; gap: 2vmin; flex-wrap: wrap; }
   .rules-chip {
-    background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 1.5vmin;
-    padding: 2.2vmin 3.5vmin; display: flex; flex-direction: column; gap: 0.6vmin; min-width: 22vmin;
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 1.2vmin;
+    padding: 1.8vmin 2.8vmin; display: flex; flex-direction: column; gap: 0.5vmin; min-width: 18vmin;
   }
   .rules-chip.pos { border-color: rgba(255,45,168,0.25); }
   .rules-chip.neg { border-color: rgba(255,69,58,0.25); }
-  .chip-label { font-size: 1.8vmin; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-  .chip-val { font-size: 3.0vmin; font-weight: 900; }
+  .chip-label { font-size: 1.3vmin; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+  .chip-val { font-size: 2.2vmin; font-weight: 900; }
   .rules-chip.pos .chip-val { color: var(--rose); }
   .rules-chip.neg .chip-val { color: #FF453A; }
 
@@ -499,7 +489,7 @@
 <!-- ===== TOPBAR ===== -->
 <div id="topbar">
   <div class="tb-left">
-    <img id="logo-top" class="logo-real" style="height:5vmin;width:auto;display:block;" src="./logo.svg" alt="QWIZZ">
+    <svg id="logo-top" class="logo-real" viewBox="0 0 1024 450" xmlns="http://www.w3.org/2000/svg" style="height:5vmin;width:auto;display:block;"><style>.ls{fill:#000}</style><g><path class="ls" d="m195.07 384.96c9.05-17.23 11.5-38.29 3.62-56.25-8.28-18.9-26.34-31.84-44.26-35.01-21.97-3.9-43.6 1.89-57.76 18.22-18.86 21.75-19.8 53.49-4.48 76.65 15.78 23.86 43.59 34.41 72.13 27.53l39.95 43.42c-33.89 12.69-70.64 13.74-103.95-0.56-57.86-24.84-86.41-88.15-65.5-148.17 16.04-46.02 59.13-73.06 107-71.74 46.51 1.27 86.4 26.8 105.37 69.33 15.06 33.79 16.4 77.07-5.68 107.95l39.3 41.49-60.97 0.02-66.81-72.57z"/><path class="ls" d="m176.47 356.1l-52.95 35.53-1.13-63.92c0.39-0.97 1.22-3.52 2.03-3.5l4.59 0.11z"/></g><g><path class="ls" d="m647.77 304.07l34.95-0.1-61.12 117.93-33.27 0.29-11.13-65.25-32.23 65.34-34.82-0.22-22.18-118.18 36.76 0.14 12.07 71.17 36.94-71.47 23.79 0.13 11.94 71.07z"/><path class="ls" d="m442.13 338.54c-1.18-15.01-39.63-13.06-58.96-8.47-8.01 1.91-14.63 6.95-16.19 14.95l-7.1 36.48c-1.95 10.03 7.18 18 16.93 18.25l23.38 0.61 22.18 26.4c-21.31 0.22-43.23 1.45-64.05-0.99-24.08-2.83-37.16-20.03-34.5-43.12 2-17.37 4.91-34.11 9.8-50.96 4.14-14.3 14.68-24.41 30.08-28.09 28.25-6.75 59.62-7 87.74-0.5 38.98 9.01 26.04 53.94 15.56 88.09l-9.76 15.27 24.75 26.65-41.4-0.08-49.83-52.8 42.05-0.42c6.9-12.52 10.46-26.72 9.32-41.27z"/><path class="ls" d="m842.25 421.88l-119.41-0.01 2.45-24.4 86.88-68.24-69.22-0.06 5.08-24.47 112.19-0.03-2.68 26.31-83.45 67.49 74.33 0.04z"/><path class="ls" d="m982.52 421.87l-122.34-0.01 2.39-23.99 87.33-68.61-73.32-0.1 4.62-24.43 115.3-0.02-3.37 25.24-83.3 68.51 78.75 0.06z"/><path class="ls" d="m705.18 422.21l-33.62 0.02 14-75.25 34.47 0.4z"/><path class="ls" d="m723.48 329.24l-35.78 0.14 8.79-25.12 31.69 0.24z"/></g></svg>
     <span class="tb-title" id="tb-title">En attente</span>
   </div>
   <div class="tb-right">
@@ -512,7 +502,7 @@
 
 <!-- IDLE -->
 <div class="view" id="view-idle">
-  <img class="idle-logo logo-real" id="logo-idle" style="width:45vmin;height:auto;" src="./logo.svg" alt="QWIZZ">
+  <svg class="idle-logo logo-real" id="logo-idle" viewBox="0 0 1024 720" xmlns="http://www.w3.org/2000/svg"><style>.ls{fill:#000}</style><g><path class="ls" d="m195.07 384.96c9.05-17.23 11.5-38.29 3.62-56.25-8.28-18.9-26.34-31.84-44.26-35.01-21.97-3.9-43.6 1.89-57.76 18.22-18.86 21.75-19.8 53.49-4.48 76.65 15.78 23.86 43.59 34.41 72.13 27.53l39.95 43.42c-33.89 12.69-70.64 13.74-103.95-0.56-57.86-24.84-86.41-88.15-65.5-148.17 16.04-46.02 59.13-73.06 107-71.74 46.51 1.27 86.4 26.8 105.37 69.33 15.06 33.79 16.4 77.07-5.68 107.95l39.3 41.49-60.97 0.02-66.81-72.57z"/><path class="ls" d="m176.47 356.1l-52.95 35.53-1.13-63.92c0.39-0.97 1.22-3.52 2.03-3.5l4.59 0.11z"/></g><g><path class="ls" d="m647.77 304.07l34.95-0.1-61.12 117.93-33.27 0.29-11.13-65.25-32.23 65.34-34.82-0.22-22.18-118.18 36.76 0.14 12.07 71.17 36.94-71.47 23.79 0.13 11.94 71.07z"/><path class="ls" d="m442.13 338.54c-1.18-15.01-39.63-13.06-58.96-8.47-8.01 1.91-14.63 6.95-16.19 14.95l-7.1 36.48c-1.95 10.03 7.18 18 16.93 18.25l23.38 0.61 22.18 26.4c-21.31 0.22-43.23 1.45-64.05-0.99-24.08-2.83-37.16-20.03-34.5-43.12 2-17.37 4.91-34.11 9.8-50.96 4.14-14.3 14.68-24.41 30.08-28.09 28.25-6.75 59.62-7 87.74-0.5 38.98 9.01 26.04 53.94 15.56 88.09l-9.76 15.27 24.75 26.65-41.4-0.08-49.83-52.8 42.05-0.42c6.9-12.52 10.46-26.72 9.32-41.27z"/><path class="ls" d="m842.25 421.88l-119.41-0.01 2.45-24.4 86.88-68.24-69.22-0.06 5.08-24.47 112.19-0.03-2.68 26.31-83.45 67.49 74.33 0.04z"/><path class="ls" d="m982.52 421.87l-122.34-0.01 2.39-23.99 87.33-68.61-73.32-0.1 4.62-24.43 115.3-0.02-3.37 25.24-83.3 68.51 78.75 0.06z"/><path class="ls" d="m705.18 422.21l-33.62 0.02 14-75.25 34.47 0.4z"/><path class="ls" d="m723.48 329.24l-35.78 0.14 8.79-25.12 31.69 0.24z"/></g><g><path class="ls" d="m402.24 471.29l-74.01-0.04-2.67-2.17c-0.78-0.64 1.85-2.78 2.81-3.06l76.06 0.13c0.66 0.83 1.73 2.24 1.16 2.66z"/><path class="ls" d="m986.8 465.91v5.4l-69.62 0.03-0.01-5.4z"/><path class="ls" d="m438.61 457.22h4.36l-3.96 19.77h12.27l-0.74 3.69h-16.62z"/><path class="ls" d="m464.29 460.87l-1.2 6.1h11.36l-0.7 3.59h-11.4l-1.28 6.47h13.28l-0.74 3.65h-17.6l4.7-23.46h17.13l-0.74 3.65z"/><path class="ls" d="m513.91 473.31c0 4.96-4.25 7.37-10.39 7.37h-11.76l4.69-23.46h10.83c4.86 0 7.64 1.84 7.64 5.26 0 3.02-1.78 5.1-4.19 6.07 1.98 0.73 3.18 2.34 3.18 4.76zm-4.35 0c0-2.08-1.55-2.82-4.23-2.82h-7.21l-1.34 6.77h7.04c3.62 0 5.74-1.34 5.74-3.95zm-9.46-12.67l-1.31 6.47h6.21c3.25 0 5.36-1.31 5.36-3.89 0-1.78-1.47-2.58-4.06-2.58z"/><path class="ls" d="m523.98 457.22h4.35l-3.95 19.77h12.27l-0.74 3.69h-16.63z"/><path class="ls" d="m546.07 457.22h4.36l-4.69 23.46h-4.36z"/><path class="ls" d="m579.6 457.22l-4.69 23.46h-3.59l-9.62-16.42-3.29 16.42h-4.32l4.69-23.46h3.59l9.65 16.42 3.25-16.42z"/><path class="ls" d="m587.95 457.22h9.49c7.14 0 11.4 3.78 11.4 9.68 0 8.32-5.87 13.78-14.62 13.78h-10.96zm6.4 19.78c6.3 0 10.09-4.19 10.09-9.82 0-3.86-2.51-6.27-7.47-6.27h-5.4l-3.22 16.09z"/><path class="ls" d="m632.95 460.9h-7.78l0.74-3.68h19.91l-0.77 3.68h-7.78l-3.92 19.78h-4.36z"/><path class="ls" d="m654.71 460.87l-1.21 6.1h11.37l-0.71 3.59h-11.39l-1.28 6.47h13.28l-0.74 3.65h-17.6l4.69-23.46h17.13l-0.73 3.65z"/><path class="ls" d="m669.5 478.27l1.84-3.42c1.95 1.57 4.8 2.55 7.65 2.55 3.42 0 5.63-1.24 5.63-3.32 0-4.36-11.84-2.08-11.84-9.62 0-4.63 4.16-7.58 10.23-7.58 3.02 0 5.87 0.7 7.84 1.98l-1.71 3.45c-1.74-1.17-4.02-1.81-6.36-1.81-3.56 0-5.67 1.44-5.67 3.49 0 4.39 11.83 2.24 11.83 9.42 0 4.66-4.19 7.61-10.36 7.61-3.68 0-7.24-1.18-9.08-2.75z"/><path class="ls" d="m702.39 460.9h-7.78l0.74-3.68h19.91l-0.77 3.68h-7.78l-3.92 19.78h-4.36z"/><path class="ls" d="m757.51 457.22l-4.7 23.46h-4.12l3.05-15.38-10.02 12.7h-1.94l-5.37-13.01-3.12 15.69h-4.15l4.69-23.46h3.55l6.2 15.62 12.18-15.62z"/><path class="ls" d="m762.75 472.97q0.01-1.21 0.27-2.51l2.64-13.24h4.36l-2.65 13.17c-0.13 0.77-0.23 1.48-0.23 2.08 0 3.18 1.87 4.72 5.19 4.72 3.72 0 5.97-2.04 6.94-6.83l2.62-13.14h4.29l-2.68 13.44c-1.38 6.9-5.3 10.36-11.6 10.36-5.77 0-9.15-3.09-9.15-8.05z"/><path class="ls" d="m788.23 478.27l1.84-3.42c1.95 1.57 4.8 2.55 7.65 2.55 3.42 0 5.63-1.24 5.63-3.32 0-4.36-11.83-2.08-11.83-9.62 0-4.63 4.15-7.58 10.22-7.58 3.02 0 5.87 0.7 7.85 1.98l-1.72 3.45c-1.74-1.17-4.02-1.81-6.36-1.81-3.56 0-5.67 1.44-5.67 3.49 0 4.39 11.83 2.24 11.83 9.42 0 4.66-4.19 7.61-10.36 7.61-3.68 0-7.24-1.18-9.08-2.75z"/><path class="ls" d="m817.43 457.22h4.36l-4.69 23.46h-4.36z"/><path class="ls" d="m825.95 470.99c0-7.94 5.73-14.11 14.45-14.11 4.02 0 7.27 1.38 8.92 3.92l-3.16 2.65c-1.27-1.77-3.28-2.75-6.06-2.75-6 0-9.76 4.53-9.76 10.03 0 3.88 2.55 6.46 7.34 6.46 2.62 0 4.9-0.87 6.67-2.71l2.55 2.75c-2.28 2.61-5.66 3.79-9.55 3.79-7.14 0-11.4-4.09-11.4-10.03z"/><path class="ls" d="m867.86 475.25h-11.8l-3.39 5.43h-4.65l15.25-23.46h4.32l5.84 23.46h-4.33zm-0.8-3.42l-2.38-10.32-6.47 10.32z"/><path class="ls" d="m883.15 457.22h4.36l-3.95 19.77h12.26l-0.73 3.69h-16.63z"/></g></svg>
   <div class="idle-status">Prêt à qwizzer ?</div>
   <div class="idle-hint">Ouvrez l'application et connectez-vous à cette TV pour commencer une partie</div>
 </div>
@@ -565,7 +555,6 @@
   <div class="qcm-question-card">
     <div class="qcm-cat-badge" id="qcm-cat">Catégorie</div>
     <div class="qcm-question-text" id="qcm-question">Question</div>
-    <div class="qcm-image" id="qcm-image" style="display:none"></div>
     <div class="qcm-pts" id="qcm-pts">200 pts</div>
   </div>
   <div class="qcm-answers-grid" id="qcm-answers"></div>
@@ -642,17 +631,15 @@
 })();
 
 /* ===== VERSION (single source of truth) ===== */
-var RECEIVER_VERSION = '8.1.5';
+var RECEIVER_VERSION = '8.0.7';
 
 /* ===== CACHE BUST ===== */
 (function() {
   var last = parseInt(localStorage.getItem('rcv_loaded') || '0');
   var now = Date.now();
-  var url = new URL(window.location.href);
-  var currentVersion = url.searchParams.get('_cv') || '0';
-  var needsReload = (now - last > 300000) || (currentVersion !== RECEIVER_VERSION);
-  if (!needsReload) return;
+  if (now - last < 300000) return; // 5 min
   localStorage.setItem('rcv_loaded', now.toString());
+  var url = new URL(window.location.href);
   url.searchParams.set('_cv', RECEIVER_VERSION);
   url.searchParams.set('_t', now);
   window.location.replace(url.toString());
@@ -670,12 +657,11 @@ var STATE = {
   isPaused: false, pauseMessage: '',
   endGame: false,
   currentTrackID: null,
-  blurCover: false,
+  blurCover: true,
   qcmActive: false, qcmDuration: 30, qcmEndTime: null, qcmCurrentQuestion: null,
   players: [],
   logoBase64: null, hasBase64Logo: false,
-  view: 'idle',
-  rulesTimer: null
+  view: 'idle'
 };
 
 const _labels = ['A', 'B', 'C', 'D'];
@@ -696,21 +682,10 @@ const _gradients = [
 function $(id) { return document.getElementById(id); }
 
 function showView(name) {
-  if (STATE.view === name) return;
-  var prev = STATE.view;
   STATE.view = name;
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   var v = $('view-' + name);
   if (v) v.classList.add('active');
-  // Aggressive cleanup of blind test elements when leaving
-  if (prev === 'blindtest' && name !== 'blindtest') {
-    $('bt-progress').style.display = 'none';
-    $('bt-img-main').src = ''; $('bt-img-main').style.display = 'none';
-    $('bt-img-blur').src = ''; $('bt-img-blur').style.display = 'none';
-    $('bt-cover-overlay').style.display = 'none';
-    $('bt-title').textContent = '';
-    $('bt-artist').textContent = '';
-  }
 }
 
 function setTopbar(opts) {
@@ -734,16 +709,11 @@ function initials(name) {
 }
 
 function setLogoImage(url) {
-  // Update both logo img elements
+  // Only update img elements (skip SVG logos)
   var top = $('logo-top');
   if (top && top.tagName === 'IMG') {
     top.onerror = function() { console.error('Logo failed:', url); };
     top.src = url;
-  }
-  var idle = $('logo-idle');
-  if (idle && idle.tagName === 'IMG') {
-    idle.onerror = function() { console.error('Logo idle failed:', url); };
-    idle.src = url;
   }
 }
 
@@ -771,13 +741,6 @@ function renderIdleQR() {
   }
 }
 
-function resolveCoverUrl(url) {
-  if (!url) return url;
-  if (url === '/no_cover' || url.includes('/no_cover?')) return './nocover.png';
-  if (url.startsWith('/')) return STATE.serverURL + url;
-  return url;
-}
-
 function renderBlindTest(d) {
   showView('blindtest');
   setTopbar({ title: 'Blind Test', category: d.category || '', live: true });
@@ -785,48 +748,26 @@ function renderBlindTest(d) {
   renderQR();
 
   var track = d.track || STATE.track;
-  var revealed = d.revealed !== undefined ? d.revealed : STATE.revealed;
+  var revealed = d.revealed || STATE.revealed;
 
-  // Update blur state only if explicitly provided, otherwise keep current (polling will provide it)
-  if (d.blurCoversOnTV !== undefined) STATE.blurCover = d.blurCoversOnTV;
   if (d.blurCover !== undefined) STATE.blurCover = d.blurCover;
-  if (d.shouldBlur !== undefined) STATE.blurCover = d.shouldBlur;
 
-  var coverUrlRaw = track && (track.coverURL || track.cover);
-  var isRealCover = coverUrlRaw && !coverUrlRaw.includes('/no_cover');
-  var hasCover = !!isRealCover;
-
+  var hasCover = track && track.coverURL;
   if (hasCover) {
-    var coverUrl = resolveCoverUrl(coverUrlRaw);
-    $('bt-img-main').src = coverUrl;
+    var coverUrl = track.coverURL;
+    if (coverUrl.startsWith('/')) coverUrl = STATE.serverURL + coverUrl;
     $('bt-img-blur').src = coverUrl;
-  } else {
-    $('bt-img-main').src = '';
-    $('bt-img-blur').src = '';
+    $('bt-img-main').src = coverUrl;
+    $('bt-img-main').style.display = '';
+    $('bt-img-blur').style.display = STATE.blurCover ? '' : 'none';
   }
 
   if (revealed && track) {
     $('bt-cover-overlay').style.display = 'none';
-    $('bt-cover-overlay').classList.remove('opaque');
-    if (!hasCover) {
-      $('bt-img-main').src = './nocover.png';
-    }
-    $('bt-img-main').style.display = '';
-    $('bt-img-blur').style.display = 'none';
     $('bt-title').textContent = track.title || '';
     $('bt-artist').textContent = track.artist || '';
   } else {
     $('bt-cover-overlay').style.display = 'flex';
-    if (STATE.blurCover && hasCover) {
-      $('bt-cover-overlay').classList.remove('opaque');
-      $('bt-img-main').style.display = 'none';
-      $('bt-img-blur').style.display = '';
-    } else {
-      // No blur OR no cover: show opaque overlay with question mark
-      $('bt-cover-overlay').classList.add('opaque');
-      $('bt-img-main').style.display = 'none';
-      $('bt-img-blur').style.display = 'none';
-    }
     $('bt-title').textContent = 'Quel est le titre ?';
     $('bt-artist').textContent = '???';
   }
@@ -851,13 +792,8 @@ function renderBlindTest(d) {
 function renderBTPlayers(players) {
   if (!players || !players.length) {
     $('bt-players').innerHTML = '<div class="bt-players-header">Joueurs</div>';
-    STATE._lastBTPlayersKey = null;
     return;
   }
-  var playersKey = JSON.stringify(players.map(p => ({n:p.name, s:p.score, b:!!p.buzzed, l:!!p.locked})));
-  if (STATE._lastBTPlayersKey === playersKey) return;
-  STATE._lastBTPlayersKey = playersKey;
-
   var html = '<div class="bt-players-header">Joueurs — ' + players.length + ' connecté' + (players.length > 1 ? 's' : '') + '</div>';
   players.sort((a,b) => (b.score||0) - (a.score||0));
   players.forEach((p, i) => {
@@ -868,7 +804,7 @@ function renderBTPlayers(players) {
       '<div class="bt-pl-ava" style="background:' + avatarGradient(p.name) + ';">' + initials(p.name) + '</div>' +
       '<div class="bt-pl-info">' +
         '<div class="bt-pl-name">' + (p.name || 'Joueur') + '</div>' +
-        <!-- score masqué sur la sidebar -->
+        '<div class="bt-pl-score">' + (p.score || 0) + ' pts</div>' +
       '</div>' + state +
     '</div>';
   });
@@ -876,83 +812,46 @@ function renderBTPlayers(players) {
 }
 
 function renderQCMQuestion(d) {
-  var isNew = (STATE.qcmCurrentQuestion !== (d.question || ''));
-  var justSwitched = (STATE.view !== 'qcm');
-
-  // Only switch view/set topbar on first entry or new question
-  if (justSwitched || isNew) {
-    showView('qcm');
-    setTopbar({ title: 'QCM', live: true });
-    renderIdleQR();
-    renderQR();
-    $('overlay-rules').classList.remove('active');
-    if (STATE.rulesTimer) { clearTimeout(STATE.rulesTimer); STATE.rulesTimer = null; }
-  }
+  showView('qcm');
+  setTopbar({ title: 'QCM', live: true });
+  renderIdleQR();
+  renderQR();
 
   STATE.qcmDuration = d.duration || STATE.qcmDuration || 30;
-  STATE.qcmCurrentQuestion = d.question || STATE.qcmCurrentQuestion || '';
+  var qText = d.question || STATE.qcmCurrentQuestion || '';
+  var isNew = (STATE.qcmCurrentQuestion !== qText);
+  STATE.qcmCurrentQuestion = qText;
 
-  if (justSwitched || isNew) {
-    $('qcm-qnum').textContent = d.questionNum ? 'Question ' + d.questionNum : '';
-    $('qcm-cat').textContent = d.category || 'QCM';
-    $('qcm-question').textContent = STATE.qcmCurrentQuestion;
-    $('qcm-pts').textContent = d.points ? (d.points + ' pts') : '';
-  }
+  $('qcm-qnum').textContent = d.questionNum ? 'Question ' + d.questionNum : '';
+  $('qcm-cat').textContent = d.category || 'QCM';
+  $('qcm-question').textContent = qText;
+  $('qcm-pts').textContent = (d.points || 200) + ' pts';
 
-  // Image (hidden during question, shown only on reveal)
-  var imgEl = $('qcm-image');
-  if (justSwitched || isNew) {
-    imgEl.innerHTML = '';
-    imgEl.style.display = 'none';
-  }
+  document.querySelectorAll('.qcm-answer').forEach(el => { el.className = 'qcm-answer'; });
+  $('qcm-timer-text').textContent = STATE.qcmDuration;
+  $('qcm-timer-bar').style.width = '100%';
+  $('qcm-timer-bar').style.background = 'var(--grad-violet-rose)';
 
   var choices = d.choices || [];
-  var choicesKey = choices.join('|');
-  // Only rebuild answers DOM if choices changed (prevents flashing on poll resync)
-  if (STATE._lastQCMChoicesKey !== choicesKey) {
-    STATE._lastQCMChoicesKey = choicesKey;
-    var ansHTML = '';
-    choices.forEach((c, i) => {
-      ansHTML += '<div class="qcm-answer" id="qcm-ans-' + i + '">' +
-        '<div class="ans-letter ' + _labels[i].toLowerCase() + '">' + _labels[i] + '</div>' +
-        '<span class="ans-text">' + c + '</span>' +
-        '<span class="ans-count" id="qcm-count-' + i + '"></span>' +
-      '</div>';
-    });
-    $('qcm-answers').innerHTML = ansHTML;
-  }
-  // Reset answer styles on every new question
-  if (isNew) {
-    document.querySelectorAll('.qcm-answer').forEach(el => { el.className = 'qcm-answer'; });
-  }
+  var ansHTML = '';
+  choices.forEach((c, i) => {
+    ansHTML += '<div class="qcm-answer" id="qcm-ans-' + i + '">' +
+      '<div class="ans-letter ' + _labels[i].toLowerCase() + '">' + _labels[i] + '</div>' +
+      '<span class="ans-text">' + c + '</span>' +
+      '<span class="ans-count" id="qcm-count-' + i + '"></span>' +
+    '</div>';
+  });
+  $('qcm-answers').innerHTML = ansHTML;
 
   renderQCMFooter(d.responders || []);
 
-  // Timer handling: sync with server remaining time if provided, else keep local RAF
-  if (isNew || !STATE.qcmEndTime) {
-    if (qcmRaf) cancelAnimationFrame(qcmRaf);
-    $('qcm-timer-text').textContent = STATE.qcmDuration;
-    $('qcm-timer-bar').style.transform = 'scaleX(1)';
-    $('qcm-timer-bar').className = 'qcm-timer-fill normal';
-    $('qcm-answered').textContent = '';
-    STATE.qcmEndTime = Date.now() + (STATE.qcmDuration * 1000);
-    updateQCMTimer();
-  } else if (d.remaining !== undefined && d.remaining >= 0) {
-    // Poll sync: adjust local timer to match server without full reset
-    var newEnd = Date.now() + (d.remaining * 1000);
-    var drift = Math.abs(newEnd - STATE.qcmEndTime);
-    if (drift > 500) { // only adjust if drift > 500ms
-      STATE.qcmEndTime = newEnd;
-    }
-  }
+  if (qcmRaf) cancelAnimationFrame(qcmRaf);
+  STATE.qcmEndTime = Date.now() + (STATE.qcmDuration * 1000);
+  updateQCMTimer();
 }
 
 function renderQCMReveal(d) {
   showView('qcm');
-  // Hide rules overlay on reveal
-  $('overlay-rules').classList.remove('active');
-  if (STATE.rulesTimer) { clearTimeout(STATE.rulesTimer); STATE.rulesTimer = null; }
-
   var correct = d.correctIndex;
   var answers = d.answers || {};
   var total = Object.keys(answers).length;
@@ -976,13 +875,6 @@ function renderQCMReveal(d) {
   $('qcm-answered').textContent = total + ' réponse' + (total > 1 ? 's' : '');
   renderQCMFooter(d.responders || []);
   STATE.qcmEndTime = null;
-
-  // Show answer image if provided
-  var imgEl = $('qcm-image');
-  if (d.imageURL && d.imageURL.length > 0) {
-    imgEl.innerHTML = '<img src="' + d.imageURL + '" alt="" style="max-height:22vmin;">';
-    imgEl.style.display = 'flex';
-  }
 }
 
 function renderQCMFooter(responders) {
@@ -1007,12 +899,11 @@ function updateQCMTimer() {
   var pct = Math.min(100, Math.max(0, (rem / STATE.qcmDuration) * 100));
 
   $('qcm-timer-text').textContent = Math.ceil(rem);
-  $('qcm-timer-bar').style.transform = 'scaleX(' + (pct / 100) + ')';
+  $('qcm-timer-bar').style.width = pct + '%';
 
-  var bar = $('qcm-timer-bar');
-  if (pct < 30 && !bar.classList.contains('urgent')) bar.className = 'qcm-timer-fill urgent';
-  else if (pct >= 30 && pct < 60 && !bar.classList.contains('warning')) bar.className = 'qcm-timer-fill warning';
-  else if (pct >= 60 && !bar.classList.contains('normal')) bar.className = 'qcm-timer-fill normal';
+  if (pct < 30) $('qcm-timer-bar').style.background = 'linear-gradient(90deg, #FF453A, #FF8A00)';
+  else if (pct < 60) $('qcm-timer-bar').style.background = 'linear-gradient(90deg, #FF8A00, #FFD600)';
+  else $('qcm-timer-bar').style.background = 'var(--grad-violet-rose)';
 
   if (rem > 0) qcmRaf = requestAnimationFrame(updateQCMTimer);
 }
@@ -1061,14 +952,10 @@ function renderPodium(data) {
 }
 
 function renderLeaderboard(players) {
-  if (!STATE.showScores) { $('overlay-leaderboard').classList.remove('active'); STATE._lastLBKey = null; return; }
+  if (!STATE.showScores) { $('overlay-leaderboard').classList.remove('active'); return; }
   var sorted = (players || []).slice().sort((a,b) => (b.score||0) - (a.score||0));
   if (!sorted.length) return;
   var max = sorted[0].score || 1;
-
-  var playersKey = JSON.stringify(sorted.map(p => ({n:p.name, s:p.score})));
-  if (STATE._lastLBKey === playersKey) { $('overlay-leaderboard').classList.add('active'); return; }
-  STATE._lastLBKey = playersKey;
 
   var html = '';
   sorted.forEach((p, i) => {
@@ -1105,17 +992,6 @@ function renderRules(d) {
   ).join('');
   $('rules-chips').innerHTML = html;
   $('overlay-rules').classList.add('active');
-
-  // Auto-hide timer
-  if (STATE.rulesTimer) { clearTimeout(STATE.rulesTimer); STATE.rulesTimer = null; }
-  var shouldAutoHide = d.autoHide !== false;
-  var duration = (d.rulesDuration || 10) * 1000;
-  if (shouldAutoHide && duration > 0) {
-    STATE.rulesTimer = setTimeout(function() {
-      $('overlay-rules').classList.remove('active');
-      STATE.rulesTimer = null;
-    }, duration);
-  }
 }
 
 function renderQR() {
@@ -1179,11 +1055,9 @@ function sync(d) {
         STATE.track = null; STATE.revealed = false; STATE.endGame = false;
         STATE.showQR = false; STATE.isPaused = false;
         STATE.qcmCurrentQuestion = null; STATE.qcmEndTime = null;
-        STATE._lastQCMChoicesKey = null;
         if (qcmRaf) { cancelAnimationFrame(qcmRaf); qcmRaf = null; }
         $('overlay-leaderboard').classList.remove('active');
         $('overlay-rules').classList.remove('active');
-        if (STATE.rulesTimer) { clearTimeout(STATE.rulesTimer); STATE.rulesTimer = null; }
         $('overlay-pause').classList.remove('active');
         $('overlay-cheat').classList.remove('active');
         renderIdle();
@@ -1200,7 +1074,6 @@ function sync(d) {
 
       case 'qcm_question':
         STATE.qcmActive = true;
-        // Pass imageURL through if present in payload
         renderQCMQuestion(d);
         return;
 
@@ -1211,8 +1084,6 @@ function sync(d) {
       case 'qcm_stop':
         STATE.qcmActive = false;
         STATE.qcmCurrentQuestion = null; STATE.qcmEndTime = null;
-        STATE._lastQCMChoicesKey = null;
-        $('qcm-image').innerHTML = ''; $('qcm-image').style.display = 'none';
         if (qcmRaf) { cancelAnimationFrame(qcmRaf); qcmRaf = null; }
         if (STATE.view === 'qcm') renderIdle();
         return;
@@ -1238,7 +1109,6 @@ function sync(d) {
         return;
 
       case 'rules':
-      case 'mode_switch':
         renderRules(d);
         return;
 
@@ -1256,11 +1126,9 @@ function sync(d) {
 
       case 'track_update':
         STATE.track = d.track || d;
-        STATE.revealed = (d.gameState === 'revealed');
+        STATE.revealed = false;
         STATE.qcmActive = false;
         STATE.currentTrackID = STATE.track.trackID || STATE.track.id;
-        $('overlay-rules').classList.remove('active');
-        if (STATE.rulesTimer) { clearTimeout(STATE.rulesTimer); STATE.rulesTimer = null; }
         renderBlindTest(d);
         return;
 
@@ -1271,22 +1139,8 @@ function sync(d) {
 
       case 'cover_update':
         if (d.coverBase64 && STATE.currentTrackID && d.trackID === STATE.currentTrackID) {
-          if (STATE.blurCover && !STATE.revealed) {
-            $('bt-img-blur').src = d.coverBase64; $('bt-img-blur').style.display = '';
-            $('bt-img-main').style.display = 'none';
-          } else if (STATE.revealed) {
-            $('bt-img-main').src = d.coverBase64; $('bt-img-main').style.display = '';
-            $('bt-img-blur').style.display = 'none';
-          }
-        }
-        return;
-      case 'cover_clear_update':
-        if (d.coverClearURL && STATE.currentTrackID && d.trackID === STATE.currentTrackID) {
-          var url = resolveCoverUrl(d.coverClearURL);
-          if (STATE.revealed) {
-            $('bt-img-main').src = url; $('bt-img-main').style.display = '';
-            $('bt-img-blur').style.display = 'none';
-          }
+          $('bt-img-blur').src = d.coverBase64; $('bt-img-blur').style.display = '';
+          $('bt-img-main').src = d.coverBase64; $('bt-img-main').style.display = '';
         }
         return;
     }
@@ -1333,10 +1187,7 @@ function sync(d) {
     else if (d.leaderboard) renderLeaderboard(d.leaderboard);
 
     if (d.rulesVisible && d.rules) renderRules(d);
-    else if (d.rulesVisible === false) {
-      $('overlay-rules').classList.remove('active');
-      if (STATE.rulesTimer) { clearTimeout(STATE.rulesTimer); STATE.rulesTimer = null; }
-    }
+    else if (d.rulesVisible === false) $('overlay-rules').classList.remove('active');
 
     if (d.isPaused) {
       STATE.isPaused = true; STATE.pauseMessage = d.pauseMessage || 'Pause';

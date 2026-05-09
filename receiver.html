@@ -395,17 +395,18 @@
   .lb-bar-wrap { width: 12vmin; height: 0.6vmin; background: rgba(255,255,255,0.08); border-radius: 0.3vmin; overflow: hidden; }
   .lb-bar-fill { height: 100%; background: var(--grad-violet-rose); border-radius: 0.3vmin; }
 
-  .rules-mode { font-size: 3.8vmin; font-weight: 900; font-style: italic; color: var(--rose); text-transform: uppercase; letter-spacing: 0.3vmin; margin-bottom: 2.5vmin; }
-  .rules-text { font-size: 2.4vmin; font-weight: 600; color: var(--text-sec); line-height: 1.5; margin-bottom: 3vmin; white-space: pre-wrap; }
-  .rules-chips { display: flex; gap: 2vmin; flex-wrap: wrap; }
+  #overlay-rules .overlay-panel { width: 60vw; max-width: 95vmin; padding: 6vmin 8vmin; }
+  .rules-mode { font-size: 5.5vmin; font-weight: 900; font-style: italic; color: var(--rose); text-transform: uppercase; letter-spacing: 0.3vmin; margin-bottom: 3.5vmin; }
+  .rules-text { font-size: 3.2vmin; font-weight: 600; color: var(--text-sec); line-height: 1.5; margin-bottom: 4vmin; white-space: pre-wrap; }
+  .rules-chips { display: flex; gap: 2.5vmin; flex-wrap: wrap; }
   .rules-chip {
-    background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 1.2vmin;
-    padding: 1.8vmin 2.8vmin; display: flex; flex-direction: column; gap: 0.5vmin; min-width: 18vmin;
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 1.5vmin;
+    padding: 2.2vmin 3.5vmin; display: flex; flex-direction: column; gap: 0.6vmin; min-width: 22vmin;
   }
   .rules-chip.pos { border-color: rgba(255,45,168,0.25); }
   .rules-chip.neg { border-color: rgba(255,69,58,0.25); }
-  .chip-label { font-size: 1.3vmin; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-  .chip-val { font-size: 2.2vmin; font-weight: 900; }
+  .chip-label { font-size: 1.8vmin; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+  .chip-val { font-size: 3.0vmin; font-weight: 900; }
   .rules-chip.pos .chip-val { color: var(--rose); }
   .rules-chip.neg .chip-val { color: #FF453A; }
 
@@ -641,7 +642,7 @@
 })();
 
 /* ===== VERSION (single source of truth) ===== */
-var RECEIVER_VERSION = '8.1.4';
+var RECEIVER_VERSION = '8.1.5';
 
 /* ===== CACHE BUST ===== */
 (function() {
@@ -673,7 +674,8 @@ var STATE = {
   qcmActive: false, qcmDuration: 30, qcmEndTime: null, qcmCurrentQuestion: null,
   players: [],
   logoBase64: null, hasBase64Logo: false,
-  view: 'idle'
+  view: 'idle',
+  rulesTimer: null
 };
 
 const _labels = ['A', 'B', 'C', 'D'];
@@ -884,6 +886,7 @@ function renderQCMQuestion(d) {
     renderIdleQR();
     renderQR();
     $('overlay-rules').classList.remove('active');
+    if (STATE.rulesTimer) { clearTimeout(STATE.rulesTimer); STATE.rulesTimer = null; }
   }
 
   STATE.qcmDuration = d.duration || STATE.qcmDuration || 30;
@@ -948,6 +951,7 @@ function renderQCMReveal(d) {
   showView('qcm');
   // Hide rules overlay on reveal
   $('overlay-rules').classList.remove('active');
+  if (STATE.rulesTimer) { clearTimeout(STATE.rulesTimer); STATE.rulesTimer = null; }
 
   var correct = d.correctIndex;
   var answers = d.answers || {};
@@ -1101,6 +1105,17 @@ function renderRules(d) {
   ).join('');
   $('rules-chips').innerHTML = html;
   $('overlay-rules').classList.add('active');
+
+  // Auto-hide timer
+  if (STATE.rulesTimer) { clearTimeout(STATE.rulesTimer); STATE.rulesTimer = null; }
+  var shouldAutoHide = d.autoHide !== false;
+  var duration = (d.rulesDuration || 10) * 1000;
+  if (shouldAutoHide && duration > 0) {
+    STATE.rulesTimer = setTimeout(function() {
+      $('overlay-rules').classList.remove('active');
+      STATE.rulesTimer = null;
+    }, duration);
+  }
 }
 
 function renderQR() {
@@ -1168,6 +1183,7 @@ function sync(d) {
         if (qcmRaf) { cancelAnimationFrame(qcmRaf); qcmRaf = null; }
         $('overlay-leaderboard').classList.remove('active');
         $('overlay-rules').classList.remove('active');
+        if (STATE.rulesTimer) { clearTimeout(STATE.rulesTimer); STATE.rulesTimer = null; }
         $('overlay-pause').classList.remove('active');
         $('overlay-cheat').classList.remove('active');
         renderIdle();
@@ -1244,6 +1260,7 @@ function sync(d) {
         STATE.qcmActive = false;
         STATE.currentTrackID = STATE.track.trackID || STATE.track.id;
         $('overlay-rules').classList.remove('active');
+        if (STATE.rulesTimer) { clearTimeout(STATE.rulesTimer); STATE.rulesTimer = null; }
         renderBlindTest(d);
         return;
 
@@ -1316,7 +1333,10 @@ function sync(d) {
     else if (d.leaderboard) renderLeaderboard(d.leaderboard);
 
     if (d.rulesVisible && d.rules) renderRules(d);
-    else if (d.rulesVisible === false) $('overlay-rules').classList.remove('active');
+    else if (d.rulesVisible === false) {
+      $('overlay-rules').classList.remove('active');
+      if (STATE.rulesTimer) { clearTimeout(STATE.rulesTimer); STATE.rulesTimer = null; }
+    }
 
     if (d.isPaused) {
       STATE.isPaused = true; STATE.pauseMessage = d.pauseMessage || 'Pause';
