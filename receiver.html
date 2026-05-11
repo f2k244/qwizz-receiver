@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>QWIZZ Receiver v8.1.1</title>
+<title>QWIZZ Receiver v8.1.6</title>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,600;0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 <style>
@@ -227,6 +227,13 @@
   .bt-progress {
     position: fixed; bottom: 0; left: 0; right: 0; height: 0.5vmin; z-index: 101;
     background: rgba(255,255,255,0.05);
+  }
+  /* Force-hide blindtest fixed elements when view is inactive (Chromecast WebKit bug) */
+  #view-blindtest:not(.active) .bt-progress,
+  #view-blindtest:not(.active) .bt-cover-card,
+  #view-blindtest:not(.active) .bt-track-info,
+  #view-blindtest:not(.active) .bt-points {
+    display: none !important;
   }
   .bt-progress-fill {
     height: 100%; width: 0%; background: var(--grad-violet-rose);
@@ -642,7 +649,7 @@
 })();
 
 /* ===== VERSION (single source of truth) ===== */
-var RECEIVER_VERSION = '8.1.5';
+var RECEIVER_VERSION = '8.1.6';
 
 /* ===== CACHE BUST ===== */
 (function() {
@@ -708,8 +715,10 @@ function showView(name) {
     $('bt-img-main').src = ''; $('bt-img-main').style.display = 'none';
     $('bt-img-blur').src = ''; $('bt-img-blur').style.display = 'none';
     $('bt-cover-overlay').style.display = 'none';
+    $('bt-cover-overlay').classList.remove('opaque');
     $('bt-title').textContent = '';
     $('bt-artist').textContent = '';
+    $('bt-points').style.display = 'none';
   }
 }
 
@@ -737,12 +746,12 @@ function setLogoImage(url) {
   // Update both logo img elements
   var top = $('logo-top');
   if (top && top.tagName === 'IMG') {
-    top.onerror = function() { console.error('Logo failed:', url); };
+    top.onerror = function() { console.error('Logo failed:', url); top.src = './logo.svg'; };
     top.src = url;
   }
   var idle = $('logo-idle');
   if (idle && idle.tagName === 'IMG') {
-    idle.onerror = function() { console.error('Logo idle failed:', url); };
+    idle.onerror = function() { console.error('Logo idle failed:', url); idle.src = './logo.svg'; };
     idle.src = url;
   }
 }
@@ -876,10 +885,10 @@ function renderBTPlayers(players) {
 }
 
 function renderQCMQuestion(d) {
-  var isNew = (STATE.qcmCurrentQuestion !== (d.question || ''));
+  var isNew = d.question !== undefined && STATE.qcmCurrentQuestion !== d.question;
   var justSwitched = (STATE.view !== 'qcm');
 
-  // Only switch view/set topbar on first entry or new question
+  // Always switch view when coming from another view
   if (justSwitched || isNew) {
     showView('qcm');
     setTopbar({ title: 'QCM', live: true });
@@ -889,14 +898,14 @@ function renderQCMQuestion(d) {
     if (STATE.rulesTimer) { clearTimeout(STATE.rulesTimer); STATE.rulesTimer = null; }
   }
 
-  STATE.qcmDuration = d.duration || STATE.qcmDuration || 30;
-  STATE.qcmCurrentQuestion = d.question || STATE.qcmCurrentQuestion || '';
+  STATE.qcmDuration = (d.duration !== undefined) ? d.duration : (STATE.qcmDuration || 30);
+  if (d.question !== undefined) STATE.qcmCurrentQuestion = d.question;
 
   if (justSwitched || isNew) {
-    $('qcm-qnum').textContent = d.questionNum ? 'Question ' + d.questionNum : '';
-    $('qcm-cat').textContent = d.category || 'QCM';
+    if (d.questionNum !== undefined) $('qcm-qnum').textContent = d.questionNum ? 'Question ' + d.questionNum : '';
+    if (d.category !== undefined) $('qcm-cat').textContent = d.category || 'QCM';
     $('qcm-question').textContent = STATE.qcmCurrentQuestion;
-    $('qcm-pts').textContent = d.points ? (d.points + ' pts') : '';
+    if (d.points !== undefined) $('qcm-pts').textContent = d.points ? (d.points + ' pts') : '';
   }
 
   // Image (hidden during question, shown only on reveal)
@@ -906,20 +915,22 @@ function renderQCMQuestion(d) {
     imgEl.style.display = 'none';
   }
 
-  var choices = d.choices || [];
-  var choicesKey = choices.join('|');
-  // Only rebuild answers DOM if choices changed (prevents flashing on poll resync)
-  if (STATE._lastQCMChoicesKey !== choicesKey) {
-    STATE._lastQCMChoicesKey = choicesKey;
-    var ansHTML = '';
-    choices.forEach((c, i) => {
-      ansHTML += '<div class="qcm-answer" id="qcm-ans-' + i + '">' +
-        '<div class="ans-letter ' + _labels[i].toLowerCase() + '">' + _labels[i] + '</div>' +
-        '<span class="ans-text">' + c + '</span>' +
-        '<span class="ans-count" id="qcm-count-' + i + '"></span>' +
-      '</div>';
-    });
-    $('qcm-answers').innerHTML = ansHTML;
+  // Only rebuild answers DOM if choices explicitly provided and changed (prevents flashing on poll resync)
+  var choices = d.choices;
+  if (choices) {
+    var choicesKey = choices.join('|');
+    if (STATE._lastQCMChoicesKey !== choicesKey) {
+      STATE._lastQCMChoicesKey = choicesKey;
+      var ansHTML = '';
+      choices.forEach((c, i) => {
+        ansHTML += '<div class="qcm-answer" id="qcm-ans-' + i + '">' +
+          '<div class="ans-letter ' + _labels[i].toLowerCase() + '">' + _labels[i] + '</div>' +
+          '<span class="ans-text">' + c + '</span>' +
+          '<span class="ans-count" id="qcm-count-' + i + '"></span>' +
+        '</div>';
+      });
+      $('qcm-answers').innerHTML = ansHTML;
+    }
   }
   // Reset answer styles on every new question
   if (isNew) {
@@ -953,6 +964,12 @@ function renderQCMReveal(d) {
   $('overlay-rules').classList.remove('active');
   if (STATE.rulesTimer) { clearTimeout(STATE.rulesTimer); STATE.rulesTimer = null; }
 
+  // Stop timer
+  if (qcmRaf) { cancelAnimationFrame(qcmRaf); qcmRaf = null; }
+  STATE.qcmEndTime = null;
+  $('qcm-timer-text').textContent = '0';
+  $('qcm-timer-bar').style.transform = 'scaleX(0)';
+
   var correct = d.correctIndex;
   var answers = d.answers || {};
   var total = Object.keys(answers).length;
@@ -975,7 +992,6 @@ function renderQCMReveal(d) {
 
   $('qcm-answered').textContent = total + ' réponse' + (total > 1 ? 's' : '');
   renderQCMFooter(d.responders || []);
-  STATE.qcmEndTime = null;
 
   // Show answer image if provided
   var imgEl = $('qcm-image');
@@ -1220,9 +1236,11 @@ function sync(d) {
       case 'qcm_timer':
         if (d.remaining !== undefined) {
           STATE.qcmActive = true;
-          STATE.qcmDuration = d.duration || STATE.qcmDuration || 30;
+          STATE.qcmDuration = (d.duration !== undefined) ? d.duration : (STATE.qcmDuration || 30);
           STATE.qcmEndTime = Date.now() + (d.remaining * 1000);
           if (qcmRaf) cancelAnimationFrame(qcmRaf);
+          showView('qcm');
+          setTopbar({ title: 'QCM', live: true });
           updateQCMTimer();
         }
         return;
@@ -1315,15 +1333,13 @@ function sync(d) {
 
     if (d.qcmActive !== undefined) STATE.qcmActive = d.qcmActive;
 
-    // View routing: track always wins over idle/qcm
+    // View routing: QCM takes priority when active; track only wins if QCM is off
     if (STATE.endGame) {
       // podium already shown
-    } else if (STATE.qcmActive && d.question && !d.isQCMRevealed) {
-      renderQCMQuestion(d);
-    } else if (STATE.qcmActive && d.isQCMRevealed) {
-      renderQCMReveal(d);
+    } else if (STATE.qcmActive) {
+      if (d.isQCMRevealed) renderQCMReveal(d);
+      else renderQCMQuestion(d);
     } else if (d.track || d.trackID || STATE.track) {
-      if (STATE.qcmActive) STATE.qcmActive = false;
       renderBlindTest(d);
     } else {
       renderIdle();
