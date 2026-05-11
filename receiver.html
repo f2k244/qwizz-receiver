@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>QWIZZ Receiver v8.2.1</title>
+<title>QWIZZ Receiver v8.2.2</title>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,600;0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 <style>
@@ -228,11 +228,18 @@
     position: fixed; bottom: 0; left: 0; right: 0; height: 0.5vmin; z-index: 101;
     background: rgba(255,255,255,0.05);
   }
-  /* Force-hide blindtest fixed elements when view is inactive (Chromecast WebKit bug) */
+  /* Force-hide blindtest elements when view is inactive (Chromecast WebKit bug) */
+  #view-blindtest:not(.active) .bt-body,
+  #view-blindtest:not(.active) .bt-left,
+  #view-blindtest:not(.active) .bt-right,
+  #view-blindtest:not(.active) #bt-players,
   #view-blindtest:not(.active) .bt-progress,
   #view-blindtest:not(.active) .bt-cover-card,
   #view-blindtest:not(.active) .bt-track-info,
-  #view-blindtest:not(.active) .bt-points {
+  #view-blindtest:not(.active) .bt-points,
+  #view-blindtest:not(.active) .cover-overlay,
+  #view-blindtest:not(.active) .cover-blur,
+  #view-blindtest:not(.active) .cover-main {
     display: none !important;
   }
   .bt-progress-fill {
@@ -624,7 +631,7 @@
 </div>
 
 <!-- ===== UI CHROME ===== -->
-<div class="version-tag" id="version-tag">v8.2.1</div>
+<div class="version-tag" id="version-tag">v8.2.2</div>
 <div id="reload-toast">⟳ Rechargement...</div>
 <div id="cast-debug-status">INIT</div>
 <cast-media-player></cast-media-player>
@@ -649,7 +656,7 @@
 })();
 
 /* ===== VERSION (single source of truth) ===== */
-var RECEIVER_VERSION = '8.2.1';
+var RECEIVER_VERSION = '8.2.2';
 
 /* ===== CACHE BUST (désactivé pour debug) ===== */
 (function() {
@@ -720,6 +727,8 @@ function showView(name) {
     $('bt-title').textContent = '';
     $('bt-artist').textContent = '';
     $('bt-points').style.display = 'none';
+    $('bt-players').innerHTML = '<div class="bt-players-header">Joueurs</div>';
+    STATE._lastBTPlayersKey = null;
   }
 }
 
@@ -962,6 +971,12 @@ function renderQCMQuestion(d) {
 
 function renderQCMReveal(d) {
   showView('qcm');
+  // Deduplication: skip if same reveal data
+  var revealKey = (d.correctIndex || 0) + '|' + JSON.stringify(d.answers || {}) + '|' + (d.imageURL || '');
+  if (STATE._lastQCMRevealKey === revealKey) { console.log('QCM reveal: skip duplicate'); return; }
+  STATE._lastQCMRevealKey = revealKey;
+  console.log('QCM reveal: render correctIndex=', d.correctIndex);
+
   // Hide rules overlay on reveal
   $('overlay-rules').classList.remove('active');
   if (STATE.rulesTimer) { clearTimeout(STATE.rulesTimer); STATE.rulesTimer = null; }
@@ -1203,7 +1218,7 @@ function sync(d) {
         STATE.track = null; STATE.revealed = false; STATE.endGame = false;
         STATE.showQR = false; STATE.isPaused = false;
         STATE.qcmCurrentQuestion = null; STATE.qcmEndTime = null;
-        STATE._lastQCMChoicesKey = null; STATE._lastPodiumKey = null;
+        STATE._lastQCMChoicesKey = null; STATE._lastPodiumKey = null; STATE._lastQCMRevealKey = null;
         if (qcmRaf) { cancelAnimationFrame(qcmRaf); qcmRaf = null; }
         $('overlay-leaderboard').classList.remove('active');
         $('overlay-rules').classList.remove('active');
@@ -1235,7 +1250,7 @@ function sync(d) {
       case 'qcm_stop':
         STATE.qcmActive = false;
         STATE.qcmCurrentQuestion = null; STATE.qcmEndTime = null;
-        STATE._lastQCMChoicesKey = null; STATE._lastPodiumKey = null;
+        STATE._lastQCMChoicesKey = null; STATE._lastPodiumKey = null; STATE._lastQCMRevealKey = null;
         $('qcm-image').innerHTML = ''; $('qcm-image').style.display = 'none';
         if (qcmRaf) { cancelAnimationFrame(qcmRaf); qcmRaf = null; }
         if (STATE.view === 'qcm') renderIdle();
