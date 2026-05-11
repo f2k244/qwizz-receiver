@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>QWIZZ Receiver v8.1.8</title>
+<title>QWIZZ Receiver v8.1.9</title>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,600;0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 <style>
@@ -624,7 +624,7 @@
 </div>
 
 <!-- ===== UI CHROME ===== -->
-<div class="version-tag" id="version-tag">v8.1.8</div>
+<div class="version-tag" id="version-tag">v8.1.9</div>
 <div id="reload-toast">⟳ Rechargement...</div>
 <div id="cast-debug-status">INIT</div>
 <cast-media-player></cast-media-player>
@@ -649,7 +649,7 @@
 })();
 
 /* ===== VERSION (single source of truth) ===== */
-var RECEIVER_VERSION = '8.1.8';
+var RECEIVER_VERSION = '8.1.9';
 
 /* ===== CACHE BUST ===== */
 (function() {
@@ -766,6 +766,7 @@ function renderIdle() {
 
 function renderIdleQR() {
   var el = $('idle-qr');
+  console.log('renderIdleQR: showQR=', STATE.showQR, 'view=', STATE.view, 'qrURL=', !!STATE.qrURL, 'qrBase64_len=', (STATE.qrBase64||'').length);
   if (!STATE.showQR || STATE.view !== 'idle') { el.classList.remove('visible'); return; }
   var img = $('idle-qr-img');
   if (STATE.qrBase64 && STATE.qrBase64.length > 100) {
@@ -1136,6 +1137,7 @@ function renderRules(d) {
 
 function renderQR() {
   var el = $('qr-float');
+  console.log('renderQR: showQR=', STATE.showQR, 'view=', STATE.view, 'qrURL=', !!STATE.qrURL, 'qrBase64_len=', (STATE.qrBase64||'').length);
   if (!STATE.showQR || STATE.view === 'idle') { el.classList.remove('visible'); return; }
   el.className = 'pos-' + STATE.qrPos;
   el.classList.add('visible');
@@ -1246,7 +1248,7 @@ function sync(d) {
         return;
 
       case 'show_qr':
-        STATE.showQR = (d.show === true || d.show === 'true');
+        STATE.showQR = !!(d.show === true || d.show === 'true' || d.show === 1 || d.show === '1');
         if (d.url) STATE.qrURL = d.url;
         if (d.qrURL) STATE.qrURL = d.qrURL;
         if (d.position) STATE.qrPos = d.position;
@@ -1362,7 +1364,7 @@ function sync(d) {
       STATE.isPaused = false; $('overlay-pause').classList.remove('active');
     }
 
-    if (d.showQR !== undefined) { STATE.showQR = d.showQR; renderQR(); renderIdleQR(); }
+    if (d.showQR !== undefined && !d.isFromPoll) { STATE.showQR = d.showQR; renderQR(); renderIdleQR(); }
 
   } catch(err) { console.error('SYNC ERROR:', err); }
 }
