@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>QWIZZ Receiver v8.2.0</title>
+<title>QWIZZ Receiver v8.2.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,600;0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 <style>
@@ -624,7 +624,7 @@
 </div>
 
 <!-- ===== UI CHROME ===== -->
-<div class="version-tag" id="version-tag">v8.2.0</div>
+<div class="version-tag" id="version-tag">v8.2.1</div>
 <div id="reload-toast">⟳ Rechargement...</div>
 <div id="cast-debug-status">INIT</div>
 <cast-media-player></cast-media-player>
@@ -649,7 +649,7 @@
 })();
 
 /* ===== VERSION (single source of truth) ===== */
-var RECEIVER_VERSION = '8.2.0';
+var RECEIVER_VERSION = '8.2.1';
 
 /* ===== CACHE BUST (désactivé pour debug) ===== */
 (function() {
@@ -1034,6 +1034,11 @@ function renderPodium(data) {
   STATE.endGame = true;
 
   var sorted = (data || []).slice().sort((a,b) => (b.score||0) - (a.score||0));
+  var podiumKey = JSON.stringify(sorted.map(p => ({n:p.name, s:p.score})));
+  if (STATE._lastPodiumKey === podiumKey) { console.log('Podium: skip duplicate render'); return; }
+  STATE._lastPodiumKey = podiumKey;
+  console.log('Podium: render', sorted.length, 'players');
+
   var top3 = sorted.slice(0, 3);
   var rest = sorted.slice(3, 8);
 
@@ -1189,7 +1194,7 @@ function sync(d) {
         STATE.track = null; STATE.revealed = false; STATE.endGame = false;
         STATE.showQR = false; STATE.isPaused = false;
         STATE.qcmCurrentQuestion = null; STATE.qcmEndTime = null;
-        STATE._lastQCMChoicesKey = null;
+        STATE._lastQCMChoicesKey = null; STATE._lastPodiumKey = null;
         if (qcmRaf) { cancelAnimationFrame(qcmRaf); qcmRaf = null; }
         $('overlay-leaderboard').classList.remove('active');
         $('overlay-rules').classList.remove('active');
@@ -1221,7 +1226,7 @@ function sync(d) {
       case 'qcm_stop':
         STATE.qcmActive = false;
         STATE.qcmCurrentQuestion = null; STATE.qcmEndTime = null;
-        STATE._lastQCMChoicesKey = null;
+        STATE._lastQCMChoicesKey = null; STATE._lastPodiumKey = null;
         $('qcm-image').innerHTML = ''; $('qcm-image').style.display = 'none';
         if (qcmRaf) { cancelAnimationFrame(qcmRaf); qcmRaf = null; }
         if (STATE.view === 'qcm') renderIdle();
