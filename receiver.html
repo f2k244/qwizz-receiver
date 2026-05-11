@@ -434,10 +434,22 @@
   .pause-msg { font-size: 2.8vmin; font-weight: 700; color: var(--text-sec); margin-top: 2.5vmin; }
 
   #overlay-cheat {
-    background: rgba(255,69,58,0.90);
     flex-direction: column; gap: 3vmin;
+  }
+  #overlay-cheat.style-Cinéma {
+    background: rgba(255,69,58,0.90);
     animation: cheatIn 0.5s ease-out;
   }
+  #overlay-cheat.style-Impact {
+    background: rgba(180,0,0,0.95);
+    animation: cheatImpact 0.5s ease-out;
+  }
+  #overlay-cheat.style-Flash {
+    background: #fff;
+    animation: cheatFlash 0.3s ease-out;
+  }
+  #overlay-cheat.style-Flash .cheat-name { color: #b40000; }
+  #overlay-cheat.style-Flash .cheat-penalty { color: #b40000; }
   .cheat-icon { font-size: 14vmin; }
   .cheat-name { font-size: 7vmin; font-weight: 900; font-style: italic; color: #fff; text-transform: uppercase; letter-spacing: 0.5vmin; }
   .cheat-penalty { font-size: 5.5vmin; font-weight: 900; color: var(--jaune); }
@@ -493,6 +505,18 @@
   @keyframes cheatIn {
     0% { transform: scale(1.1); opacity: 0; }
     100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes cheatImpact {
+    0% { transform: scale(1.25); opacity: 0; }
+    20% { transform: scale(0.92); opacity: 1; }
+    40% { transform: scale(1.06); }
+    60% { transform: scale(0.97); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes cheatFlash {
+    0% { opacity: 0; background: #fff; }
+    30% { opacity: 1; background: #fff; }
+    100% { opacity: 1; background: rgba(255,69,58,0.95); }
   }
   @keyframes slideUp {
     from { transform: translateY(3vmin); opacity: 0; }
@@ -631,7 +655,7 @@
 </div>
 
 <!-- ===== UI CHROME ===== -->
-<div class="version-tag" id="version-tag">v8.2.2</div>
+<div class="version-tag" id="version-tag">v8.2.3</div>
 <div id="reload-toast">⟳ Rechargement...</div>
 <div id="cast-debug-status">INIT</div>
 <cast-media-player></cast-media-player>
@@ -656,7 +680,7 @@
 })();
 
 /* ===== VERSION (single source of truth) ===== */
-var RECEIVER_VERSION = '8.2.2';
+var RECEIVER_VERSION = '8.2.3';
 
 /* ===== CACHE BUST (désactivé pour debug) ===== */
 (function() {
@@ -1171,10 +1195,16 @@ function renderQR() {
 }
 
 function renderCheat(d) {
+  const overlay = $('overlay-cheat');
+  // reset style classes
+  overlay.className = 'overlay';
+  const style = d.style || 'Cinéma';
+  overlay.classList.add('style-' + style);
+
   $('cheat-name').textContent = (d.playerName || d.name || 'UN JOUEUR').toUpperCase();
   $('cheat-penalty').textContent = (d.penalty || d.cheatingPenalty) ? '-' + (d.penalty || d.cheatingPenalty) + ' PTS' : 'PÉNALITÉ !';
-  $('overlay-cheat').classList.add('active');
-  setTimeout(() => $('overlay-cheat').classList.remove('active'), 5000);
+  overlay.classList.add('active');
+  setTimeout(() => overlay.classList.remove('active'), 5000);
 }
 
 /* ===== SYNC ===== */
