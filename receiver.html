@@ -782,7 +782,7 @@
 </div>
 
 <!-- ===== UI CHROME ===== -->
-<div class="version-tag" id="version-tag">v8.2.7</div>
+<div class="version-tag" id="version-tag">v8.2.8</div>
 <div id="reload-toast">⟳ Rechargement...</div>
 <div id="cast-debug-status">INIT</div>
 <cast-media-player></cast-media-player>
@@ -807,7 +807,7 @@
 })();
 
 /* ===== VERSION (single source of truth) ===== */
-var RECEIVER_VERSION = '8.2.7';
+var RECEIVER_VERSION = '8.2.8';
 
 /* ===== CACHE BUST (désactivé pour debug) ===== */
 (function() {
@@ -1179,7 +1179,7 @@ function renderQCMReveal(d) {
   // Show answer image if provided
   var imgEl = $('qcm-image');
   if (d.imageURL && d.imageURL.length > 0) {
-    imgEl.innerHTML = '<img src="' + d.imageURL + '" alt="" style="max-height:22vmin;">';
+    imgEl.innerHTML = '<img src="' + esc(d.imageURL) + '" alt="" style="max-height:22vmin;">';
     imgEl.style.display = 'flex';
   }
 }
