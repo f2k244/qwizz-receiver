@@ -181,7 +181,7 @@
     background: var(--grad-violet-rose);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     background-clip: text;
-    filter: drop-shadow(0 0 3vmin rgba(255,45,168,0.30));
+    filter: drop-shadow(0 0 0.8vmin rgba(0,0,0,0.45));
   }
   .bt-track-info { text-align: center; display: flex; flex-direction: column; gap: 1vmin; }
   .bt-track-title { font-size: 5vmin; font-weight: 900; font-style: italic; color: #fff; }
@@ -782,7 +782,7 @@
 </div>
 
 <!-- ===== UI CHROME ===== -->
-<div class="version-tag" id="version-tag">v8.2.8</div>
+<div class="version-tag" id="version-tag">v8.2.9</div>
 <div id="reload-toast">⟳ Rechargement...</div>
 <div id="cast-debug-status">INIT</div>
 <cast-media-player></cast-media-player>
@@ -807,7 +807,7 @@
 })();
 
 /* ===== VERSION (single source of truth) ===== */
-var RECEIVER_VERSION = '8.2.8';
+var RECEIVER_VERSION = '8.2.9';
 
 /* ===== CACHE BUST (désactivé pour debug) ===== */
 (function() {
